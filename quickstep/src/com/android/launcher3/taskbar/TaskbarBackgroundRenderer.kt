@@ -79,7 +79,11 @@ class TaskbarBackgroundRenderer(private val context: TaskbarActivityContext) {
         context.resources.getDimensionPixelSize(R.dimen.taskbar_stashed_handle_width)
 
     private val stashedHandleHeight =
-        context.resources.getDimensionPixelSize(R.dimen.taskbar_stashed_handle_height)
+        if (context.isNavbarHintEnabled) {
+            context.resources.getDimensionPixelSize(R.dimen.taskbar_stashed_handle_height)
+        } else {
+            0
+        }
 
     init {
         paint.color = context.getColor(R.color.taskbar_background)
@@ -212,6 +216,7 @@ class TaskbarBackgroundRenderer(private val context: TaskbarActivityContext) {
             if (isAnimatingPinning) maxPersistentTaskbarHeight else stashedHandleHeight.toFloat()
         val newBackgroundHeight =
             mapRange(progress, backgroundHeightWhileAnimating, maxTransientTaskbarHeight)
+        if (newBackgroundHeight == 0f) return
         val fullWidth = transientBackgroundBounds.width()
         val animationWidth = context.currentTaskbarWidth
         val backgroundWidthWhileAnimating =

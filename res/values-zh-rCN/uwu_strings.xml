@@ -60,6 +60,7 @@
     <string name="dock_rows_value">Dock 行数：%1$d</string>
     <string name="dock_pages_value">Dock 页数：%1$d</string>
     <string name="settings_general_section">常规</string>
+    <string name="navigation_bar_hint_title">显示手势导航小白条</string>
     <string name="settings_home_screen_section">主屏幕</string>
     <string name="settings_icons_section">图标外观</string>
     <string name="settings_dock_section">Dock 和搜索</string>

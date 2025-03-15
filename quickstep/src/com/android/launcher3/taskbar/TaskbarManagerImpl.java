@@ -24,6 +24,7 @@ import static com.android.launcher3.Flags.enableGrowthNudge;
 import static com.android.launcher3.LauncherPrefs.TASKBAR_PINNING;
 import static com.android.launcher3.LauncherPrefs.TASKBAR_PINNING_IN_DESKTOP_MODE;
 import static com.android.launcher3.LauncherPrefs.TASKBAR_PINNING_KEY;
+import static com.android.launcher3.LauncherPrefs.SHOW_GESTURE_NAVIGATION_HINT;
 import static com.android.launcher3.display.LauncherDisplayInfo.getChangeFlagsString;
 import static com.android.launcher3.statehandlers.DesktopVisibilityController.INACTIVE_DESK_ID;
 import static com.android.launcher3.taskbar.growth.GrowthConstants.BROADCAST_SHOW_NUDGE;
@@ -318,18 +319,21 @@ public class TaskbarManagerImpl {
         cleanupTasks.addCloseable(getTaskbarUiThread(), mResources);
 
         LauncherPrefChangeListener prefChangeListener = key -> {
-            if (TASKBAR_PINNING_KEY.equals(key)) {
+            if (TASKBAR_PINNING_KEY.equals(key)
+                    || SHOW_GESTURE_NAVIGATION_HINT.getSharedPrefKey().equals(key)) {
                 getTaskbarUiThread().execute(this::recreateTaskbars);
             }
         };
         launcherPrefs.addListener(
                 prefChangeListener,
                 TASKBAR_PINNING,
-                TASKBAR_PINNING_IN_DESKTOP_MODE);
+                TASKBAR_PINNING_IN_DESKTOP_MODE,
+                SHOW_GESTURE_NAVIGATION_HINT);
 
         cleanupTasks.addCloseable(getTaskbarUiThread(), () -> launcherPrefs.removeListener(
                 prefChangeListener,
-                TASKBAR_PINNING, TASKBAR_PINNING_IN_DESKTOP_MODE));
+                TASKBAR_PINNING, TASKBAR_PINNING_IN_DESKTOP_MODE,
+                SHOW_GESTURE_NAVIGATION_HINT));
 
         desktopVisibilityController.registerDesktopVisibilityListener(mDesktopVisibilityListener);
         cleanupTasks.addTask(getTaskbarUiThread(), () -> desktopVisibilityController

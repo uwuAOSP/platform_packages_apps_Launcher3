@@ -289,6 +289,7 @@ public class TaskbarActivityContext extends BaseTaskbarContext {
     private final boolean mIsSafeModeEnabled;
     private final boolean mIsUserSetupComplete;
     private final boolean mIsNavBarKidsMode;
+    private final boolean mIsNavbarHintEnabled;
 
     private boolean mIsDestroyed = false;
 
@@ -352,6 +353,8 @@ public class TaskbarActivityContext extends BaseTaskbarContext {
         SettingsCache settingsCache = SettingsCache.INSTANCE.get(this);
         mIsUserSetupComplete = settingsCache.getValue(URI_USER_SETUP_COMPLETE);
         mIsNavBarKidsMode = settingsCache.getValue(URI_NAV_BAR_KIDS_MODE);
+        mIsNavbarHintEnabled = LauncherPrefs.get(this).get(
+                LauncherPrefs.SHOW_GESTURE_NAVIGATION_HINT);
         mBubbleFeatureConfig =
                 new BubbleFeatureConfigImpl(mWindowContext, getDesktopState(mWindowContext));
 
@@ -2469,6 +2472,10 @@ public class TaskbarActivityContext extends BaseTaskbarContext {
 
     public boolean isInKidsMode() {
         return mIsNavBarKidsMode;
+    }
+
+    public boolean isNavbarHintEnabled() {
+        return mIsNavbarHintEnabled;
     }
 
     /**

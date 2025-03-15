@@ -41,6 +41,7 @@ import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.DeveloperMode
 import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.Gesture
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Notifications
@@ -539,6 +540,7 @@ private fun MainSettingsContent(
                         }
                     )
                 }
+                NavigationBarHintPreference(context)
             }
             Category(title = context.getString(R.string.settings_home_screen_section)) {
                 AddIconsToHomePreference(context)
@@ -660,6 +662,33 @@ private fun NotificationDotsPreference(context: Context) {
                     context.startActivity(Intent(Settings.ACTION_NOTIFICATION_SETTINGS))
                 }
             }
+    )
+}
+
+@Composable
+private fun NavigationBarHintPreference(context: Context) {
+    var enabled by remember(context) {
+        mutableStateOf(
+            LauncherPrefs.get(context).get(LauncherPrefs.SHOW_GESTURE_NAVIGATION_HINT)
+        )
+    }
+
+    SwitchPreference(
+        model = object : SwitchPreferenceModel {
+            override val title = context.getString(R.string.navigation_bar_hint_title)
+            override val icon = settingsPreferenceIcon(
+                Icons.Outlined.Gesture,
+                SettingsIconTone.Secondary,
+            )
+            override val checked = { enabled }
+            override val onCheckedChange = { newChecked: Boolean ->
+                LauncherPrefs.get(context).put(
+                    LauncherPrefs.SHOW_GESTURE_NAVIGATION_HINT,
+                    newChecked,
+                )
+                enabled = newChecked
+            }
+        }
     )
 }
 

@@ -276,6 +276,9 @@ constructor(@ApplicationContext private val encryptedContext: Context) {
         @JvmField
         val TASKBAR_PINNING_IN_DESKTOP_MODE =
             backedUpItem(TASKBAR_PINNING_DESKTOP_MODE_KEY, true, EncryptionType.DEVICE_PROTECTED)
+        @JvmField
+        val SHOW_GESTURE_NAVIGATION_HINT =
+            backedUpItem("show_gesture_navigation_hint", true, EncryptionType.DEVICE_PROTECTED)
 
         @JvmField
         val DEVICE_TYPE =

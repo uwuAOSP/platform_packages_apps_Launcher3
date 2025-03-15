@@ -94,6 +94,7 @@
     <string name="dock_rows_value">Dock rows: %1$d</string>
     <string name="dock_pages_value">Dock pages: %1$d</string>
     <string name="settings_general_section">General</string>
+    <string name="navigation_bar_hint_title">Show gesture navigation hint</string>
     <string name="settings_home_screen_section">Home screen</string>
     <string name="settings_icons_section">Icon appearance</string>
     <string name="settings_dock_section">Dock and search</string>
