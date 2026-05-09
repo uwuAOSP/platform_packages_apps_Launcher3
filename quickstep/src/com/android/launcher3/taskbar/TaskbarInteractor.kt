@@ -189,10 +189,15 @@ class TaskbarInteractor(private val taskbarUIController: TaskbarUIController) {
     fun postOnRootViewDraw(callback: Runnable, callbackExecutor: Executor): Boolean {
         val rootView = taskbarUIController.rootView
         return if (rootView != null) {
-            executor.execute {
-                ViewUtils.postFrameDrawn(rootView) { callbackExecutor.execute(callback) }
+            if (rootView.height == 0) {
+                // A zero-height taskbar root never draws, so there is nothing to wait for.
+                false
+            } else {
+                executor.execute {
+                    ViewUtils.postFrameDrawn(rootView) { callbackExecutor.execute(callback) }
+                }
+                true
             }
-            true
         } else {
             false
         }
