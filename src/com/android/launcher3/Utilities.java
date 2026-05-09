@@ -23,6 +23,7 @@ import static com.android.launcher3.folder.ClippedFolderIconLayoutRule.ICON_OVER
 import static com.android.launcher3.graphics.ShapeDelegate.DEFAULT_PATH_SIZE;
 import static com.android.launcher3.icons.BitmapInfo.FLAG_THEMED;
 import static com.android.launcher3.icons.IconNormalizer.ICON_VISIBLE_AREA_FACTOR;
+import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
 import static com.android.launcher3.util.SplitConfigurationOptions.STAGE_POSITION_BOTTOM_OR_RIGHT;
 import static com.android.launcher3.util.SplitConfigurationOptions.STAGE_POSITION_TOP_OR_LEFT;
 import static com.android.launcher3.util.SplitConfigurationOptions.STAGE_TYPE_MAIN;
@@ -125,6 +126,7 @@ public final class Utilities {
 
     public static final String[] EMPTY_STRING_ARRAY = new String[0];
     public static final Person[] EMPTY_PERSON_ARRAY = new Person[0];
+    public static final String GSA_PACKAGE = "com.google.android.googlequicksearchbox";
 
     @ChecksSdkIntAtLeast(api = VERSION_CODES.TIRAMISU, codename = "T")
     public static final boolean ATLEAST_T = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU;
@@ -183,6 +185,11 @@ public final class Utilities {
     /** Disables running test in test harness mode */
     public static void disableRunningInTestHarnessForTests() {
         sIsRunningInTestHarness = false;
+    }
+
+    public static void restart() {
+        Log.d(TAG, "scheduling launcher restart");
+        MAIN_EXECUTOR.getHandler().postDelayed(() -> System.exit(0), 500);
     }
 
     public static boolean isPropertyEnabled(String propertyName) {
