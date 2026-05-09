@@ -86,6 +86,9 @@
     <string name="label_application" msgid="8531721983832654978">"App"</string>
     <string name="all_apps_label" msgid="5015784846527570951">"Alle Apps"</string>
     <string name="all_apps_list_label" msgid="5106226764073070906">"Liste der Apps"</string>
+    <string name="pref_themed_icons_title">Symboldesigns</string>
+    <string name="pref_themed_icons_summary">Stil der Symboldesigns auf dem Startbildschirm folgen</string>
+    <string name="themed_icons_disabled_summary">Themenbezogene Symbole sind in „Hintergrundbild &amp; Stil“ deaktiviert.</string>
     <string name="notifications_header" msgid="1404149926117359025">"Benachrichtigungen"</string>
     <string name="long_press_shortcut_to_add" msgid="5405328730817637737">"Zum Verschieben einer Verknüpfung gedrückt halten"</string>
     <string name="long_accessible_way_to_add_shortcut" msgid="2199537273817090740">"Doppeltippen und halten, um eine Verknüpfung zu bewegen oder benutzerdefinierte Aktionen zu nutzen."</string>

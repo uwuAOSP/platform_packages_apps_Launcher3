@@ -57,6 +57,7 @@ import com.android.launcher3.Flags;
 import com.android.launcher3.InvariantDeviceProfile;
 import com.android.launcher3.LauncherFiles;
 import com.android.launcher3.R;
+import com.android.launcher3.graphics.ThemeManager;
 import com.android.launcher3.states.RotationHelper;
 import com.android.launcher3.util.DisplayController;
 import com.android.launcher3.util.SettingsCache;
@@ -73,6 +74,7 @@ public class SettingsActivity extends FragmentActivity
     public static final String FIXED_LANDSCAPE_MODE = "pref_fixed_landscape_mode";
 
     private static final String NOTIFICATION_DOTS_PREFERENCE_KEY = "pref_icon_badging";
+    private static final String ALLAPPS_THEMED_ICONS_PREFERENCE_KEY = "pref_allapps_themed_icons";
 
     public static final String EXTRA_FRAGMENT_ARGS = ":settings:fragment_args";
 
@@ -175,6 +177,7 @@ public class SettingsActivity extends FragmentActivity
         private String mHighLightKey;
 
         private boolean mPreferenceHighlighted = false;
+        private Preference mThemeAllAppsIconsPref;
 
         @Override
         public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -311,6 +314,10 @@ public class SettingsActivity extends FragmentActivity
                         preference.setOrder(0);
                     }
                     return mDeveloperOptionsEnabled;
+                case ALLAPPS_THEMED_ICONS_PREFERENCE_KEY:
+                    mThemeAllAppsIconsPref = preference;
+                    updateThemeAllAppsIconsPref();
+                    return true;
                 case FIXED_LANDSCAPE_MODE:
                     if (!Flags.oneGridSpecs()
                             // adding this condition until fixing b/378972567
@@ -352,6 +359,10 @@ public class SettingsActivity extends FragmentActivity
             if (mRestartOnResume) {
                 recreateActivityNow();
             }
+
+            if (mThemeAllAppsIconsPref != null) {
+                updateThemeAllAppsIconsPref();
+            }
         }
 
         @Override
@@ -378,6 +389,14 @@ public class SettingsActivity extends FragmentActivity
             } else {
                 mRestartOnResume = true;
             }
+        }
+
+        private void updateThemeAllAppsIconsPref() {
+            boolean enabled = ThemeManager.INSTANCE.get(getContext()).isMonoThemeEnabled();
+            mThemeAllAppsIconsPref.setEnabled(enabled);
+            mThemeAllAppsIconsPref.setSummary(getContext().getString(enabled
+                    ? R.string.pref_themed_icons_summary
+                    : R.string.themed_icons_disabled_summary));
         }
 
         private void recreateActivityNow() {
