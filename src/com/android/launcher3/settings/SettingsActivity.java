@@ -50,6 +50,7 @@ import androidx.preference.PreferenceFragmentCompat.OnPreferenceStartScreenCallb
 import androidx.preference.PreferenceGroup;
 import androidx.preference.PreferenceGroup.PreferencePositionCallback;
 import androidx.preference.PreferenceScreen;
+import androidx.preference.SwitchPreferenceCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.launcher3.BuildConfig;
@@ -177,7 +178,7 @@ public class SettingsActivity extends FragmentActivity
         private String mHighLightKey;
 
         private boolean mPreferenceHighlighted = false;
-        private Preference mThemeAllAppsIconsPref;
+        private SwitchPreferenceCompat mThemeAllAppsIconsPref;
 
         @Override
         public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -315,7 +316,14 @@ public class SettingsActivity extends FragmentActivity
                     }
                     return mDeveloperOptionsEnabled;
                 case ALLAPPS_THEMED_ICONS_PREFERENCE_KEY:
-                    mThemeAllAppsIconsPref = preference;
+                    mThemeAllAppsIconsPref = (SwitchPreferenceCompat) preference;
+                    mThemeAllAppsIconsPref.setPersistent(false);
+                    mThemeAllAppsIconsPref.setOnPreferenceChangeListener((pref, newValue) -> {
+                        Settings.Secure.putInt(getContext().getContentResolver(),
+                                SettingsCache.ALL_APPS_THEMED_ICONS,
+                                (Boolean) newValue ? 1 : 0);
+                        return true;
+                    });
                     updateThemeAllAppsIconsPref();
                     return true;
                 case FIXED_LANDSCAPE_MODE:
@@ -393,6 +401,8 @@ public class SettingsActivity extends FragmentActivity
 
         private void updateThemeAllAppsIconsPref() {
             boolean enabled = ThemeManager.INSTANCE.get(getContext()).isMonoThemeEnabled();
+            mThemeAllAppsIconsPref.setChecked(SettingsCache.INSTANCE.get(getContext())
+                    .getValue(SettingsCache.ALL_APPS_THEMED_ICONS_URI));
             mThemeAllAppsIconsPref.setEnabled(enabled);
             mThemeAllAppsIconsPref.setSummary(getContext().getString(enabled
                     ? R.string.pref_themed_icons_summary
