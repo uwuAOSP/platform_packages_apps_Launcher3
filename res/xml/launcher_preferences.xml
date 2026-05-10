@@ -57,6 +57,14 @@
         android:title="@string/title_show_google_app" />
 
     <SwitchPreferenceCompat
+        android:key="navigation_bar_hint"
+        android:title="@string/pref_navigation_bar_hint_title"
+        android:summary="@string/pref_navigation_bar_hint_summary"
+        android:defaultValue="true"
+        android:persistent="false"
+        launcher:iconSpaceReserved="false" />
+
+    <SwitchPreferenceCompat
         android:key="pref_allapps_themed_icons"
         android:title="@string/pref_themed_icons_title"
         android:summary="@string/pref_themed_icons_summary"

@@ -74,8 +74,12 @@ public class SettingsActivity extends FragmentActivity
 
     public static final String FIXED_LANDSCAPE_MODE = "pref_fixed_landscape_mode";
 
+    private static final String NAVIGATION_BAR_HINT = "navigation_bar_hint";
     private static final String NOTIFICATION_DOTS_PREFERENCE_KEY = "pref_icon_badging";
+    private static final String NAVIGATION_BAR_HINT_PREFERENCE_KEY = "navigation_bar_hint";
     private static final String ALLAPPS_THEMED_ICONS_PREFERENCE_KEY = "pref_allapps_themed_icons";
+    private static final Uri NAVIGATION_BAR_HINT_URI =
+            Settings.Secure.getUriFor(NAVIGATION_BAR_HINT);
 
     public static final String EXTRA_FRAGMENT_ARGS = ":settings:fragment_args";
 
@@ -178,6 +182,7 @@ public class SettingsActivity extends FragmentActivity
         private String mHighLightKey;
 
         private boolean mPreferenceHighlighted = false;
+        private SwitchPreferenceCompat mNavigationBarHintPref;
         private SwitchPreferenceCompat mThemeAllAppsIconsPref;
 
         @Override
@@ -315,6 +320,20 @@ public class SettingsActivity extends FragmentActivity
                         preference.setOrder(0);
                     }
                     return mDeveloperOptionsEnabled;
+                case NAVIGATION_BAR_HINT_PREFERENCE_KEY:
+                    if (!info.getNavigationMode().hasGestures) {
+                        return false;
+                    }
+                    mNavigationBarHintPref = (SwitchPreferenceCompat) preference;
+                    mNavigationBarHintPref.setPersistent(false);
+                    mNavigationBarHintPref.setOnPreferenceChangeListener((pref, newValue) -> {
+                        Settings.Secure.putInt(getContext().getContentResolver(),
+                                NAVIGATION_BAR_HINT,
+                                (Boolean) newValue ? 1 : 0);
+                        return true;
+                    });
+                    updateNavigationBarHintPref();
+                    return true;
                 case ALLAPPS_THEMED_ICONS_PREFERENCE_KEY:
                     mThemeAllAppsIconsPref = (SwitchPreferenceCompat) preference;
                     mThemeAllAppsIconsPref.setPersistent(false);
@@ -368,6 +387,10 @@ public class SettingsActivity extends FragmentActivity
                 recreateActivityNow();
             }
 
+            if (mNavigationBarHintPref != null) {
+                updateNavigationBarHintPref();
+            }
+
             if (mThemeAllAppsIconsPref != null) {
                 updateThemeAllAppsIconsPref();
             }
@@ -397,6 +420,11 @@ public class SettingsActivity extends FragmentActivity
             } else {
                 mRestartOnResume = true;
             }
+        }
+
+        private void updateNavigationBarHintPref() {
+            mNavigationBarHintPref.setChecked(SettingsCache.INSTANCE.get(getContext())
+                    .getValue(NAVIGATION_BAR_HINT_URI));
         }
 
         private void updateThemeAllAppsIconsPref() {

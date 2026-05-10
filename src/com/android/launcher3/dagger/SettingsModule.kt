@@ -17,7 +17,7 @@
 package com.android.launcher3.dagger
 
 import android.net.Uri
-import com.android.launcher3.taskbar.TaskbarManagerImpl.NAVIGATION_BAR_HINT_URI
+import android.provider.Settings
 import com.android.launcher3.util.SettingsCache.NOTIFICATION_BADGING_URI
 import dagger.Module
 import dagger.Provides
@@ -27,6 +27,10 @@ import javax.inject.Named
 @Module
 class SettingsModule {
 
+    companion object {
+        private const val NAVIGATION_BAR_HINT = "navigation_bar_hint"
+    }
+
     @Provides
     @IntoSet
     @Named("SETTINGS_ENABLED_BY_DEFAULT")
@@ -35,5 +39,6 @@ class SettingsModule {
     @Provides
     @IntoSet
     @Named("SETTINGS_ENABLED_BY_DEFAULT")
-    fun provideNavigationBarHintDefaults(): Uri = NAVIGATION_BAR_HINT_URI
+    fun provideNavigationBarHintDefaults(): Uri =
+        Settings.Secure.getUriFor(NAVIGATION_BAR_HINT)
 }
