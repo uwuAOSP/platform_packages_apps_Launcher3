@@ -31,7 +31,7 @@ import android.util.SparseArray
 import com.android.launcher3.Flags
 import com.android.launcher3.InvariantDeviceProfile
 import com.android.launcher3.LauncherSettings.Favorites
-import com.android.launcher3.Utilities.qsbOnFirstScreen
+import com.android.launcher3.Utilities.firstPagePinnedItemEnabled
 import com.android.launcher3.WorkspaceLayoutManager
 import com.android.launcher3.backuprestore.LauncherRestoreEventLogger.RestoreError
 import com.android.launcher3.folder.Folder
@@ -648,8 +648,8 @@ class WorkspaceItemProcessor(
             ArrayList(loadedItems.filter { it.container == Favorites.CONTAINER_DESKTOP })
         val excludedScreens = IntSet()
 
-        if (qsbOnFirstScreen()) {
-            // Reserve layout space for the search container. Note that this is not required when
+        if (firstPagePinnedItemEnabled()) {
+            // Reserve layout space for the fixed first page item. This is not required when
             // [Flags.FLAG_INJECTABLE_MODEL_ITEMS] is enabled as injected items will already be
             // accounted for in [knownDesktopContainerItems].
             knownDesktopContainerItems.add(
@@ -658,7 +658,7 @@ class WorkspaceItemProcessor(
                     cellY = 0
                     container = Favorites.CONTAINER_DESKTOP
                     screenId = WorkspaceLayoutManager.FIRST_SCREEN_ID
-                    spanX = idp.numSearchContainerColumns
+                    spanX = idp.numColumns
                     spanY = 1
                 }
             )

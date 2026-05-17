@@ -155,6 +155,13 @@ public final class Utilities {
         return !injectableModelItems() && BuildConfig.QSB_ON_FIRST_SCREEN;
     }
 
+    /**
+     * Temporary fixed slot on the first workspace page for the upcoming companion widget app.
+     */
+    public static boolean firstPagePinnedItemEnabled() {
+        return true;
+    }
+
     public static final int TRANSLATE_UP = 0;
     public static final int TRANSLATE_DOWN = 1;
     public static final int TRANSLATE_LEFT = 2;
