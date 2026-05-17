@@ -105,14 +105,7 @@ public class Hotseat extends CellLayout implements Insettable {
 
     public Hotseat(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        if (Flags.enableQsbOnHotseat()) {
-            mQsb = LayoutInflater.from(context).inflate(R.layout.qsb_container_hotseat, this,
-                    false);
-        } else {
-            mQsb = LayoutInflater.from(context).inflate(R.layout.search_container_hotseat, this,
-                    false);
-        }
-
+        mQsb = LayoutInflater.from(context).inflate(R.layout.qsb_container_hotseat, this, false);
         addView(mQsb);
         mIconsAlphaChannels = new MultiValueAlpha(getShortcutsAndWidgets(),
                 ALPHA_CHANNEL_CHANNELS_COUNT);
@@ -322,7 +315,14 @@ public class Hotseat extends CellLayout implements Insettable {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
         DeviceProfile dp = mActivity.getDeviceProfile();
-        mQsb.measure(makeMeasureSpec(dp.hotseatQsbWidth, MeasureSpec.EXACTLY),
+        int availableWidth = Math.max(0, getMeasuredWidth() - getPaddingLeft() - getPaddingRight());
+        int qsbEdgeMargin = getResources().getDimensionPixelSize(R.dimen.hotseat_qsb_edge_margin);
+        int maxQsbWidth = Math.max(0, availableWidth - 2 * qsbEdgeMargin);
+        int qsbWidth = dp.hotseatQsbWidth > 0 ? dp.hotseatQsbWidth : maxQsbWidth;
+        if (maxQsbWidth > 0) {
+            qsbWidth = Math.min(qsbWidth, maxQsbWidth);
+        }
+        mQsb.measure(makeMeasureSpec(qsbWidth, MeasureSpec.EXACTLY),
                 makeMeasureSpec(dp.getHotseatProfile().getQsbHeight(), MeasureSpec.EXACTLY));
     }
 
@@ -381,8 +381,7 @@ public class Hotseat extends CellLayout implements Insettable {
     @Nullable
     @Override
     public View mapOverItems(ItemOperator op) {
-        if (Flags.enableQsbOnHotseat()
-                && mQsb != null
+        if (mQsb != null
                 && mQsb.getTag() instanceof ItemInfo info
                 && op.evaluate(info, mQsb)) {
             return mQsb;
