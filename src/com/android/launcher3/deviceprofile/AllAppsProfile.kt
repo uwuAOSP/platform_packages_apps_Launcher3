@@ -32,6 +32,7 @@ import com.android.launcher3.util.CellContentDimensions
 import com.android.launcher3.util.IconSizeSteps
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 data class AllAppsProfile(
     val borderSpacePx: Point,
@@ -52,6 +53,37 @@ data class AllAppsProfile(
     }
 
     companion object Factory {
+
+        private fun shouldUseDynamicPhoneAllAppsIconSize(
+            inv: InvariantDeviceProfile,
+            deviceProperties: DeviceProperties,
+        ): Boolean {
+            return deviceProperties.isPhone &&
+                !deviceProperties.isLandscape &&
+                !deviceProperties.isExternalDisplay &&
+                !deviceProperties.isTwoPanels &&
+                inv.numColumns == 4 &&
+                inv.numRows == 5
+        }
+
+        private fun getDynamicPhoneAllAppsIconSizePx(
+            res: Resources,
+            inv: InvariantDeviceProfile,
+            deviceProperties: DeviceProperties,
+            allAppsColumns: Int,
+        ): Int {
+            if (!shouldUseDynamicPhoneAllAppsIconSize(inv, deviceProperties)) {
+                return 0
+            }
+
+            val minIconSizePx = pxFromDp(DYNAMIC_PHONE_ALL_APPS_ICON_MIN_DP, res.displayMetrics)
+            val maxIconSizePx = pxFromDp(DYNAMIC_PHONE_ALL_APPS_ICON_MAX_DP, res.displayMetrics)
+            val cellWidthPx =
+                (deviceProperties.availableWidthPx / allAppsColumns.toFloat()).roundToInt()
+            val targetIconSizePx = (cellWidthPx * DYNAMIC_PHONE_ALL_APPS_ICON_WIDTH_RATIO).roundToInt()
+
+            return targetIconSizePx.coerceIn(minIconSizePx, maxIconSizePx)
+        }
 
         private fun calculateAllAppsBorderSpacePx(
             inv: InvariantDeviceProfile,
@@ -131,11 +163,18 @@ data class AllAppsProfile(
             res: Resources,
             inv: InvariantDeviceProfile,
             metric: DisplayMetrics,
+            deviceProperties: DeviceProperties,
             typeIndex: Int,
             scale: Float,
         ): AllAppsProfile {
             val allAppsBorderSpacePx = calculateAllAppsBorderSpacePx(inv, metric, typeIndex, scale)
-            val allAppsIconSizePx = max(1, pxFromDp(inv.allAppsIconSize[typeIndex], metric, scale))
+            val allAppsIconSizePx =
+                getDynamicPhoneAllAppsIconSizePx(
+                    res = res,
+                    inv = inv,
+                    deviceProperties = deviceProperties,
+                    allAppsColumns = inv.numAllAppsColumns,
+                ).takeIf { it > 0 } ?: max(1, pxFromDp(inv.allAppsIconSize[typeIndex], metric, scale))
             val allAppsIconDrawablePaddingPx =
                 res.getDimensionPixelSize(R.dimen.all_apps_icon_drawable_padding)
             return AllAppsProfile(
@@ -242,6 +281,7 @@ data class AllAppsProfile(
             res: Resources,
             inv: InvariantDeviceProfile,
             metric: DisplayMetrics,
+            deviceProperties: DeviceProperties,
             isScalableGrid: Boolean,
             typeIndex: Int,
             scale: Float,
@@ -261,8 +301,19 @@ data class AllAppsProfile(
                 }
 
                 else -> {
-                    createAllAppsProfileNonScalable(res, inv, metric, typeIndex, scale)
+                    createAllAppsProfileNonScalable(
+                        res = res,
+                        inv = inv,
+                        metric = metric,
+                        deviceProperties = deviceProperties,
+                        typeIndex = typeIndex,
+                        scale = scale,
+                    )
                 }
             }
+
+        private const val DYNAMIC_PHONE_ALL_APPS_ICON_MIN_DP = 60f
+        private const val DYNAMIC_PHONE_ALL_APPS_ICON_MAX_DP = 68f
+        private const val DYNAMIC_PHONE_ALL_APPS_ICON_WIDTH_RATIO = 0.62f
     }
 }

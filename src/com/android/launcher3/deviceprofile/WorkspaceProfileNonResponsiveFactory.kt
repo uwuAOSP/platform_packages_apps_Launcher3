@@ -35,6 +35,7 @@ import com.android.launcher3.testing.shared.ResourceUtils.INVALID_RESOURCE_HANDL
 import com.android.launcher3.testing.shared.ResourceUtils.pxFromDp
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 @Deprecated(
     "Non responsive grids are deprecated, please refer to responsive grid for a " +
@@ -49,6 +50,38 @@ import kotlin.math.min
  * For reference please look at {@code WorkspaceProfile#Factory}.
  */
 object WorkspaceProfileNonResponsiveFactory {
+
+    private fun shouldUseDynamicPhoneWorkspaceIconSize(
+        inv: InvariantDeviceProfile,
+        deviceProperties: DeviceProperties,
+        isVerticalLayout: Boolean,
+    ): Boolean {
+        return deviceProperties.isPhone &&
+            !deviceProperties.isLandscape &&
+            !deviceProperties.isExternalDisplay &&
+            !deviceProperties.isTwoPanels &&
+            !isVerticalLayout &&
+            inv.numColumns == 4 &&
+            inv.numRows == 5
+    }
+
+    private fun getDynamicPhoneWorkspaceIconSizePx(
+        res: Resources,
+        inv: InvariantDeviceProfile,
+        deviceProperties: DeviceProperties,
+        cellSize: Point,
+        isVerticalLayout: Boolean,
+    ): Int {
+        if (!shouldUseDynamicPhoneWorkspaceIconSize(inv, deviceProperties, isVerticalLayout)) {
+            return 0
+        }
+
+        val minIconSizePx = pxFromDp(DYNAMIC_PHONE_WORKSPACE_ICON_MIN_DP, res.displayMetrics)
+        val maxIconSizePx = pxFromDp(DYNAMIC_PHONE_WORKSPACE_ICON_MAX_DP, res.displayMetrics)
+        val targetIconSizePx = (cellSize.x * DYNAMIC_PHONE_WORKSPACE_ICON_WIDTH_RATIO).roundToInt()
+
+        return targetIconSizePx.coerceIn(minIconSizePx, maxIconSizePx)
+    }
 
     fun createWorkspacePadding(
         isVerticalLayout: Boolean,
@@ -180,18 +213,26 @@ object WorkspaceProfileNonResponsiveFactory {
                 cellLayoutPadding = Rect(0, 0, 0, 0),
                 totalWorkspacePadding = Point(0, 0),
             )
+        val resolvedIconSizePx =
+            getDynamicPhoneWorkspaceIconSizePx(
+                res = res,
+                inv = inv,
+                deviceProperties = deviceProperties,
+                cellSize = cellSize,
+                isVerticalLayout = isVerticalLayout,
+            ).takeIf { it > 0 } ?: iconSizePx
         val desiredWorkspaceHorizontalMarginOriginalPx =
             when {
                 isVerticalLayout -> 0
                 else -> res.getDimensionPixelSize(R.dimen.dynamic_grid_left_right_margin)
             }
         var iconDrawablePaddingPx =
-            (getNormalizedIconDrawablePadding(iconSizePx, iconDrawablePaddingOriginalPx) *
+            (getNormalizedIconDrawablePadding(resolvedIconSizePx, iconDrawablePaddingOriginalPx) *
                     iconScale)
                 .toInt()
-        val cellWidthPx = iconSizePx + iconDrawablePaddingPx
+        val cellWidthPx = resolvedIconSizePx + iconDrawablePaddingPx
         var cellHeightPx =
-            (getIconSizeWithOverlap(iconSizePx) +
+            (getIconSizeWithOverlap(resolvedIconSizePx) +
                 iconDrawablePaddingPx +
                 Utilities.calculateTextHeight(iconTextSizePx.toFloat()))
         val cellPaddingY: Int = (cellSize.y - cellHeightPx) / 2
@@ -226,7 +267,7 @@ object WorkspaceProfileNonResponsiveFactory {
                 workspacePageIndicatorOverlapWorkspace = workspacePageIndicatorOverlapWorkspace,
                 workspaceTopPadding = 0,
                 workspaceBottomPadding = 0,
-                iconSize = iconSizePx,
+                iconSize = resolvedIconSizePx,
                 hotseatBarBottomSpacePx = hotseatBarBottomSpacePx,
                 hotseatQsbSpace = hotseatQsbSpace,
             )
@@ -261,7 +302,7 @@ object WorkspaceProfileNonResponsiveFactory {
         return WorkspaceProfile(
             // Workspace icons
             iconScale = iconScale,
-            iconSizePx = iconSizePx,
+            iconSizePx = resolvedIconSizePx,
             iconTextSizePx = iconTextSizePx,
             iconDrawablePaddingPx = iconDrawablePaddingPx,
             cellScaleToFit = cellScaleToFit,
@@ -702,4 +743,8 @@ object WorkspaceProfileNonResponsiveFactory {
             inv,
         )
     }
+
+    private const val DYNAMIC_PHONE_WORKSPACE_ICON_MIN_DP = 60f
+    private const val DYNAMIC_PHONE_WORKSPACE_ICON_MAX_DP = 68f
+    private const val DYNAMIC_PHONE_WORKSPACE_ICON_WIDTH_RATIO = 0.74f
 }
