@@ -3270,6 +3270,61 @@ public abstract class RecentsView<
         }
     }
 
+    public void setPopUpGestureVisualProgress(float progress) {
+        final float boundedProgress = Utilities.boundToRange(progress, 0f, 1f);
+        final TaskView focusTask = getRunningTaskView() != null
+                ? getRunningTaskView()
+                : getCurrentPageTaskView();
+        if (focusTask == null) {
+            return;
+        }
+        final int focusIndex = indexOfChild(focusTask);
+        final float controlsAlpha = mContentAlpha * (1f - boundedProgress);
+        for (TaskView taskView : getTaskViews()) {
+            if (taskView == focusTask) {
+                taskView.setPopUpGestureVisuals(
+                        0f,
+                        -getHeight() * 0.045f * boundedProgress,
+                        1f - (0.06f * boundedProgress),
+                        1f);
+                continue;
+            }
+            final int direction = indexOfChild(taskView) < focusIndex ? -1 : 1;
+            final float travelX =
+                    direction * ((getWidth() * 0.45f) + (taskView.getWidth() * 0.35f))
+                            * boundedProgress;
+            taskView.setPopUpGestureVisuals(
+                    travelX,
+                    getHeight() * 0.02f * boundedProgress,
+                    1f - (0.08f * boundedProgress),
+                    Math.max(0f, 1f - (1.35f * boundedProgress)));
+        }
+        if (mClearAllButton != null) {
+            mClearAllButton.setContentAlpha(controlsAlpha);
+        }
+        if (mAddDesktopButton != null) {
+            mAddDesktopButton.setContentAlpha(controlsAlpha);
+        }
+        if (mActionsView != null) {
+            mActionsView.getContentAlpha().updateValue(controlsAlpha);
+        }
+    }
+
+    public void clearPopUpGestureVisualProgress() {
+        for (TaskView taskView : getTaskViews()) {
+            taskView.resetPopUpGestureVisuals();
+        }
+        if (mClearAllButton != null) {
+            mClearAllButton.setContentAlpha(mContentAlpha);
+        }
+        if (mAddDesktopButton != null) {
+            mAddDesktopButton.setContentAlpha(mContentAlpha);
+        }
+        if (mActionsView != null) {
+            mActionsView.getContentAlpha().updateValue(mContentAlpha);
+        }
+    }
+
     private void applyAttachAlpha() {
         // Only hide non running task carousel when it's fully off screen, otherwise it needs to
         // be visible to move to on screen.

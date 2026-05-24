@@ -136,6 +136,8 @@ import com.android.launcher3.taskbar.TaskbarThresholdUtils;
 import com.android.launcher3.taskbar.TaskbarUiState;
 import com.android.launcher3.taskbar.TaskbarUiStateMonitor;
 import com.android.launcher3.taskbar.customization.TaskbarFeatureEvaluator;
+import com.android.launcher3.uioverrides.touchcontrollers.PopUpViewDropTargetView;
+import com.android.launcher3.views.BaseDragLayer;
 import com.android.launcher3.uioverrides.QuickstepLauncher;
 import com.android.launcher3.util.DisplayController;
 import com.android.launcher3.util.MSDLPlayerWrapper;
@@ -305,6 +307,8 @@ public abstract class AbsSwipeUpHandler<
     public static final long RECENTS_ATTACH_DURATION = 300;
 
     private static final float MAX_QUICK_SWITCH_RECENTS_SCALE_PROGRESS = 0.07f;
+    private static final float POPUP_GESTURE_SHOW_THRESHOLD = 0.88f;
+    private static final float POPUP_GESTURE_RELEASE_THRESHOLD = 0.97f;
 
     // Controls task thumbnail splash's reveal animation after landing on a task from quickswitch.
     // These values match WindowManager/Shell starting_window_app_reveal_* config values.
@@ -387,6 +391,12 @@ public abstract class AbsSwipeUpHandler<
     private final MSDLPlayerWrapper mMSDLPlayerWrapper;
 
     private final RotationTouchHelper mRotationTouchHelper;
+    private final Rect mPopUpGestureTaskBounds = new Rect();
+    private final Rect mPopUpGestureGuideBounds = new Rect();
+    private @Nullable PopUpViewDropTargetView mPopUpGestureTargetView;
+    private boolean mIsPopUpGestureArmed;
+    private boolean mShouldLaunchRunningTaskInPopUp;
+    private float mLastPopUpGestureProgress = Float.NaN;
 
     public AbsSwipeUpHandler(Context context,
             TaskAnimationManager taskAnimationManager, RecentsAnimationDeviceState deviceState,
@@ -1022,6 +1032,7 @@ public abstract class AbsSwipeUpHandler<
         applyScrollAndTransform();
 
         updateLauncherTransitionProgress();
+        updatePopUpGestureTargetState();
     }
 
     private void updateLauncherTransitionProgress() {
@@ -1570,8 +1581,16 @@ public abstract class AbsSwipeUpHandler<
             boolean horizontalTouchSlopPassed) {
         long duration = MAX_SWIPE_DURATION;
         float currentShift = mCurrentShift.value;
-        final GestureEndTarget endTarget = calculateEndTarget(
+        GestureEndTarget endTarget = calculateEndTarget(
                 velocityPxPerMs, endVelocityPxPerMs, isFling, isCancel, horizontalTouchSlopPassed);
+        if (!isCancel && !isFling && mIsPopUpGestureArmed && getPopUpLaunchTaskView() != null) {
+            endTarget = RECENTS;
+        }
+        mShouldLaunchRunningTaskInPopUp = !isCancel && !isFling && mIsPopUpGestureArmed
+                && endTarget == RECENTS;
+        if (!mShouldLaunchRunningTaskInPopUp) {
+            clearPopUpGestureState(true /* animated */);
+        }
         // Set the state, but don't notify until the animation completes
         mGestureState.setEndTarget(endTarget, false /* isAtomic */);
         mAnimationFactory.setEndTarget(endTarget);
@@ -1693,9 +1712,11 @@ public abstract class AbsSwipeUpHandler<
         }
         long finalDuration = duration;
         Interpolator finalInterpolator = interpolator;
+        GestureEndTarget finalEndTarget = endTarget;
         runOnRecentsAnimationAndLauncherBound(() -> {
             animateGestureEnd(
-                startShift, endShift, finalDuration, finalInterpolator, endTarget, velocityPxPerMs);
+                startShift, endShift, finalDuration, finalInterpolator, finalEndTarget,
+                velocityPxPerMs);
         });
     }
 
@@ -2396,6 +2417,11 @@ public abstract class AbsSwipeUpHandler<
     }
 
     private void reset() {
+        clearPopUpGestureState(false /* animated */);
+        if (mPopUpGestureTargetView != null) {
+            mPopUpGestureTargetView.detachIfNeeded();
+            mPopUpGestureTargetView = null;
+        }
         mStateCallback.setStateOnUiThread(STATE_HANDLER_INVALIDATED);
         if (mContainer != null) {
             mContainer.removeEventCallback(EVENT_DESTROYED, mLauncherOnDestroyCallback);
@@ -2420,6 +2446,11 @@ public abstract class AbsSwipeUpHandler<
     }
 
     private void invalidateHandler() {
+        clearPopUpGestureState(false /* animated */);
+        if (mPopUpGestureTargetView != null) {
+            mPopUpGestureTargetView.detachIfNeeded();
+            mPopUpGestureTargetView = null;
+        }
         if (!mContainerInterface.isInLiveTileMode() || mGestureState.getEndTarget() != RECENTS) {
             mInputConsumerProxy.destroy();
             mTaskAnimationManager.setLiveTileCleanUpHandler(null);
@@ -2475,6 +2506,11 @@ public abstract class AbsSwipeUpHandler<
      * continued quick switch gesture, which cancels the previous handler but doesn't invalidate it.
      */
     private void resetLauncherListeners() {
+        clearPopUpGestureState(false /* animated */);
+        if (mPopUpGestureTargetView != null) {
+            mPopUpGestureTargetView.detachIfNeeded();
+            mPopUpGestureTargetView = null;
+        }
         if (mContainer != null) {
             mContainer.removeEventCallback(EVENT_STARTED, mLauncherOnStartCallback);
             mContainer.removeEventCallback(EVENT_DESTROYED, mLauncherOnDestroyCallback);
@@ -2641,9 +2677,119 @@ public abstract class AbsSwipeUpHandler<
         });
         mTaskAnimationManager.enableLiveTileRestartListener();
 
+        if (maybeLaunchRunningTaskInPopUpView()) {
+            return;
+        }
+
         SystemUiProxy.INSTANCE.get(mContext).onOverviewShown(false, TAG);
         doLogGesture(RECENTS, mRecentsView.getCurrentPageTaskView());
         reset();
+    }
+
+    private void updatePopUpGestureTargetState() {
+        if (mContainer == null || mRecentsView == null || mIsLikelyToStartNewTask) {
+            clearPopUpGestureState(true /* animated */);
+            return;
+        }
+        if (mGestureState.getEndTarget() != null && !mShouldLaunchRunningTaskInPopUp) {
+            clearPopUpGestureState(true /* animated */);
+            return;
+        }
+        TaskView taskView = getPopUpLaunchTaskView();
+        if (taskView == null || mCurrentShift.value < POPUP_GESTURE_SHOW_THRESHOLD) {
+            clearPopUpGestureState(true /* animated */);
+            return;
+        }
+        BaseDragLayer<?> dragLayer = mContainer.getDragLayer();
+        if (mPopUpGestureTargetView == null) {
+            mPopUpGestureTargetView = new PopUpViewDropTargetView(mContainer);
+        }
+        mPopUpGestureTargetView.attachIfNeeded(dragLayer);
+        dragLayer.getDescendantRectRelativeToSelf(taskView, mPopUpGestureTaskBounds);
+        final float visualProgress = Utilities.boundToRange(
+                (mCurrentShift.value - POPUP_GESTURE_SHOW_THRESHOLD)
+                        / (1f - POPUP_GESTURE_SHOW_THRESHOLD),
+                0f,
+                1f);
+        mLastPopUpGestureProgress = visualProgress;
+        mIsPopUpGestureArmed = mCurrentShift.value >= POPUP_GESTURE_RELEASE_THRESHOLD;
+        mPopUpGestureTargetView.updateLayoutForContainer(
+                dragLayer.getWidth(),
+                dragLayer.getHeight(),
+                mPopUpGestureTaskBounds,
+                visualProgress,
+                mIsPopUpGestureArmed);
+        mPopUpGestureTargetView.show();
+        mPopUpGestureTargetView.bringToFront();
+        mRecentsView.setPopUpGestureVisualProgress(visualProgress);
+    }
+
+    private void clearPopUpGestureState(boolean animated) {
+        mIsPopUpGestureArmed = false;
+        mShouldLaunchRunningTaskInPopUp = false;
+        mLastPopUpGestureProgress = Float.NaN;
+        if (mRecentsView != null) {
+            mRecentsView.clearPopUpGestureVisualProgress();
+        }
+        if (mPopUpGestureTargetView != null) {
+            mPopUpGestureTargetView.hide(animated);
+        }
+    }
+
+    private @Nullable TaskView getPopUpLaunchTaskView() {
+        if (mRecentsView == null) {
+            return null;
+        }
+        TaskView taskView = mRecentsView.getRunningTaskView();
+        if (taskView == null) {
+            taskView = mRecentsView.getCurrentPageTaskView();
+        }
+        if (taskView == null || taskView instanceof DesktopTaskView
+                || taskView.containsMultipleTasks()) {
+            return null;
+        }
+        return taskView;
+    }
+
+    private boolean maybeLaunchRunningTaskInPopUpView() {
+        if (!mShouldLaunchRunningTaskInPopUp || mRecentsView == null) {
+            return false;
+        }
+        TaskView taskView = getPopUpLaunchTaskView();
+        mShouldLaunchRunningTaskInPopUp = false;
+        if (taskView == null || mPopUpGestureTargetView == null) {
+            clearPopUpGestureState(false /* animated */);
+            return false;
+        }
+        mPopUpGestureTargetView.getHitRectInParent(mPopUpGestureGuideBounds);
+        final int anchorX = mPopUpGestureGuideBounds.centerX();
+        final int anchorY = mPopUpGestureGuideBounds.bottom;
+        final float launchProgress = Float.isNaN(mLastPopUpGestureProgress)
+                ? 1f
+                : Utilities.boundToRange(mLastPopUpGestureProgress, 0f, 1f);
+        mRecentsView.switchToScreenshot(() -> {
+            final Runnable launchRunnable = () -> taskView.launchInPopUpView(
+                    false /* deferSuccessCallbackUntilRecentsReset */,
+                    anchorX,
+                    anchorY,
+                    launchProgress,
+                    (Consumer<Boolean>) launched -> {
+                        if (launched) {
+                            mRecentsView.finishRecentsAnimation(
+                                    true /* toHome */,
+                                    false /* shouldPip */,
+                                    () -> mRecentsView.startHome(
+                                            false /* animated */,
+                                            this::reset));
+                        } else {
+                            SystemUiProxy.INSTANCE.get(mContext).onOverviewShown(false, TAG);
+                            doLogGesture(RECENTS, mRecentsView.getCurrentPageTaskView());
+                            reset();
+                        }
+                    });
+            mPopUpGestureTargetView.animateLaunchCommit(launchRunnable);
+        });
+        return true;
     }
 
     private static boolean isNotInRecents(RemoteAnimationTarget app) {

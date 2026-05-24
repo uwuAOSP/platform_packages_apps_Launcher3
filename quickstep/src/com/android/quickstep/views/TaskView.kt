@@ -23,6 +23,7 @@ import android.annotation.IdRes
 import android.app.ActivityOptions
 import android.app.ActivityTaskManager.INVALID_TASK_ID
 import android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN
+import android.app.WindowConfiguration.WINDOWING_MODE_MINI_WINDOW_EXT
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.PointF
@@ -117,6 +118,7 @@ import com.android.quickstep.window.RecentsWindowFlags.enableOverviewOnConnected
 import com.android.systemui.shared.recents.model.Task
 import com.android.systemui.shared.recents.model.ThumbnailData
 import com.android.systemui.shared.system.ActivityManagerWrapper
+import java.util.function.Consumer
 import com.android.wm.shell.shared.split.SplitScreenConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -392,6 +394,12 @@ constructor(
             applyScale()
         }
 
+    private var popUpGestureScale = 1f
+        set(value) {
+            field = value
+            applyScale()
+        }
+
     var modalScale = 1f
         set(value) {
             field = value
@@ -417,6 +425,18 @@ constructor(
         }
 
     private var taskOffsetTranslationY = 0f
+        set(value) {
+            field = value
+            applyTranslationY()
+        }
+
+    private var popUpGestureTranslationX = 0f
+        set(value) {
+            field = value
+            applyTranslationX()
+        }
+
+    private var popUpGestureTranslationY = 0f
         set(value) {
             field = value
             applyTranslationY()
@@ -486,6 +506,7 @@ constructor(
     protected var stableAlpha by MultiPropertyDelegate(taskViewAlpha, Alpha.Stable)
     var attachAlpha by MultiPropertyDelegate(taskViewAlpha, Alpha.Attach)
     var splitAlpha by MultiPropertyDelegate(taskViewAlpha, Alpha.Split)
+    var popUpGestureAlpha by MultiPropertyDelegate(taskViewAlpha, Alpha.PopUpGesture)
     private var modalAlpha by MultiPropertyDelegate(taskViewAlpha, Alpha.Modal)
 
     protected var shouldShowScreenshot = false
@@ -1637,6 +1658,99 @@ constructor(
         }
     }
 
+    @JvmOverloads
+    fun launchInPopUpView(
+        deferSuccessCallbackUntilRecentsReset: Boolean = true,
+        popUpLaunchAnchorX: Int = INVALID_POP_UP_LAUNCH_POSITION,
+        popUpLaunchAnchorY: Int = INVALID_POP_UP_LAUNCH_POSITION,
+        popUpLaunchProgress: Float = Float.NaN,
+        callback: (launched: Boolean) -> Unit = {},
+    ) {
+        val firstTaskContainer = firstTaskContainer ?: return callback(false)
+        if (containsMultipleTasks()) {
+            notifyTaskLaunchFailed("launchInPopUpView")
+            callback(false)
+            return
+        }
+        val opts =
+            ActivityOptions.makeBasic().apply {
+                launchDisplayId = displayId
+                launchWindowingMode = WINDOWING_MODE_MINI_WINDOW_EXT
+                setLaunchTaskId(firstTaskContainer.task.key.id)
+                disableStartingWindow = firstTaskContainer.shouldShowSplashView
+                if (
+                    popUpLaunchAnchorX != INVALID_POP_UP_LAUNCH_POSITION &&
+                        popUpLaunchAnchorY != INVALID_POP_UP_LAUNCH_POSITION &&
+                        !popUpLaunchProgress.isNaN()
+                ) {
+                    setPopUpViewLaunchPoint(
+                        popUpLaunchAnchorX,
+                        popUpLaunchAnchorY,
+                        popUpLaunchProgress,
+                    )
+                }
+            }
+        Executors.UI_HELPER_EXECUTOR.execute {
+            Log.d(
+                TAG,
+                "launchInPopUpView - startActivityFromRecents: ${taskIds.contentToString()}",
+            )
+            val success =
+                ActivityManagerWrapper.getInstance()
+                    .startActivityFromRecents(firstTaskContainer.task.key, opts)
+            Executors.MAIN_EXECUTOR.post {
+                if (!success) {
+                    notifyTaskLaunchFailed("launchInPopUpView")
+                    callback(false)
+                    return@post
+                }
+
+                RecentsModel.INSTANCE.get(context).getThumbnailCache()
+                    .remove(firstTaskContainer.task.key)
+                firstTaskContainer.task.thumbnail = null
+
+                val recentsView = recentsView
+                if (
+                    recentsView != null &&
+                        recentsView.runningTaskViewId != -1 &&
+                        recentsView.mRecentsAnimationController != null
+                ) {
+                    recentsView.onTaskLaunchedInLiveTileMode()
+                    if (deferSuccessCallbackUntilRecentsReset) {
+                        RunnableList()
+                            .apply { add { callback(true) } }
+                            .also { recentsView.addSideTaskLaunchCallback(it) }
+                    } else {
+                        callback(true)
+                    }
+                    return@post
+                }
+                callback(true)
+            }
+        }
+    }
+
+    fun launchInPopUpView(callback: Consumer<Boolean>) {
+        launchInPopUpView(true) { launched -> callback.accept(launched) }
+    }
+
+    fun launchInPopUpView(
+        deferSuccessCallbackUntilRecentsReset: Boolean,
+        popUpLaunchAnchorX: Int,
+        popUpLaunchAnchorY: Int,
+        popUpLaunchProgress: Float,
+        callback: Consumer<Boolean>,
+    ) {
+        launchInPopUpView(
+            deferSuccessCallbackUntilRecentsReset,
+            popUpLaunchAnchorX,
+            popUpLaunchAnchorY,
+            popUpLaunchProgress,
+        ) { launched ->
+            callback.accept(launched)
+        }
+    }
+
     /** Starts the task associated with this view without any animation */
     @JvmOverloads
     open fun launchWithoutAnimation(
@@ -2017,7 +2131,11 @@ constructor(
     fun getSizeAdjustment(fullscreenEnabled: Boolean) = if (fullscreenEnabled) nonGridScale else 1f
 
     private fun applyScale() {
-        val scale = persistentScale * dismissScale * Utilities.mapRange(modalness, 1f, modalScale)
+        val scale =
+            persistentScale *
+                dismissScale *
+                popUpGestureScale *
+                Utilities.mapRange(modalness, 1f, modalScale)
         scaleX = scale
         scaleY = scale
         updateFullscreenParams()
@@ -2027,6 +2145,7 @@ constructor(
         translationX =
             dismissTranslationX +
                 taskOffsetTranslationX +
+                popUpGestureTranslationX +
                 taskResistanceTranslationX +
                 splitSelectTranslationX +
                 gridEndTranslationX +
@@ -2037,6 +2156,7 @@ constructor(
         translationY =
             dismissTranslationY +
                 taskOffsetTranslationY +
+                popUpGestureTranslationY +
                 taskResistanceTranslationY +
                 splitSelectTranslationY +
                 persistentTranslationY
@@ -2121,19 +2241,34 @@ constructor(
         // fullscreenTranslation and accumulatedTranslation should not be reset, as
         // resetViewTransforms is called during QuickSwitch scrolling.
         taskOffsetTranslationX = 0f
+        popUpGestureTranslationX = 0f
         taskResistanceTranslationX = 0f
         splitSelectTranslationX = 0f
         gridEndTranslationX = 0f
         taskOffsetTranslationY = 0f
+        popUpGestureTranslationY = 0f
         taskResistanceTranslationY = 0f
         if (recentsView?.isSplitSelectionActive != true) {
             splitSelectTranslationY = 0f
         }
         dismissScale = 1f
+        popUpGestureScale = 1f
+        popUpGestureAlpha = 1f
         translationZ = 0f
         setIconVisibleForGesture(true)
         settledProgressDismiss = 1f
         setColorTint(0f, 0)
+    }
+
+    fun setPopUpGestureVisuals(offsetX: Float, offsetY: Float, scale: Float, alpha: Float) {
+        popUpGestureTranslationX = offsetX
+        popUpGestureTranslationY = offsetY
+        popUpGestureScale = scale
+        popUpGestureAlpha = alpha
+    }
+
+    fun resetPopUpGestureVisuals() {
+        setPopUpGestureVisuals(0f, 0f, 1f, 1f)
     }
 
     private fun getGridTrans(endTranslation: Float) =
@@ -2157,11 +2292,13 @@ constructor(
 
     companion object {
         private const val TAG = "TaskView"
+        private const val INVALID_POP_UP_LAUNCH_POSITION = Int.MIN_VALUE
 
         private enum class Alpha {
             Stable,
             Attach,
             Split,
+            PopUpGesture,
             Modal,
         }
 
