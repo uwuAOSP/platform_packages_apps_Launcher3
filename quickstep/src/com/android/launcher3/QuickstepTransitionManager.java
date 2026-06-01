@@ -1239,7 +1239,8 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
         // blur the wallpaper instead of the launcher surface as well
         LauncherState launcherState = mLauncher.getStateManager().getState();
         boolean allowBlurringLauncher =
-                launcherState != OVERVIEW && BlurUtils.supportsBlursOnWindows();
+                launcherState != OVERVIEW && BlurUtils.supportsBlursOnWindows()
+                        && Utilities.blurBackgroundAtAppLaunch(mLauncher.getApplicationContext());
 
         ObjectAnimator backgroundRadiusAnim = ObjectAnimator.ofFloat(
                         mLauncher.getDepthController().stateDepth, MULTI_PROPERTY_VALUE,

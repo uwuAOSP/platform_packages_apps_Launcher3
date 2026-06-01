@@ -251,6 +251,7 @@ constructor(@ApplicationContext private val encryptedContext: Context) {
         @JvmField
         val PROMISE_ICON_IDS = nonRestorableItem(InstallSessionHelper.PROMISE_ICON_IDS, "")
         @JvmField val WORK_EDU_STEP = backedUpItem("showed_work_profile_edu", 0)
+        @JvmField val ANIMATION_BLUR = backedUpItem("pref_blur_background_at_app_launch", true)
         @JvmField
         val WORKSPACE_SIZE =
             backedUpItem(DeviceGridState.KEY_WORKSPACE_SIZE, "", EncryptionType.ENCRYPTED)
