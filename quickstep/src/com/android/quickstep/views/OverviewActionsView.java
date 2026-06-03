@@ -217,6 +217,32 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
         mSplitButton.setOnClickListener(this);
         mSaveAppPairButton.setOnClickListener(this);
         findViewById(R.id.action_clear_all).setOnClickListener(this);
+
+        View lens = findViewById(R.id.action_lens);
+        if (lens != null) {
+            lens.setOnClickListener(this);
+        }
+        updateLensButtonVisibility();
+    }
+
+    @Override
+    protected void onVisibilityChanged(View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+        if (visibility == VISIBLE) {
+            updateLensButtonVisibility();
+        }
+    }
+
+    private void updateLensButtonVisibility() {
+        View lens = findViewById(R.id.action_lens);
+        if (lens == null) return;
+        try {
+            boolean lensEnabled = android.provider.Settings.Secure.getInt(
+                    getContext().getContentResolver(), "launcher_lens_icon", 0) == 1;
+            lens.setVisibility(lensEnabled ? VISIBLE : GONE);
+        } catch (Exception ignored) {
+            lens.setVisibility(GONE);
+        }
     }
 
     /**
@@ -240,6 +266,8 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
             mCallbacks.onSplit();
         } else if (id == R.id.action_save_app_pair) {
             mCallbacks.onSaveAppPair();
+        } else if (id == R.id.action_lens) {
+            mCallbacks.onLens();
         } else if (id == R.id.action_clear_all) {
             mCallbacks.onClearAllTasksRequested();
         }
