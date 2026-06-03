@@ -34,7 +34,9 @@ import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.Person;
 import android.app.WallpaperManager;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.ShortcutInfo;
@@ -127,6 +129,9 @@ public final class Utilities {
     public static final String[] EMPTY_STRING_ARRAY = new String[0];
     public static final Person[] EMPTY_PERSON_ARRAY = new Person[0];
     public static final String GSA_PACKAGE = "com.google.android.googlequicksearchbox";
+    public static final String LENS_URI = "google://lens";
+    public static final String LENS_ACTIVITY = "com.google.android.apps.search.lens.LensActivity";
+    public static final String LENS_SHARE_ACTIVITY = "com.google.android.apps.search.lens.LensShareEntryPointActivity";
 
     @ChecksSdkIntAtLeast(api = VERSION_CODES.TIRAMISU, codename = "T")
     public static final boolean ATLEAST_T = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU;
@@ -201,6 +206,25 @@ public final class Utilities {
 
     public static boolean isPropertyEnabled(String propertyName) {
         return Log.isLoggable(propertyName, Log.VERBOSE);
+    }
+
+    public static boolean isPackageEnabled(String packageName, Context context) {
+        try {
+            context.getPackageManager().getPackageInfo(packageName, 0);
+            return true;
+        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
+
+    public static boolean isGSAEnabled(Context context) {
+        if (!isPackageEnabled(GSA_PACKAGE, context)) {
+            return false;
+        }
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setComponent(new ComponentName(GSA_PACKAGE, LENS_SHARE_ACTIVITY));
+        return context.getPackageManager().queryIntentActivities(intent,
+                android.content.pm.PackageManager.MATCH_DEFAULT_ONLY).size() > 0;
     }
 
     /**
