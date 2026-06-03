@@ -17,8 +17,6 @@
 package com.android.launcher3.notification;
 
 import static com.android.launcher3.util.Executors.UI_HELPER_EXECUTOR;
-import static com.android.launcher3.util.SettingsCache.NOTIFICATION_BADGING_URI;
-
 import static java.util.Collections.emptyList;
 
 import android.app.Notification;
@@ -37,8 +35,6 @@ import androidx.annotation.WorkerThread;
 import com.android.launcher3.dagger.LauncherComponentProvider;
 import com.android.launcher3.dot.DotInfo;
 import com.android.launcher3.util.PackageUserKey;
-import com.android.launcher3.util.SettingsCache;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -74,9 +70,6 @@ public class NotificationListener extends NotificationListenerService {
     private final Map<String, NotificationGroup> mNotificationGroupMap = new HashMap<>();
     /** Maps keys to their corresponding current group key */
     private final Map<String, String> mNotificationGroupKeyMap = new HashMap<>();
-
-    private SettingsCache mSettingsCache;
-    private SettingsCache.OnChangeListener mNotificationSettingsChangedListener;
 
     public NotificationListener() {
         mWorkerHandler = new Handler(UI_HELPER_EXECUTOR.getLooper(), this::handleWorkerMessage);
@@ -195,20 +188,7 @@ public class NotificationListener extends NotificationListenerService {
         Log.i(TAG, "onListenerConnected");
         mIsConnected = true;
 
-        // Register an observer to rebind the notification listener when dots are re-enabled.
-        mSettingsCache = SettingsCache.INSTANCE.get(this);
-        mNotificationSettingsChangedListener = this::onNotificationSettingsChanged;
-        mSettingsCache.register(NOTIFICATION_BADGING_URI,
-                mNotificationSettingsChangedListener);
-        onNotificationSettingsChanged(mSettingsCache.getValue(NOTIFICATION_BADGING_URI));
-
         onNotificationFullRefresh();
-    }
-
-    private void onNotificationSettingsChanged(boolean areNotificationDotsEnabled) {
-        if (!areNotificationDotsEnabled && mIsConnected) {
-            requestUnbind();
-        }
     }
 
     private void onNotificationFullRefresh() {
@@ -220,7 +200,6 @@ public class NotificationListener extends NotificationListenerService {
         super.onListenerDisconnected();
         Log.i(TAG, "onListenerDisconnected");
         mIsConnected = false;
-        mSettingsCache.unregister(NOTIFICATION_BADGING_URI, mNotificationSettingsChangedListener);
         onNotificationFullRefresh();
     }
 
