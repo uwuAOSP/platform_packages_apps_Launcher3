@@ -80,6 +80,8 @@
     <string name="widgets_list_expanded" msgid="7374857868788557730">"正在显示所有微件"</string>
     <string name="reconfigurable_widget_education_tip" msgid="6336962690888067057">"点按即可更改微件设置"</string>
     <string name="widget_reconfigure_button_content_description" msgid="8811472721881205250">"更改微件设置"</string>
+    <string name="smartspacer_prompt_setup">点击以设置 Smartspacer</string>
+    <string name="smartspacer_prompt_configure">点击以配置 Smartspacer</string>
     <string name="all_apps_search_bar_hint" msgid="1390553134053255246">"搜索应用"</string>
     <string name="all_apps_loading_message" msgid="5813968043155271636">"正在加载应用…"</string>
     <string name="all_apps_no_search_results" msgid="3200346862396363786">"未找到与“<xliff:g id="QUERY">%1$s</xliff:g>”相符的应用"</string>
@@ -145,6 +147,8 @@
     <string name="msg_disabled_by_admin" msgid="6898038085516271325">"已被您的管理员停用"</string>
     <string name="allow_rotation_title" msgid="7222049633713050106">"允许旋转主屏幕"</string>
     <string name="allow_rotation_desc" msgid="8662546029078692509">"手机旋转时"</string>
+    <string name="pref_enable_smartspacer_title">"在主屏幕显示 Smartspacer"</string>
+    <string name="pref_enable_smartspacer_summary">"用 Smartspacer 替换首页顶部状态区域"</string>
     <string name="landscape_mode_title" msgid="5138814555934843926">"横屏模式"</string>
     <string name="landscape_mode_desc" msgid="3085236452297838664">"将主屏幕设为横屏模式"</string>
     <string name="notification_dots_title" msgid="9062440428204120317">"通知圆点"</string>

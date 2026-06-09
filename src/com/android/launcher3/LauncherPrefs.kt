@@ -311,6 +311,18 @@ constructor(@ApplicationContext private val encryptedContext: Context) {
         val FIXED_LANDSCAPE_MODE = backedUpItem(SettingsActivity.FIXED_LANDSCAPE_MODE, false)
 
         @JvmField
+        val SMARTSPACER_ENABLED =
+            backedUpItem(SettingsActivity.SMARTSPACER_PREFERENCE_KEY, false)
+
+        @JvmField
+        val SMARTSPACER_WIDGET_ID =
+            nonRestorableItem("smartspacer_widget_id", -1)
+
+        @JvmField
+        val SMARTSPACER_WIDGET_NEEDS_CONFIG =
+            nonRestorableItem("smartspacer_widget_needs_config", false)
+
+        @JvmField
         val NON_FIXED_LANDSCAPE_GRID_NAME =
             ConstantItem(
                 NON_FIXED_LANDSCAPE_GRID_NAME_PREFS_KEY,

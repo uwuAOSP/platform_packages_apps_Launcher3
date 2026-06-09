@@ -125,6 +125,7 @@ import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.pageindicators.PageIndicator;
 import com.android.launcher3.popup.Poppable;
 import com.android.launcher3.popup.Popup;
+import com.android.launcher3.smartspacer.LauncherSmartspacer;
 import com.android.launcher3.statemanager.StateManager;
 import com.android.launcher3.statemanager.StateManager.StateHandler;
 import com.android.launcher3.statemanager.StateManager.StateListener;
@@ -660,8 +661,11 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
             // In transposed layout, we add the first page pinned widget in the Grid.
             // As workspace does not touch the edges, we do not need a full
             // width first page pinned item.
+            int firstPagePinnedLayout = LauncherSmartspacer.isEnabled(getContext())
+                    ? R.layout.search_container_smartspacer
+                    : R.layout.search_container_workspace;
             mFirstPagePinnedItem = LayoutInflater.from(getContext())
-                    .inflate(R.layout.search_container_workspace, firstPage, false);
+                    .inflate(firstPagePinnedLayout, firstPage, false);
         }
 
         int cellHSpan = firstPage.getCountX();
