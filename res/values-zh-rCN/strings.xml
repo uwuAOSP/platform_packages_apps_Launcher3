@@ -145,6 +145,8 @@
     <string name="msg_disabled_by_admin" msgid="6898038085516271325">"已被您的管理员停用"</string>
     <string name="allow_rotation_title" msgid="7222049633713050106">"允许旋转主屏幕"</string>
     <string name="allow_rotation_desc" msgid="8662546029078692509">"手机旋转时"</string>
+    <string name="pref_enable_smartspacer_title">"在主屏幕显示 Smartspacer"</string>
+    <string name="pref_enable_smartspacer_summary">"用 Smartspacer 替换首页顶部状态区域"</string>
     <string name="landscape_mode_title" msgid="5138814555934843926">"横屏模式"</string>
     <string name="landscape_mode_desc" msgid="3085236452297838664">"将主屏幕设为横屏模式"</string>
     <string name="notification_dots_title" msgid="9062440428204120317">"通知圆点"</string>
