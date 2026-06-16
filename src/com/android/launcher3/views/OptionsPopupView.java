@@ -291,7 +291,15 @@ public class OptionsPopupView<T extends Context & ActivityContext> extends Arrow
         if (!TextUtils.isEmpty(pickerPackage)) {
             intent.setPackage(pickerPackage);
         }
-        return launcher.startActivitySafely(v, intent, placeholderInfo(intent)) != null;
+        // Try the configured package first; fall back to system default if unavailable
+        if (launcher.startActivitySafely(v, intent, placeholderInfo(intent)) != null) {
+            return true;
+        }
+        if (!TextUtils.isEmpty(pickerPackage)) {
+            intent.setPackage(null);
+            return launcher.startActivitySafely(v, intent, placeholderInfo(intent)) != null;
+        }
+        return false;
     }
 
     static WorkspaceItemInfo placeholderInfo(Intent intent) {
