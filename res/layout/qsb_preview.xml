@@ -20,6 +20,4 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingStart="@dimen/first_page_status_start_padding"
-    android:paddingTop="8dp"
-    android:paddingEnd="@dimen/first_page_pinned_item_horizontal_margin"
-    android:paddingBottom="4dp" />
+    android:paddingEnd="@dimen/first_page_pinned_item_horizontal_margin" />
