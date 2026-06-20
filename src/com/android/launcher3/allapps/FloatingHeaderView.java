@@ -90,6 +90,7 @@ public class FloatingHeaderView extends LinearLayout implements
 
     protected PersonalWorkSlidingTabStrip mTabLayout;
     private AllAppsRecyclerView mMainRV;
+    private AllAppsRecyclerView mCaddyRV;
     private AllAppsRecyclerView mWorkRV;
     private SearchRecyclerView mSearchRV;
     private AllAppsRecyclerView mCurrentRV;
@@ -237,8 +238,9 @@ public class FloatingHeaderView extends LinearLayout implements
         return null;
     }
 
-    void setup(AllAppsRecyclerView mainRV, AllAppsRecyclerView workRV, SearchRecyclerView searchRV,
-            int activeRV, boolean tabsHidden) {
+    void setup(AllAppsRecyclerView mainRV, AllAppsRecyclerView caddyRV,
+            AllAppsRecyclerView workRV, SearchRecyclerView searchRV, int activeRV,
+            boolean tabsHidden) {
         for (FloatingHeaderRow row : mAllRows) {
             row.setup(this, mAllRows, tabsHidden);
         }
@@ -246,6 +248,7 @@ public class FloatingHeaderView extends LinearLayout implements
         mTabsHidden = tabsHidden;
         maybeSetTabVisibility(VISIBLE);
         mMainRV = mainRV;
+        mCaddyRV = caddyRV;
         mWorkRV = workRV;
         mSearchRV = searchRV;
         setActiveRV(activeRV);
@@ -264,7 +267,11 @@ public class FloatingHeaderView extends LinearLayout implements
         }
         mCurrentRV =
                 rvType == AdapterHolder.MAIN ? mMainRV
+                : rvType == AdapterHolder.CADDY ? mCaddyRV
                 : rvType == AdapterHolder.WORK ? mWorkRV : mSearchRV;
+        if (mCurrentRV == null) {
+            mCurrentRV = mMainRV;
+        }
         mCurrentRV.addOnScrollListener(mOnScrollListener);
         maybeSetTabVisibility(rvType == AdapterHolder.SEARCH ? GONE : VISIBLE);
 
@@ -356,6 +363,9 @@ public class FloatingHeaderView extends LinearLayout implements
         setClipBounds(mHeaderClip);
         if (mMainRV != null) {
             mMainRV.setClipBounds(mRVClip);
+        }
+        if (mCaddyRV != null) {
+            mCaddyRV.setClipBounds(mRVClip);
         }
         if (mWorkRV != null) {
             mWorkRV.setClipBounds(mRVClip);

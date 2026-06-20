@@ -464,8 +464,15 @@ public class PreviewItemManager {
                     new AppPairIconDrawingParams(mContext, DISPLAY_FOLDER);
             p.drawable = AppPairIconGraphic.composeDrawable(api, appPairParams);
             p.drawable.setBounds(0, 0, mIconSize, mIconSize);
+        } else if (item instanceof ItemInfoWithIcon info) {
+            p.drawable = info.newIcon(mContext, FLAG_THEMED);
+            p.drawable.setBounds(0, 0, mIconSize, mIconSize);
         }
 
+        if (p.drawable == null) {
+            Log.w(TAG, "Skipping folder preview item without drawable: " + item);
+            return;
+        }
         p.item = item;
         // Set the callback to FolderIcon as it is responsible to drawing the icon. The
         // callback will be released when the folder is opened.

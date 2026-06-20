@@ -22,6 +22,7 @@ import static com.android.launcher3.Flags.enableLauncherVisualRefresh;
 import static com.android.launcher3.LauncherAnimUtils.SPRING_LOADED_EXIT_DELAY;
 import static com.android.launcher3.LauncherState.EDIT_MODE;
 import static com.android.launcher3.LauncherState.NORMAL;
+import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_ALL_APPS;
 import static com.android.launcher3.compat.AccessibilityManagerCompat.sendCustomAccessibilityEvent;
 import static com.android.launcher3.config.FeatureFlags.ALWAYS_USE_HARDWARE_OPTIMIZATION_FOR_FOLDER_ANIMATIONS;
 import static com.android.launcher3.folder.FolderGridOrganizer.createFolderGridOrganizer;
@@ -570,11 +571,17 @@ public class Folder extends AbstractFloatingView implements ClipPathView, DragSo
         return mInfo;
     }
 
+    public boolean isInAppDrawer() {
+        return mInfo != null && mInfo.container == CONTAINER_ALL_APPS;
+    }
+
     void bind(FolderInfo info) {
         mInfo = info;
         mFromTitle = info.title;
         mFromLabelState = info.getFromLabelState();
-        updateItemLocationsInDatabaseBatch(true);
+        if (!isInAppDrawer()) {
+            updateItemLocationsInDatabaseBatch(true);
+        }
 
         BaseDragLayer.LayoutParams lp = (BaseDragLayer.LayoutParams) getLayoutParams();
         if (lp == null) {
@@ -585,7 +592,7 @@ public class Folder extends AbstractFloatingView implements ClipPathView, DragSo
         reapplyItemInfo();
         // In case any children didn't come across during loading, clean up the folder accordingly
         mFolderIcon.post(() -> {
-            if (getItemCount() <= 1) {
+            if (!isInAppDrawer() && getItemCount() <= 1) {
                 replaceFolderWithFinalItem();
             }
         });
@@ -1224,6 +1231,10 @@ public class Folder extends AbstractFloatingView implements ClipPathView, DragSo
     }
 
     private void updateItemLocationsInDatabaseBatch(boolean isBind) {
+        if (isInAppDrawer()) {
+            return;
+        }
+
         FolderGridOrganizer verifier = createFolderGridOrganizer(
                 mActivityContext.getDeviceProfile()
         ).setFolderInfo(mInfo);
@@ -1382,6 +1393,9 @@ public class Folder extends AbstractFloatingView implements ClipPathView, DragSo
     }
 
     void replaceFolderWithFinalItem() {
+        if (isInAppDrawer()) {
+            return;
+        }
         mDestroyed = mLauncherDelegate.replaceFolderWithFinalItem(this);
     }
 

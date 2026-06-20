@@ -18,6 +18,7 @@ package com.android.launcher3.allapps;
 import static android.view.View.GONE;
 
 import static com.android.launcher3.LauncherPrefs.WORK_EDU_STEP;
+import static com.android.launcher3.allapps.ActivityAllAppsContainerView.AdapterHolder.CADDY;
 import static com.android.launcher3.allapps.ActivityAllAppsContainerView.AdapterHolder.MAIN;
 import static com.android.launcher3.allapps.ActivityAllAppsContainerView.AdapterHolder.SEARCH;
 import static com.android.launcher3.allapps.ActivityAllAppsContainerView.AdapterHolder.WORK;
@@ -84,7 +85,7 @@ public class WorkProfileManager extends UserProfileManager
 
     private void updateWorkUtilityViews(int page) {
         if (mWorkUtilityView != null) {
-            if (page == MAIN || page == SEARCH) {
+            if (page == MAIN || page == CADDY || page == SEARCH) {
                 mWorkUtilityView.animateVisibility(false);
             } else if (page == WORK && getCurrentState() == STATE_ENABLED) {
                 mWorkUtilityView.animateVisibility(true);

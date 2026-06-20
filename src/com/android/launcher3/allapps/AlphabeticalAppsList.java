@@ -17,6 +17,7 @@ package com.android.launcher3.allapps;
 
 import static android.multiuser.Flags.enableMovingContentIntoPrivateSpace;
 
+import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_ALL_APPS;
 import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_PRIVATESPACE;
 import static com.android.launcher3.allapps.BaseAllAppsAdapter.VIEW_TYPE_BOTTOM_VIEW_TO_SCROLL_TO;
 import static com.android.launcher3.allapps.BaseAllAppsAdapter.VIEW_TYPE_MASK_PRIVATE_SPACE_HEADER;
@@ -40,6 +41,7 @@ import com.android.launcher3.Flags;
 import com.android.launcher3.R;
 import com.android.launcher3.allapps.BaseAllAppsAdapter.AdapterItem;
 import com.android.launcher3.model.data.AppInfo;
+import com.android.launcher3.model.data.FolderInfo;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.util.LabelComparator;
 import com.android.launcher3.views.ActivityContext;
@@ -114,9 +116,18 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
     private int mNumAppRowsInAdapter;
     private Predicate<ItemInfo> mItemFilter;
     private final boolean mSortSections;
+    private final boolean mCaddyOnly;
+    private final CaddyCategorizer mCaddyCategorizer;
 
     public AlphabeticalAppsList(ActivityContext activityContext, @Nullable AllAppsStore appsStore,
             WorkProfileManager workProfileManager, PrivateProfileManager privateProfileManager) {
+        this(activityContext, appsStore, workProfileManager, privateProfileManager,
+                false /* caddyOnly */);
+    }
+
+    public AlphabeticalAppsList(ActivityContext activityContext, @Nullable AllAppsStore appsStore,
+            WorkProfileManager workProfileManager, PrivateProfileManager privateProfileManager,
+            boolean caddyOnly) {
         mAllAppsStore = appsStore;
         mActivityContext = activityContext;
 
@@ -138,11 +149,16 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
                         R.drawable.ic_private_profile_divider_badge, ImageSpan.ALIGN_CENTER),
                 0, 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         mSortSections = context.getResources().getBoolean(R.bool.config_appsListSortSections);
+        mCaddyOnly = caddyOnly;
+        if (mCaddyOnly) {
+            mNumAppsPerRowAllApps = 2;
+        }
+        mCaddyCategorizer = caddyOnly ? new CaddyCategorizer(context) : null;
     }
 
     /** Set the number of apps per row when device profile changes. */
     public void setNumAppsPerRowAllApps(int numAppsPerRow) {
-        mNumAppsPerRowAllApps = numAppsPerRow;
+        mNumAppsPerRowAllApps = mCaddyOnly ? 2 : numAppsPerRow;
     }
 
     public void updateItemFilter(Predicate<ItemInfo> itemFilter) {
@@ -297,6 +313,8 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
         // ordered set of sections
         if (hasSearchResults()) {
             mAdapterItems.addAll(mSearchResults);
+        } else if (mCaddyOnly) {
+            addCaddyFolders(mApps);
         } else {
             int position = 0;
             boolean addApps = true;
@@ -490,6 +508,28 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
             position++;
         }
         return position;
+    }
+
+    private void addCaddyFolders(List<AppInfo> appList) {
+        int position = 0;
+        for (Map.Entry<String, List<AppInfo>> entry : mCaddyCategorizer.categorize(appList)
+                .entrySet()) {
+            if (entry.getValue().isEmpty()) {
+                continue;
+            }
+            FolderInfo folderInfo = new FolderInfo();
+            folderInfo.title = entry.getKey();
+            folderInfo.container = CONTAINER_ALL_APPS;
+            int rank = 0;
+            for (AppInfo app : entry.getValue()) {
+                AppInfo folderApp = new AppInfo(app);
+                folderApp.container = CONTAINER_ALL_APPS;
+                folderApp.rank = rank++;
+                folderInfo.add(folderApp);
+            }
+            mAdapterItems.add(AdapterItem.asFolder(folderInfo));
+            mFastScrollerSections.add(new FastScrollSectionInfo(folderInfo.title, position++));
+        }
     }
 
     private boolean isPrivateSpaceApp(AppInfo appInfo) {

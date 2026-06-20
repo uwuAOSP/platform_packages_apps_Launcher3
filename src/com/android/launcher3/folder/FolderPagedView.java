@@ -48,6 +48,7 @@ import com.android.launcher3.celllayout.CellLayoutLayoutParams;
 import com.android.launcher3.keyboard.ViewGroupFocusHelper;
 import com.android.launcher3.model.data.AppPairInfo;
 import com.android.launcher3.model.data.ItemInfo;
+import com.android.launcher3.model.data.ItemInfoWithIcon;
 import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.pageindicators.PageIndicatorDots;
 import com.android.launcher3.util.LauncherBindableItemsContainer.ItemOperator;
@@ -198,7 +199,9 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> implements Cli
                 View iconView = container.getChildAt(j);
                 iconView.setVisibility(View.VISIBLE);
                 if (iconView instanceof BubbleTextView) {
-                    mViewCache.recycleView(R.layout.folder_application, iconView);
+                    mViewCache.recycleView(mFolder.isInAppDrawer()
+                            ? R.layout.all_apps_folder_application
+                            : R.layout.folder_application, iconView);
                 }
             }
             page.removeAllViews();
@@ -236,9 +239,18 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> implements Cli
      */
     public void addViewForRank(View view, ItemInfo item, int rank) {
         int pageNo = rank / mOrganizer.getMaxItemsPerPage();
+        while (getChildCount() <= pageNo) {
+            createAndAddNewPage();
+        }
 
         CellLayoutLayoutParams lp = (CellLayoutLayoutParams) view.getLayoutParams();
-        lp.setCellXY(mOrganizer.getPosForRank(rank));
+        Point pos = mOrganizer.getPosForRank(rank);
+        if (lp == null) {
+            lp = new CellLayoutLayoutParams(pos.x, pos.y, 1, 1);
+            view.setLayoutParams(lp);
+        } else {
+            lp.setCellXY(pos);
+        }
         getPageAt(pageNo).addViewToCellLayout(view, -1, item.getViewId(), lp, true);
     }
 
@@ -254,8 +266,14 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> implements Cli
             icon = AppPairIcon.inflateIcon(R.layout.folder_app_pair, ActivityContext.lookupContext(
                     getContext()), null , api, BubbleTextView.DISPLAY_FOLDER);
         } else {
-            icon = mViewCache.getView(R.layout.folder_application, getContext(), null);
-            ((BubbleTextView) icon).applyFromWorkspaceItem((WorkspaceItemInfo) item);
+            if (mFolder.isInAppDrawer()) {
+                icon = mViewCache.getView(R.layout.all_apps_folder_application,
+                        getContext(), null);
+                ((BubbleTextView) icon).applyFromItemInfoWithIcon((ItemInfoWithIcon) item);
+            } else {
+                icon = mViewCache.getView(R.layout.folder_application, getContext(), null);
+                ((BubbleTextView) icon).applyFromWorkspaceItem((WorkspaceItemInfo) item);
+            }
         }
 
         icon.setOnClickListener(mFolder.mActivityContext.getItemOnClickListener());
@@ -288,8 +306,13 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> implements Cli
     private CellLayout createAndAddNewPage() {
         DeviceProfile grid = mFolder.mActivityContext.getDeviceProfile();
         CellLayout page = mViewCache.getView(R.layout.folder_page, getContext(), this);
-        page.setCellDimensions(grid.getFolderProfile().getCellWidthPx(),
-                grid.getFolderProfile().getCellHeightPx());
+        if (mFolder.isInAppDrawer()) {
+            page.setCellDimensions(grid.getAllAppsProfile().getCellWidthPx(),
+                    grid.getAllAppsProfile().getCellHeightPx());
+        } else {
+            page.setCellDimensions(grid.getFolderProfile().getCellWidthPx(),
+                    grid.getFolderProfile().getCellHeightPx());
+        }
         page.getShortcutsAndWidgets().setMotionEventSplittingEnabled(false);
         page.setInvertIfRtl(true);
         page.setGridSize(mGridCountX, mGridCountY);

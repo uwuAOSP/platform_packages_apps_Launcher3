@@ -185,6 +185,9 @@ public class AllAppsGridAdapter extends BaseAllAppsAdapter {
     public void setAppsPerRow(int appsPerRow) {
         mAppsPerRow = appsPerRow;
         int totalSpans = mAppsPerRow;
+        if (totalSpans % 2 != 0) {
+            totalSpans *= 2;
+        }
         for (int itemPerRow : mAdapterProvider.getSupportedItemsPerRowArray()) {
             if (totalSpans % itemPerRow != 0) {
                 totalSpans *= itemPerRow;
@@ -211,7 +214,9 @@ public class AllAppsGridAdapter extends BaseAllAppsAdapter {
                 return totalSpans;
             }
             int viewType = items.get(position).viewType;
-            if (isIconViewType(viewType)) {
+            if (viewType == VIEW_TYPE_FOLDER) {
+                return totalSpans / 2;
+            } else if (isIconViewType(viewType)) {
                 return totalSpans / mAppsPerRow;
             } else {
                 if (mAdapterProvider.isViewSupported(viewType)) {

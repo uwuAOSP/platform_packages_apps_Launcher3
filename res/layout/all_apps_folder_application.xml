@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2024 Lawnchair
+  Copyright (C) 2026 The uwuAOSP Project
+
+  This file is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  SPDX-License-Identifier: GPL-3.0-or-later
+-->
+<com.android.launcher3.BubbleTextView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:launcher="http://schemas.android.com/apk/res-auto"
+    style="@style/BaseIcon"
+    android:textColor="?attr/folderTextColor"
+    android:includeFontPadding="false"
+    android:hapticFeedbackEnabled="false"
+    launcher:iconDisplay="all_apps"
+    launcher:centerVertically="true" />

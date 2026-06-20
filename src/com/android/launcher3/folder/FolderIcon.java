@@ -16,6 +16,7 @@
 
 package com.android.launcher3.folder;
 
+import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_ALL_APPS;
 import static com.android.launcher3.folder.ClippedFolderIconLayoutRule.ICON_OVERLAP_FACTOR;
 import static com.android.launcher3.folder.ClippedFolderIconLayoutRule.MAX_NUM_ITEMS_IN_PREVIEW;
 import static com.android.launcher3.folder.FolderGridOrganizer.createFolderGridOrganizer;
@@ -185,6 +186,20 @@ public class FolderIcon extends FrameLayout implements FloatingIconViewCompanion
         return icon;
     }
 
+    public static FolderIcon inflateFolderAndIconFromActivityContext(int resId,
+            ActivityContext activityContext,
+            ViewGroup group, FolderInfo folderInfo) {
+        Context context = activityContext.asContext();
+        Folder folder = Folder.fromXml((Context & ActivityContext) context);
+
+        FolderIcon icon = inflateIcon(resId, activityContext, group, folderInfo);
+        folder.setFolderIcon(icon);
+        folder.bind(folderInfo);
+
+        icon.setFolder(folder);
+        return icon;
+    }
+
     /**
      * Builds a FolderIcon to be added to the activity.
      * This method doesn't add any listeners to the FolderInfo, and hence any changes to the info
@@ -211,8 +226,11 @@ public class FolderIcon extends FrameLayout implements FloatingIconViewCompanion
         icon.mFolderName.applyLabel(folderInfo.title);
         icon.mFolderName.setCompoundDrawablePadding(0);
         FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) icon.mFolderName.getLayoutParams();
-        lp.topMargin = grid.getWorkspaceIconProfile().getIconSizePx()
-                + grid.getWorkspaceIconProfile().getIconDrawablePaddingPx();
+        lp.topMargin = folderInfo.container == CONTAINER_ALL_APPS
+                ? grid.getAllAppsProfile().getIconSizePx()
+                        + grid.getAllAppsProfile().getIconDrawablePaddingPx()
+                : grid.getWorkspaceIconProfile().getIconSizePx()
+                        + grid.getWorkspaceIconProfile().getIconDrawablePaddingPx();
 
         icon.setTag(folderInfo);
         icon.setOnClickListener(activity.getItemOnClickListener());

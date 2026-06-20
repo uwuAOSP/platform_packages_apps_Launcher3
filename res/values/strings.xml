@@ -201,6 +201,12 @@
     <string name="all_apps_label">All apps</string>
 
     <string name="all_apps_list_label">Apps list</string>
+    <!-- Tab label. A user can tap this tab to access categorized app folders. [CHAR_LIMIT=25] -->
+    <string name="all_apps_caddy_tab">Categories</string>
+    <!-- Accessibility label for the categorized app folders tab. [CHAR_LIMIT=50] -->
+    <string name="all_apps_caddy_tab_content_description">Categorized apps</string>
+    <!-- Accessibility label for the more button in an app category preview. [CHAR_LIMIT=50] -->
+    <string name="all_apps_folder_more_content_description">Open <xliff:g id="folder" example="Games">%1$s</xliff:g></string>
     <string name="google_folder_title" translatable="false">Google</string>
     <string name="pref_navigation_bar_hint_title">Gesture hint</string>
     <string name="pref_navigation_bar_hint_summary">Show the bottom gesture handle in Launcher taskbar</string>
