@@ -307,8 +307,11 @@ public abstract class AbsSwipeUpHandler<
     public static final long RECENTS_ATTACH_DURATION = 300;
 
     private static final float MAX_QUICK_SWITCH_RECENTS_SCALE_PROGRESS = 0.07f;
-    private static final float POPUP_GESTURE_SHOW_THRESHOLD = 0.88f;
-    private static final float POPUP_GESTURE_RELEASE_THRESHOLD = 0.97f;
+    private static final float POPUP_GESTURE_SHOW_WINDOW = 0.04f;
+    private static final int POPUP_GESTURE_MIN_SETTING = 95;
+    private static final int POPUP_GESTURE_MAX_SETTING = 99;
+    private static final float POPUP_GESTURE_MIN_RELEASE_THRESHOLD = 0.975f;
+    private static final float POPUP_GESTURE_MAX_RELEASE_THRESHOLD = 0.995f;
 
     // Controls task thumbnail splash's reveal animation after landing on a task from quickswitch.
     // These values match WindowManager/Shell starting_window_app_reveal_* config values.
@@ -2687,7 +2690,10 @@ public abstract class AbsSwipeUpHandler<
     }
 
     private void updatePopUpGestureTargetState() {
-        if (mContainer == null || mRecentsView == null || mIsLikelyToStartNewTask) {
+        if (!isPopUpGestureEnabled()
+                || mContainer == null
+                || mRecentsView == null
+                || mIsLikelyToStartNewTask) {
             clearPopUpGestureState(true /* animated */);
             return;
         }
@@ -2695,8 +2701,10 @@ public abstract class AbsSwipeUpHandler<
             clearPopUpGestureState(true /* animated */);
             return;
         }
+        final float releaseThreshold = getPopUpGestureReleaseThreshold();
+        final float showThreshold = getPopUpGestureShowThreshold(releaseThreshold);
         TaskView taskView = getPopUpLaunchTaskView();
-        if (taskView == null || mCurrentShift.value < POPUP_GESTURE_SHOW_THRESHOLD) {
+        if (taskView == null || mCurrentShift.value < showThreshold) {
             clearPopUpGestureState(true /* animated */);
             return;
         }
@@ -2707,12 +2715,11 @@ public abstract class AbsSwipeUpHandler<
         mPopUpGestureTargetView.attachIfNeeded(dragLayer);
         dragLayer.getDescendantRectRelativeToSelf(taskView, mPopUpGestureTaskBounds);
         final float visualProgress = Utilities.boundToRange(
-                (mCurrentShift.value - POPUP_GESTURE_SHOW_THRESHOLD)
-                        / (1f - POPUP_GESTURE_SHOW_THRESHOLD),
+                (mCurrentShift.value - showThreshold) / (releaseThreshold - showThreshold),
                 0f,
                 1f);
         mLastPopUpGestureProgress = visualProgress;
-        mIsPopUpGestureArmed = mCurrentShift.value >= POPUP_GESTURE_RELEASE_THRESHOLD;
+        mIsPopUpGestureArmed = mCurrentShift.value >= releaseThreshold;
         mPopUpGestureTargetView.updateLayoutForContainer(
                 dragLayer.getWidth(),
                 dragLayer.getHeight(),
@@ -2722,6 +2729,26 @@ public abstract class AbsSwipeUpHandler<
         mPopUpGestureTargetView.show();
         mPopUpGestureTargetView.bringToFront();
         mRecentsView.setPopUpGestureVisualProgress(visualProgress);
+    }
+
+    private float getPopUpGestureReleaseThreshold() {
+        int setting = Utilities.boundToRange(
+                LauncherPrefs.get(mContext).get(LauncherPrefs.POPUP_VIEW_GESTURE_THRESHOLD),
+                POPUP_GESTURE_MIN_SETTING,
+                POPUP_GESTURE_MAX_SETTING);
+        float progress = (setting - POPUP_GESTURE_MIN_SETTING)
+                / (float) (POPUP_GESTURE_MAX_SETTING - POPUP_GESTURE_MIN_SETTING);
+        return Utilities.mapRange(progress,
+                POPUP_GESTURE_MIN_RELEASE_THRESHOLD,
+                POPUP_GESTURE_MAX_RELEASE_THRESHOLD);
+    }
+
+    private static float getPopUpGestureShowThreshold(float releaseThreshold) {
+        return Math.max(0.88f, releaseThreshold - POPUP_GESTURE_SHOW_WINDOW);
+    }
+
+    private boolean isPopUpGestureEnabled() {
+        return LauncherPrefs.get(mContext).get(LauncherPrefs.POPUP_VIEW_GESTURE_ENABLED);
     }
 
     private void clearPopUpGestureState(boolean animated) {
@@ -2752,7 +2779,8 @@ public abstract class AbsSwipeUpHandler<
     }
 
     private boolean maybeLaunchRunningTaskInPopUpView() {
-        if (!mShouldLaunchRunningTaskInPopUp || mRecentsView == null) {
+        if (!isPopUpGestureEnabled() || !mShouldLaunchRunningTaskInPopUp || mRecentsView == null) {
+            clearPopUpGestureState(false /* animated */);
             return false;
         }
         TaskView taskView = getPopUpLaunchTaskView();

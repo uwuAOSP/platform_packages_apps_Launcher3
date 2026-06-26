@@ -147,6 +147,10 @@
     <string name="allow_rotation_desc" msgid="8662546029078692509">"手机旋转时"</string>
     <string name="pref_enable_smartspacer_title">"在主屏幕显示 Smartspacer"</string>
     <string name="pref_enable_smartspacer_summary">"用 Smartspacer 替换首页顶部状态区域"</string>
+    <string name="pref_popup_view_gesture_enabled_title">"小窗手势"</string>
+    <string name="pref_popup_view_gesture_enabled_summary">"在最近任务手势中继续上滑，将当前应用以小窗打开"</string>
+    <string name="pref_popup_view_gesture_threshold_title">"小窗手势触发阈值"</string>
+    <string name="pref_popup_view_gesture_threshold_summary">"数值越高，松手进入小窗前需要上滑得越远"</string>
     <string name="landscape_mode_title" msgid="5138814555934843926">"横屏模式"</string>
     <string name="landscape_mode_desc" msgid="3085236452297838664">"将主屏幕设为横屏模式"</string>
     <string name="notification_dots_title" msgid="9062440428204120317">"通知圆点"</string>

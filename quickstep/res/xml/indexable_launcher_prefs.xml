@@ -14,7 +14,9 @@
      limitations under the License.
 -->
 
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:launcher="http://schemas.android.com/apk/res-auto">
 
     <SwitchPreferenceCompat
         android:key="pref_add_icon_to_home"
@@ -33,6 +35,22 @@
         android:key="pref_fixed_landscape_mode"
         android:title="@string/landscape_mode_title"
         android:summary="@string/landscape_mode_desc"
+        android:defaultValue="false"
+        android:persistent="true" />
+
+    <androidx.preference.SeekBarPreference
+        android:key="pref_popup_view_gesture_threshold"
+        android:title="@string/pref_popup_view_gesture_threshold_title"
+        android:summary="@string/pref_popup_view_gesture_threshold_summary"
+        android:defaultValue="99"
+        android:max="99"
+        android:persistent="true"
+        launcher:min="95" />
+
+    <SwitchPreferenceCompat
+        android:key="pref_popup_view_gesture_enabled"
+        android:title="@string/pref_popup_view_gesture_enabled_title"
+        android:summary="@string/pref_popup_view_gesture_enabled_summary"
         android:defaultValue="false"
         android:persistent="true" />
 

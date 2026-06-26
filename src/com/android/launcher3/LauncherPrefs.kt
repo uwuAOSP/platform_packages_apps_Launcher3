@@ -315,6 +315,12 @@ constructor(@ApplicationContext private val encryptedContext: Context) {
             backedUpItem(SettingsActivity.SMARTSPACER_PREFERENCE_KEY, false)
 
         @JvmField
+        val POPUP_VIEW_GESTURE_ENABLED = backedUpItem("pref_popup_view_gesture_enabled", false)
+
+        @JvmField
+        val POPUP_VIEW_GESTURE_THRESHOLD = backedUpItem("pref_popup_view_gesture_threshold", 99)
+
+        @JvmField
         val NON_FIXED_LANDSCAPE_GRID_NAME =
             ConstantItem(
                 NON_FIXED_LANDSCAPE_GRID_NAME_PREFS_KEY,

@@ -18,65 +18,99 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:launcher="http://schemas.android.com/apk/res-auto">
 
-    <com.android.launcher3.settings.NotificationDotsPreference
-        android:key="pref_icon_badging"
-        android:title="@string/notification_dots_title"
-        android:persistent="false"
-        android:widgetLayout="@layout/notification_pref_warning" />
+    <PreferenceCategory android:title="@string/pref_category_home_screen">
 
-    <!--
-      LAUNCHER_ADD_NEW_APPS_TO_HOME_SCREEN_ENABLED(613)
-      LAUNCHER_ADD_NEW_APPS_TO_HOME_SCREEN_DISABLED(614)
-    -->
-    <SwitchPreferenceCompat
-        android:key="pref_add_icon_to_home"
-        android:title="@string/auto_add_shortcuts_label"
-        android:summary="@string/auto_add_shortcuts_description"
-        android:defaultValue="true"
-        android:persistent="true"
-        launcher:logIdOn="613"
-        launcher:logIdOff="614" />
+        <!--
+          LAUNCHER_ADD_NEW_APPS_TO_HOME_SCREEN_ENABLED(613)
+          LAUNCHER_ADD_NEW_APPS_TO_HOME_SCREEN_DISABLED(614)
+        -->
+        <SwitchPreferenceCompat
+            android:key="pref_add_icon_to_home"
+            android:title="@string/auto_add_shortcuts_label"
+            android:summary="@string/auto_add_shortcuts_description"
+            android:defaultValue="true"
+            android:persistent="true"
+            launcher:logIdOn="613"
+            launcher:logIdOff="614" />
 
-    <!--
-      LAUNCHER_HOME_SCREEN_ROTATION_ENABLED(615)
-      LAUNCHER_HOME_SCREEN_ROTATION_DISABLED(616)
-    -->
-    <SwitchPreferenceCompat
-        android:key="pref_allowRotation"
-        android:title="@string/allow_rotation_title"
-        android:summary="@string/allow_rotation_desc"
-        android:defaultValue="false"
-        android:persistent="true"
-        launcher:logIdOn="615"
-        launcher:logIdOff="616" />
+        <SwitchPreferenceCompat
+            android:key="pref_enable_smartspacer"
+            android:title="@string/pref_enable_smartspacer_title"
+            android:summary="@string/pref_enable_smartspacer_summary"
+            android:defaultValue="false"
+            android:persistent="true" />
 
-    <SwitchPreferenceCompat
-        android:key="pref_enable_smartspacer"
-        android:title="@string/pref_enable_smartspacer_title"
-        android:summary="@string/pref_enable_smartspacer_summary"
-        android:defaultValue="false"
-        android:persistent="true" />
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="pref_enable_minus_one"
+            android:summary="@string/pref_show_google_now_summary"
+            android:title="@string/title_show_google_app" />
+    </PreferenceCategory>
 
-    <SwitchPreferenceCompat
-        android:defaultValue="true"
-        android:key="pref_enable_minus_one"
-        android:summary="@string/pref_show_google_now_summary"
-        android:title="@string/title_show_google_app" />
+    <PreferenceCategory android:title="@string/pref_category_appearance">
 
-    <SwitchPreferenceCompat
-        android:key="navigation_bar_hint"
-        android:title="@string/pref_navigation_bar_hint_title"
-        android:summary="@string/pref_navigation_bar_hint_summary"
-        android:defaultValue="true"
-        android:persistent="false"
-        launcher:iconSpaceReserved="false" />
+        <com.android.launcher3.settings.NotificationDotsPreference
+            android:key="pref_icon_badging"
+            android:title="@string/notification_dots_title"
+            android:persistent="false"
+            android:widgetLayout="@layout/notification_pref_warning" />
 
-    <SwitchPreferenceCompat
-        android:key="pref_allapps_themed_icons"
-        android:title="@string/pref_themed_icons_title"
-        android:summary="@string/pref_themed_icons_summary"
-        android:defaultValue="false"
-        android:persistent="true"
-        launcher:iconSpaceReserved="false" />
+        <SwitchPreferenceCompat
+            android:key="pref_allapps_themed_icons"
+            android:title="@string/pref_themed_icons_title"
+            android:summary="@string/pref_themed_icons_summary"
+            android:defaultValue="false"
+            android:persistent="true"
+            launcher:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/pref_category_gestures">
+
+        <SwitchPreferenceCompat
+            android:key="navigation_bar_hint"
+            android:title="@string/pref_navigation_bar_hint_title"
+            android:summary="@string/pref_navigation_bar_hint_summary"
+            android:defaultValue="true"
+            android:persistent="false"
+            launcher:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:key="pref_popup_view_gesture_enabled"
+            android:title="@string/pref_popup_view_gesture_enabled_title"
+            android:summary="@string/pref_popup_view_gesture_enabled_summary"
+            android:defaultValue="false"
+            android:persistent="true"
+            launcher:iconSpaceReserved="false" />
+
+        <com.android.settingslib.widget.SliderPreference
+            android:key="pref_popup_view_gesture_threshold"
+            android:title="@string/pref_popup_view_gesture_threshold_title"
+            android:summary="@string/pref_popup_view_gesture_threshold_summary"
+            android:defaultValue="99"
+            android:dependency="pref_popup_view_gesture_enabled"
+            android:max="99"
+            android:persistent="true"
+            launcher:min="95"
+            launcher:seekBarIncrement="1"
+            launcher:showSeekBarValue="true"
+            launcher:updatesContinuously="true"
+            launcher:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/pref_category_layout">
+
+        <!--
+          LAUNCHER_HOME_SCREEN_ROTATION_ENABLED(615)
+          LAUNCHER_HOME_SCREEN_ROTATION_DISABLED(616)
+        -->
+        <SwitchPreferenceCompat
+            android:key="pref_allowRotation"
+            android:title="@string/allow_rotation_title"
+            android:summary="@string/allow_rotation_desc"
+            android:defaultValue="false"
+            android:persistent="true"
+            launcher:logIdOn="615"
+            launcher:logIdOff="616" />
+    </PreferenceCategory>
 
 </androidx.preference.PreferenceScreen>

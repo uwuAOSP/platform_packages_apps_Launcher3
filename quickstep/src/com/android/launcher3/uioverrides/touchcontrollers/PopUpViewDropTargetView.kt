@@ -270,7 +270,7 @@ constructor(
         private const val MIN_GUIDE_ASPECT_RATIO = 0.72f
         private const val MAX_GUIDE_ASPECT_RATIO = 1.45f
         private const val DEFAULT_TASK_ASPECT_RATIO = MIN_GUIDE_ASPECT_RATIO
-        private const val GUIDE_VERTICAL_POSITION_RATIO = 0.39f
+        private const val GUIDE_VERTICAL_POSITION_RATIO = 0.33f
         private const val MIN_GUIDE_WIDTH_RATIO = 0.52f
         private const val MAX_GUIDE_WIDTH_RATIO = 0.68f
         private const val MIN_ALPHA = 0.22f

@@ -204,6 +204,10 @@
     <string name="google_folder_title" translatable="false">Google</string>
     <string name="pref_navigation_bar_hint_title">Gesture hint</string>
     <string name="pref_navigation_bar_hint_summary">Show the bottom gesture handle in Launcher taskbar</string>
+    <string name="pref_popup_view_gesture_enabled_title">Pop-Up View gesture</string>
+    <string name="pref_popup_view_gesture_enabled_summary">Open the running app in Pop-Up View by dragging farther up during the recent apps gesture</string>
+    <string name="pref_popup_view_gesture_threshold_title">Pop-Up View gesture threshold</string>
+    <string name="pref_popup_view_gesture_threshold_summary">Higher values require a longer upward drag before releasing into Pop-Up View</string>
     <string name="pref_themed_icons_title">Themed icons</string>
     <string name="pref_themed_icons_summary">Follow themed icons used on home screen</string>
     <string name="themed_icons_disabled_summary">Themed icons are turned off in Wallpaper &amp; style</string>
