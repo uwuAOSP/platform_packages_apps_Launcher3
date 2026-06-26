@@ -145,12 +145,21 @@
     <string name="msg_disabled_by_admin" msgid="6898038085516271325">"已被您的管理员停用"</string>
     <string name="allow_rotation_title" msgid="7222049633713050106">"允许旋转主屏幕"</string>
     <string name="allow_rotation_desc" msgid="8662546029078692509">"手机旋转时"</string>
+    <string name="pref_category_home_screen">"主屏幕"</string>
+    <string name="pref_category_appearance">"外观"</string>
+    <string name="pref_category_gestures">"手势"</string>
+    <string name="pref_category_layout">"布局"</string>
+    <string name="pref_navigation_bar_hint_title">"手势提示条"</string>
+    <string name="pref_navigation_bar_hint_summary">"在启动器任务栏中显示底部手势横条"</string>
     <string name="pref_enable_smartspacer_title">"在主屏幕显示 Smartspacer"</string>
     <string name="pref_enable_smartspacer_summary">"用 Smartspacer 替换首页顶部状态区域"</string>
     <string name="pref_popup_view_gesture_enabled_title">"小窗手势"</string>
     <string name="pref_popup_view_gesture_enabled_summary">"在最近任务手势中继续上滑，将当前应用以小窗打开"</string>
     <string name="pref_popup_view_gesture_threshold_title">"小窗手势触发阈值"</string>
     <string name="pref_popup_view_gesture_threshold_summary">"数值越高，松手进入小窗前需要上滑得越远"</string>
+    <string name="pref_themed_icons_title">"主题图标"</string>
+    <string name="pref_themed_icons_summary">"跟随主屏幕使用的主题图标"</string>
+    <string name="themed_icons_disabled_summary">"请先在壁纸与风格中开启主题图标"</string>
     <string name="landscape_mode_title" msgid="5138814555934843926">"横屏模式"</string>
     <string name="landscape_mode_desc" msgid="3085236452297838664">"将主屏幕设为横屏模式"</string>
     <string name="notification_dots_title" msgid="9062440428204120317">"通知圆点"</string>
@@ -234,6 +243,9 @@
     <string name="ps_app_label_override" msgid="6876160706011676804">"添加"</string>
     <string name="ps_add_button_content_description" msgid="3254274107740952556">"将应用安装到私密空间"</string>
     <string name="ps_app_content_description" msgid="1129133475892816226">"将文件等内容添加到私密空间"</string>
+    <string name="title_show_google_app">"显示 Google 应用"</string>
+    <string name="msg_minus_one_on_left">"从主屏幕向右滑动时"</string>
+    <string name="msg_minus_one_on_right">"从主屏幕向左滑动时"</string>
     <string name="circle_shape_title" msgid="3582075061179674565">"圆形"</string>
     <string name="square_shape_title" msgid="3085320803149569308">"方形"</string>
     <string name="four_sided_cookie_shape_title" msgid="3275212586290522151">"四边形饼干"</string>

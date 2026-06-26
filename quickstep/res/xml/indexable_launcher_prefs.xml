@@ -38,7 +38,7 @@
         android:defaultValue="false"
         android:persistent="true" />
 
-    <androidx.preference.SeekBarPreference
+    <com.android.settingslib.widget.SliderPreference
         android:key="pref_popup_view_gesture_threshold"
         android:title="@string/pref_popup_view_gesture_threshold_title"
         android:summary="@string/pref_popup_view_gesture_threshold_summary"

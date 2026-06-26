@@ -202,6 +202,10 @@
 
     <string name="all_apps_list_label">Apps list</string>
     <string name="google_folder_title" translatable="false">Google</string>
+    <string name="pref_category_home_screen">Home screen</string>
+    <string name="pref_category_appearance">Appearance</string>
+    <string name="pref_category_gestures">Gestures</string>
+    <string name="pref_category_layout">Layout</string>
     <string name="pref_navigation_bar_hint_title">Gesture hint</string>
     <string name="pref_navigation_bar_hint_summary">Show the bottom gesture handle in Launcher taskbar</string>
     <string name="pref_popup_view_gesture_enabled_title">Pop-Up View gesture</string>

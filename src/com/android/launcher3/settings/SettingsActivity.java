@@ -38,10 +38,8 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-import androidx.core.view.WindowCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
@@ -62,12 +60,16 @@ import com.android.launcher3.graphics.ThemeManager;
 import com.android.launcher3.states.RotationHelper;
 import com.android.launcher3.util.DisplayController;
 import com.android.launcher3.util.SettingsCache;
+import com.android.settingslib.collapsingtoolbar.CollapsingToolbarBaseActivity;
+import com.android.settingslib.widget.ExpressiveDesignEnabledProvider;
+import com.android.settingslib.widget.SettingsBasePreferenceFragment;
 
 /**
  * Settings activity for Launcher. Currently implements the following setting: Allow rotation
  */
-public class SettingsActivity extends FragmentActivity
-        implements OnPreferenceStartFragmentCallback, OnPreferenceStartScreenCallback {
+public class SettingsActivity extends CollapsingToolbarBaseActivity
+        implements OnPreferenceStartFragmentCallback, OnPreferenceStartScreenCallback,
+        ExpressiveDesignEnabledProvider {
 
     @VisibleForTesting
     static final String DEVELOPER_OPTIONS_KEY = "pref_developer_options";
@@ -95,16 +97,7 @@ public class SettingsActivity extends FragmentActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.settings_activity);
-
-        setActionBar(findViewById(R.id.action_bar));
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-
         Intent intent = getIntent();
-        if (intent.hasExtra(EXTRA_FRAGMENT_ROOT_KEY) || intent.hasExtra(EXTRA_FRAGMENT_ARGS)
-                || intent.hasExtra(EXTRA_FRAGMENT_HIGHLIGHT_KEY)) {
-            getActionBar().setDisplayHomeAsUpEnabled(true);
-        }
 
         if (savedInstanceState == null) {
             Bundle args = intent.getBundleExtra(EXTRA_FRAGMENT_ARGS);
@@ -126,8 +119,15 @@ public class SettingsActivity extends FragmentActivity
                     getString(R.string.settings_fragment_name));
             f.setArguments(args);
             // Display the fragment as the main content.
-            fm.beginTransaction().replace(R.id.content_frame, f).commit();
+            fm.beginTransaction()
+                    .replace(com.android.settingslib.collapsingtoolbar.R.id.content_frame, f)
+                    .commit();
         }
+    }
+
+    @Override
+    public boolean isExpressiveDesignEnabled() {
+        return true;
     }
 
     private boolean startPreference(String fragment, Bundle args, String key) {
@@ -173,7 +173,7 @@ public class SettingsActivity extends FragmentActivity
     /**
      * This fragment shows the launcher preferences.
      */
-    public static class LauncherSettingsFragment extends PreferenceFragmentCompat implements
+    public static class LauncherSettingsFragment extends SettingsBasePreferenceFragment implements
             SettingsCache.OnChangeListener {
 
         protected boolean mDeveloperOptionsEnabled = false;
@@ -212,7 +212,7 @@ public class SettingsActivity extends FragmentActivity
             PreferenceScreen screen = getPreferenceScreen();
             for (int i = screen.getPreferenceCount() - 1; i >= 0; i--) {
                 Preference preference = screen.getPreference(i);
-                if (!initPreference(preference)) {
+                if (!initPreferenceTree(preference)) {
                     screen.removePreference(preference);
                 }
             }
@@ -244,6 +244,10 @@ public class SettingsActivity extends FragmentActivity
                 if (pref.getKey() != null && pref.getKey().equals(targetKey)) {
                     return true;
                 }
+                if (pref instanceof PreferenceGroup
+                        && isKeyInPreferenceGroup(targetKey, (PreferenceGroup) pref)) {
+                    return true;
+                }
             }
             return false;
         }
@@ -265,11 +269,31 @@ public class SettingsActivity extends FragmentActivity
                     if (foundKey != null) {
                         return foundKey;
                     }
+                } else if (pref instanceof PreferenceGroup
+                        && isKeyInPreferenceGroup(targetKey, (PreferenceGroup) pref)) {
+                    return parent;
                 } else if (pref.getKey() != null && pref.getKey().equals(targetKey)) {
                     return parent;
                 }
             }
             return null;
+        }
+
+        private boolean initPreferenceTree(Preference preference) {
+            if (!initPreference(preference)) {
+                return false;
+            }
+            if (preference instanceof PreferenceGroup) {
+                PreferenceGroup group = (PreferenceGroup) preference;
+                for (int i = group.getPreferenceCount() - 1; i >= 0; i--) {
+                    Preference child = group.getPreference(i);
+                    if (!initPreferenceTree(child)) {
+                        group.removePreference(child);
+                    }
+                }
+                return preference instanceof PreferenceScreen || group.getPreferenceCount() > 0;
+            }
+            return true;
         }
 
         @Override
@@ -302,7 +326,11 @@ public class SettingsActivity extends FragmentActivity
          */
         protected boolean initPreference(Preference preference) {
             DisplayController.Info info = DisplayController.INSTANCE.get(getContext()).getInfo();
-            switch (preference.getKey()) {
+            String key = preference.getKey();
+            if (key == null) {
+                return true;
+            }
+            switch (key) {
                 case NOTIFICATION_DOTS_PREFERENCE_KEY:
                     return BuildConfig.NOTIFICATION_DOTS_ENABLED;
                 case ALLOW_ROTATION_PREFERENCE_KEY:
