@@ -678,7 +678,7 @@ public class DeviceProfile {
             hotseatBarSizePx = hotseatIconSizePx + getHotseatProfile().getBarEdgePaddingPx()
                     + getHotseatProfile().getBarWorkspaceSpacePx();
         } else if (isQsbInline) {
-            hotseatBarSizePx = max(hotseatIconSizePx, getHotseatProfile().getQsbVisualHeight())
+            hotseatBarSizePx = max(hotseatIconSizePx, getHotseatProfile().getQsbHeight())
                     + hotseatBarBottomSpacePx;
         } else {
             hotseatBarSizePx = hotseatIconSizePx
@@ -1335,8 +1335,7 @@ public class DeviceProfile {
             return getHotseatBarBottomPadding()
                     - ((getHotseatProfile().getQsbHeight() - hotseatCellHeightPx) / 2);
         } else if (isTaskbarPresent) { // QSB on top
-            return hotseatBarSizePx - getHotseatProfile().getQsbHeight()
-                    + getHotseatProfile().getQsbShadowHeight();
+            return hotseatBarSizePx - getHotseatProfile().getQsbHeight();
         } else {
             return hotseatBarBottomSpacePx - getHotseatProfile().getQsbShadowHeight();
         }
