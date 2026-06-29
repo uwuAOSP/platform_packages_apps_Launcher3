@@ -17,9 +17,11 @@
 package com.android.launcher3.uioverrides;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import com.android.launcher3.Launcher;
+import com.android.launcher3.LauncherPrefs;
 import com.android.systemui.plugins.shared.LauncherOverlayManager;
 import com.android.systemui.plugins.shared.LauncherOverlayManager.LauncherOverlay;
 import com.android.systemui.plugins.shared.LauncherOverlayManager.LauncherOverlayCallbacks;
@@ -37,16 +39,22 @@ import java.io.PrintWriter;
  * Launcher}.
  */
 public class OverlayCallbackImpl
-        implements LauncherOverlay, LauncherClientCallbacks, LauncherOverlayManager {
+        implements LauncherOverlay, LauncherClientCallbacks, LauncherOverlayManager,
+        SharedPreferences.OnSharedPreferenceChangeListener {
+
+    private static final String KEY_ENABLE_MINUS_ONE = "pref_enable_minus_one";
 
     private final Launcher mLauncher;
     private final LauncherClient mClient;
+    private final SharedPreferences mPrefs;
 
     private LauncherOverlayCallbacks mLauncherOverlayCallbacks;
     private boolean mWasOverlayAttached = false;
 
     public OverlayCallbackImpl(Launcher launcher) {
         mLauncher = launcher;
+        mPrefs = LauncherPrefs.getPrefs(mLauncher);
+        mPrefs.registerOnSharedPreferenceChangeListener(this);
         mClient = new LauncherClient(mLauncher, this, getClientOptions());
     }
 
@@ -107,6 +115,7 @@ public class OverlayCallbackImpl
 
     @Override
     public void onActivityDestroyed() {
+        mPrefs.unregisterOnSharedPreferenceChangeListener(this);
         mClient.onDestroy();
     }
 
@@ -114,7 +123,14 @@ public class OverlayCallbackImpl
     public void onServiceStateChanged(boolean overlayAttached, boolean hotwordActive) {
         if (overlayAttached != mWasOverlayAttached) {
             mWasOverlayAttached = overlayAttached;
-            mLauncher.setLauncherOverlay(overlayAttached ? this : null);
+            updateLauncherOverlay();
+        }
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (KEY_ENABLE_MINUS_ONE.equals(key)) {
+            updateLauncherOverlay();
         }
     }
 
@@ -151,5 +167,13 @@ public class OverlayCallbackImpl
                 true, /* enableHotword */
                 true /* enablePrewarming */
         );
+    }
+
+    private void updateLauncherOverlay() {
+        mLauncher.setLauncherOverlay(mWasOverlayAttached && isMinusOneEnabled() ? this : null);
+    }
+
+    private boolean isMinusOneEnabled() {
+        return mPrefs.getBoolean(KEY_ENABLE_MINUS_ONE, true);
     }
 }
