@@ -1099,4 +1099,8 @@ public final class Utilities {
             return deviceProperties.isLandscape();
         }
     }
+
+    public static boolean blurBackgroundAtAppLaunch(Context context) {
+        return LauncherPrefs.ANIMATION_BLUR.get(context);
+    }
 }

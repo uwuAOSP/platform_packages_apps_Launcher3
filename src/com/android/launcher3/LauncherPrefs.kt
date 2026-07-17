@@ -318,6 +318,9 @@ constructor(@ApplicationContext private val encryptedContext: Context) {
         val POPUP_VIEW_GESTURE_ENABLED = backedUpItem("pref_popup_view_gesture_enabled", false)
 
         @JvmField
+        val ANIMATION_BLUR = backedUpItem("pref_blur_background_at_app_launch", true)
+
+        @JvmField
         val POPUP_VIEW_GESTURE_THRESHOLD = backedUpItem("pref_popup_view_gesture_threshold", 99)
 
         @JvmField

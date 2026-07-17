@@ -250,6 +250,7 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
     private final float mClosingWindowTransY;
     private final float mClosingFreeformWindowTransY;
     private final float mMaxShadowRadius;
+    private final int mMaxBlurRadius;
 
     private final StartingWindowListener mStartingWindowListener =
             new StartingWindowListener(this);
@@ -307,6 +308,7 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
         mClosingFreeformWindowTransY =
                 res.getDimensionPixelSize(R.dimen.closing_freeform_window_trans_y);
         mMaxShadowRadius = res.getDimensionPixelSize(R.dimen.max_shadow_radius);
+        mMaxBlurRadius = res.getInteger(R.integer.max_depth_blur_radius);
 
         mLauncher.addOnDeviceProfileChangeListener(this);
         mSystemUiProxy = SystemUiProxy.INSTANCE.get(mLauncher);
@@ -1229,9 +1231,7 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
 
     /** Returns animator that controls depth/blur of the background during app/widget opening. */
     private Animator getBackgroundAnimator() {
-        if (Flags.allAppsBlur()) {
-            // Don't animate/blur the background for this launch, regardless of the launcher state.
-            // We have too many performance issues with the blur.
+        if (!Utilities.blurBackgroundAtAppLaunch(mLauncher)) {
             return new AnimatorSet();
         }
 
@@ -1265,8 +1265,15 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
                     .setEffectLayer()
                     .build();
 
+            backgroundRadiusAnim.addUpdateListener(animation -> {
+                float progress = animation.getAnimatedFraction();
+                try (SurfaceControl.Transaction transaction = new SurfaceControl.Transaction()) {
+                    transaction.setBackgroundBlurRadius(dimLayer,
+                            Math.round(progress * mMaxBlurRadius));
+                    transaction.apply();
+                }
+            });
             backgroundRadiusAnim.addListener(AnimatorListeners.forEndCallback(() -> {
-                // Use try-with-resources to ensure the transaction gets closed.
                 try (SurfaceControl.Transaction transaction = new SurfaceControl.Transaction()) {
                     transaction.remove(dimLayer).apply();
                 }
@@ -1857,7 +1864,8 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
                         new ScalingWorkspaceRevealAnim(mLauncher, rectFSpringAnim,
                                 rectFSpringAnim.getTargetRect(),
                                 !fromPredictiveBack /* playAlphaReveal */,
-                                true /* playBlur */).getAnimators());
+                                Utilities.blurBackgroundAtAppLaunch(
+                                        mLauncher) /* playBlur */).getAnimators());
 
                 // We play StaggeredWorkspaceAnim as a part of the closing window animation.
                 playWorkspaceReveal = false;
