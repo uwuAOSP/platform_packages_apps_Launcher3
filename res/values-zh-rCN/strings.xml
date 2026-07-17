@@ -155,6 +155,8 @@
     <string name="pref_enable_smartspacer_summary">"用 Smartspacer 替换首页顶部状态区域"</string>
     <string name="pref_popup_view_gesture_enabled_title">"小窗手势"</string>
     <string name="pref_popup_view_gesture_enabled_summary">"在最近任务手势中继续上滑，将当前应用以小窗打开"</string>
+    <string name="pref_blur_background_at_app_launch_title">"动画背景模糊"</string>
+    <string name="pref_blur_background_at_app_launch_summary">"为应用启动与退出动画添加背景模糊"</string>
     <string name="pref_popup_view_gesture_threshold_title">"小窗手势触发阈值"</string>
     <string name="pref_popup_view_gesture_threshold_summary">"数值越高，松手进入小窗前需要上滑得越远"</string>
     <string name="pref_themed_icons_title">"主题图标"</string>

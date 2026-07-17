@@ -62,6 +62,14 @@
             android:defaultValue="false"
             android:persistent="true"
             launcher:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:key="pref_blur_background_at_app_launch"
+            android:title="@string/pref_blur_background_at_app_launch_title"
+            android:summary="@string/pref_blur_background_at_app_launch_summary"
+            android:defaultValue="true"
+            android:persistent="true"
+            launcher:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/pref_category_gestures">

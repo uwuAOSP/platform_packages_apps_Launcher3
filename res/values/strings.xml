@@ -210,6 +210,8 @@
     <string name="pref_navigation_bar_hint_summary">Show the bottom gesture handle in Launcher taskbar</string>
     <string name="pref_popup_view_gesture_enabled_title">Pop-Up View gesture</string>
     <string name="pref_popup_view_gesture_enabled_summary">Open the running app in Pop-Up View by dragging farther up during the recent apps gesture</string>
+    <string name="pref_blur_background_at_app_launch_title">Animation background blur</string>
+    <string name="pref_blur_background_at_app_launch_summary">Blur the background during app launch and exit animations</string>
     <string name="pref_popup_view_gesture_threshold_title">Pop-Up View gesture threshold</string>
     <string name="pref_popup_view_gesture_threshold_summary">Higher values require a longer upward drag before releasing into Pop-Up View</string>
     <string name="pref_themed_icons_title">Themed icons</string>
