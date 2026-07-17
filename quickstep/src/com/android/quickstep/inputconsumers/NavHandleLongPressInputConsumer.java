@@ -24,6 +24,7 @@ import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
 import static com.android.launcher3.util.LogConfig.NAV_HANDLE_LONG_PRESS;
 
 import android.content.Context;
+import android.os.SystemProperties;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
@@ -49,6 +50,8 @@ import com.android.systemui.shared.system.InputMonitorCompat;
 public class NavHandleLongPressInputConsumer extends DelegateInputConsumer {
 
     private static final String TAG = "NavHandleLongPressIC";
+    private static final String MOMENT_DEBUG_PROPERTY = "persist.debug.wm.moment";
+    private static final String MOMENT_DEBUG_TAG = "MomentNavHandle";
     private static final boolean DEBUG_NAV_HANDLE = Utilities.isPropertyEnabled(
             NAV_HANDLE_LONG_PRESS);
 
@@ -74,13 +77,18 @@ public class NavHandleLongPressInputConsumer extends DelegateInputConsumer {
     private final int mOuterLongPressTimeout;
     private final boolean mDeepPressEnabled;
     private final NavHandle mNavHandle;
+    private final NavHandle mMomentTapReceiver;
+    private final boolean mCanLongPress;
     private StatsLogManager mStatsLogManager;
     private final TopTaskTracker mTopTaskTracker;
     private final GestureState mGestureState;
+    private final int mMomentTargetTaskId;
 
     private MotionEvent mCurrentDownEvent;  // Down event that started the current gesture.
     private MotionEvent mCurrentMotionEvent;  // Most recent motion event.
     private boolean mDeepPressLogged;  // Whether deep press has been logged for the current touch.
+    private boolean mTouchStartedInNavHandle;
+    private boolean mTapCandidate;
 
     public NavHandleLongPressInputConsumer(
             Context context,
@@ -88,6 +96,17 @@ public class NavHandleLongPressInputConsumer extends DelegateInputConsumer {
             InputMonitorCompat inputMonitor,
             RecentsAnimationDeviceState deviceState,
             NavHandle navHandle,
+            GestureState gestureState) {
+        this(context, delegate, inputMonitor, deviceState, navHandle, navHandle, gestureState);
+    }
+
+    public NavHandleLongPressInputConsumer(
+            Context context,
+            InputConsumer delegate,
+            InputMonitorCompat inputMonitor,
+            RecentsAnimationDeviceState deviceState,
+            NavHandle navHandle,
+            NavHandle momentTapReceiver,
             GestureState gestureState) {
         super(gestureState.getDisplayId(), delegate, inputMonitor);
         mScreenWidth = DisplayController.INSTANCE.get(context).getInfo().currentSize.x;
@@ -121,6 +140,7 @@ public class NavHandleLongPressInputConsumer extends DelegateInputConsumer {
         mTouchSlopSquaredOriginal = mTouchSlopSquared;
 
         mGestureState = gestureState;
+        mMomentTargetTaskId = gestureState.getTopRunningTaskId();
         mGestureState.setIsInExtendedSlopRegion(false);
         if (DEBUG_NAV_HANDLE) {
             Log.d(TAG, "mLongPressTimeout=" + mLongPressTimeout);
@@ -129,6 +149,8 @@ public class NavHandleLongPressInputConsumer extends DelegateInputConsumer {
             Log.d(TAG, "mOuterTouchSlopSquared=" + mOuterTouchSlopSquared);
         }
         mNavHandle = navHandle;
+        mMomentTapReceiver = momentTapReceiver;
+        mCanLongPress = navHandle.canNavHandleBeLongPressed();
         mNavHandleWidth = navHandle.getNavHandleWidth(context);
         mNavHandleLongPressHandler = NavHandleLongPressHandler.newInstance(context);
         mStatsLogManager = StatsLogManager.newInstance(context);
@@ -148,7 +170,9 @@ public class NavHandleLongPressInputConsumer extends DelegateInputConsumer {
         mCurrentMotionEvent = MotionEvent.obtain(ev);
         if (mDelegate.allowInterceptByParent()) {
             handleMotionEvent(ev);
-        } else if (MAIN_EXECUTOR.getHandler().hasCallbacks(mTriggerLongPress)) {
+        } else if (mTapCandidate) {
+            mTapCandidate = false;
+            mMomentTapReceiver.onNavHandleTapCancelled(getDisplayId());
             cancelLongPress(CANCEL_REASON_INTERCEPT_DISALLOWED);
         }
 
@@ -165,6 +189,8 @@ public class NavHandleLongPressInputConsumer extends DelegateInputConsumer {
     @Override
     public void onConsumerAboutToBeSwitched() {
         super.onConsumerAboutToBeSwitched();
+        mTapCandidate = false;
+        mMomentTapReceiver.onNavHandleTapCancelled(getDisplayId());
         if (MAIN_EXECUTOR.getHandler().hasCallbacks(mTriggerLongPress)) {
             cancelLongPress(CANCEL_REASON_INPUT_CONSUMER_SWITCHED);
         }
@@ -180,16 +206,27 @@ public class NavHandleLongPressInputConsumer extends DelegateInputConsumer {
                 mTouchSlopSquared = mTouchSlopSquaredOriginal;
                 mGestureState.setIsInExtendedSlopRegion(false);
                 mDeepPressLogged = false;
-                if (isInNavBarHorizontalArea(ev.getRawX())) {
+                mTouchStartedInNavHandle = isInNavBarHorizontalArea(ev.getRawX());
+                mTapCandidate = mTouchStartedInNavHandle;
+                if (mTouchStartedInNavHandle) {
                     mNavHandleLongPressHandler.onTouchStarted(mNavHandle);
-                    MAIN_EXECUTOR.getHandler().postDelayed(mTriggerLongPress, mLongPressTimeout);
+                    if (mCanLongPress) {
+                        MAIN_EXECUTOR.getHandler().postDelayed(mTriggerLongPress, mLongPressTimeout);
+                    }
+                } else {
+                    mMomentTapReceiver.onNavHandleTapCancelled(getDisplayId());
+                }
+                if (SystemProperties.getBoolean(MOMENT_DEBUG_PROPERTY, false)) {
+                    Log.d(MOMENT_DEBUG_TAG, "down display=" + getDisplayId()
+                            + " inHandle=" + mTouchStartedInNavHandle
+                            + " longPress=" + mCanLongPress);
                 }
                 if (DEBUG_NAV_HANDLE) {
                     Log.d(TAG, "ACTION_DOWN");
                 }
             }
             case MotionEvent.ACTION_MOVE -> {
-                if (!MAIN_EXECUTOR.getHandler().hasCallbacks(mTriggerLongPress)) {
+                if (!mTapCandidate) {
                     break;
                 }
 
@@ -199,7 +236,7 @@ public class NavHandleLongPressInputConsumer extends DelegateInputConsumer {
                 if (DEBUG_NAV_HANDLE) {
                     Log.d(TAG, "ACTION_MOVE distanceSquared=" + distanceSquared);
                 }
-                if (DeviceConfigWrapper.get().getEnableLpnhTwoStages()) {
+                if (mCanLongPress && DeviceConfigWrapper.get().getEnableLpnhTwoStages()) {
                     if (mTouchSlopSquared < distanceSquared
                             && distanceSquared <= mOuterTouchSlopSquared) {
                         MAIN_EXECUTOR.getHandler().removeCallbacks(mTriggerLongPress);
@@ -217,11 +254,28 @@ public class NavHandleLongPressInputConsumer extends DelegateInputConsumer {
                     if (DEBUG_NAV_HANDLE) {
                         Log.d(TAG, "Touch slop out. mTouchSlopSquared=" + mTouchSlopSquared);
                     }
+                    mTapCandidate = false;
+                    mMomentTapReceiver.onNavHandleTapCancelled(getDisplayId());
                     cancelLongPress(CANCEL_REASON_TOUCH_SLOP_PASSED);
                 }
             }
-            case MotionEvent.ACTION_UP -> cancelLongPress(CANCEL_REASON_TOUCH_UP);
-            case MotionEvent.ACTION_CANCEL -> cancelLongPress(CANCEL_REASON_TOUCH_CANCEL);
+            case MotionEvent.ACTION_UP -> {
+                if (mTapCandidate) {
+                    mMomentTapReceiver.onNavHandleTap(ev.getEventTime(), getDisplayId(),
+                            mMomentTargetTaskId);
+                    if (SystemProperties.getBoolean(MOMENT_DEBUG_PROPERTY, false)) {
+                        Log.d(MOMENT_DEBUG_TAG, "tap display=" + getDisplayId()
+                                + " taskId=" + mMomentTargetTaskId);
+                    }
+                }
+                mTapCandidate = false;
+                cancelLongPress(CANCEL_REASON_TOUCH_UP);
+            }
+            case MotionEvent.ACTION_CANCEL -> {
+                mTapCandidate = false;
+                mMomentTapReceiver.onNavHandleTapCancelled(getDisplayId());
+                cancelLongPress(CANCEL_REASON_TOUCH_CANCEL);
+            }
         }
 
         // If the gesture is deep press then trigger long press asap
@@ -248,6 +302,8 @@ public class NavHandleLongPressInputConsumer extends DelegateInputConsumer {
         if (DEBUG_NAV_HANDLE) {
             Log.d(TAG, "triggerLongPress");
         }
+        mTapCandidate = false;
+        mMomentTapReceiver.onNavHandleTapCancelled(getDisplayId());
         String runningPackage = mTopTaskTracker.getCachedTopTask(
                 /* filterOnlyVisibleRecents */ true, getDisplayId()).getPackageName();
         mStatsLogManager.logger().withPackageName(runningPackage).log(

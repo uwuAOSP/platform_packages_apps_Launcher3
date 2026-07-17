@@ -16,6 +16,8 @@
 package com.android.quickstep
 
 import android.content.Context
+import android.os.SystemProperties
+import android.util.Log
 import android.view.InputDevice
 import android.view.MotionEvent
 import androidx.annotation.VisibleForTesting
@@ -56,6 +58,8 @@ import java.util.function.Function
 
 /** Utility class for creating input consumers. */
 object InputConsumerUtils {
+    private const val MOMENT_DEBUG_PROPERTY = "persist.debug.wm.moment"
+    private const val MOMENT_DEBUG_TAG = "MomentNavHandle"
     private const val SUBSTRING_PREFIX = "; "
     private const val NEWLINE_PREFIX = "\n\t\t\t-> "
 
@@ -274,10 +278,21 @@ object InputConsumerUtils {
             }
 
             val navHandle = tac?.navHandle ?: SystemUiProxy.INSTANCE[context]
+            val momentTapReceiver = SystemUiProxy.INSTANCE[context]
+            if (SystemProperties.getBoolean(MOMENT_DEBUG_PROPERTY, false)) {
+                Log.d(
+                    MOMENT_DEBUG_TAG,
+                    "selection display=${gestureState.displayId} canStart=$canStartSystemGesture " +
+                        "recents=${previousGestureState.isRecentsAnimationRunning} " +
+                        "longPress=${navHandle.canNavHandleBeLongPressed()} " +
+                        "trackpadIgnored=${ignoreThreeFingerTrackpadForNavHandleLongPress(gestureState)}",
+                )
+            }
             if (
                 canStartSystemGesture &&
                     !previousGestureState.isRecentsAnimationRunning &&
-                    navHandle.canNavHandleBeLongPressed() &&
+                    // Keep receiving taps even when the device does not support nav-handle
+                    // long press. The consumer also owns Moment double-tap detection.
                     !ignoreThreeFingerTrackpadForNavHandleLongPress(gestureState)
             ) {
                 reasonString.append(
@@ -286,10 +301,17 @@ object InputConsumerUtils {
                     reasonPrefix,
                     SUBSTRING_PREFIX,
                 )
-                if (tac != null && tac.navHandle.canNavHandleBeLongPressed()) {
+                if (navHandle.canNavHandleBeLongPressed()) {
                     reasonString.append("stashed handle is long-pressable, ")
                 }
                 reasonString.append("using NavHandleLongPressInputConsumer")
+                if (SystemProperties.getBoolean(MOMENT_DEBUG_PROPERTY, false)) {
+                    Log.d(
+                        MOMENT_DEBUG_TAG,
+                        "install display=${gestureState.displayId} " +
+                            "longPress=${navHandle.canNavHandleBeLongPressed()}",
+                    )
+                }
                 base =
                     NavHandleLongPressInputConsumer(
                         context,
@@ -297,6 +319,7 @@ object InputConsumerUtils {
                         inputMonitorCompat,
                         deviceState,
                         navHandle,
+                        momentTapReceiver,
                         gestureState,
                     )
             }

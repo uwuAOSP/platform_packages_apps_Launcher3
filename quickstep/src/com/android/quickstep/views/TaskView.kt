@@ -23,7 +23,7 @@ import android.annotation.IdRes
 import android.app.ActivityOptions
 import android.app.ActivityTaskManager.INVALID_TASK_ID
 import android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN
-import android.app.WindowConfiguration.WINDOWING_MODE_MINI_WINDOW_EXT
+import android.app.WindowConfiguration.WINDOWING_MODE_MOMENT
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.PointF
@@ -1675,20 +1675,9 @@ constructor(
         val opts =
             ActivityOptions.makeBasic().apply {
                 launchDisplayId = displayId
-                launchWindowingMode = WINDOWING_MODE_MINI_WINDOW_EXT
+                launchWindowingMode = WINDOWING_MODE_MOMENT
                 setLaunchTaskId(firstTaskContainer.task.key.id)
                 disableStartingWindow = firstTaskContainer.shouldShowSplashView
-                if (
-                    popUpLaunchAnchorX != INVALID_POP_UP_LAUNCH_POSITION &&
-                        popUpLaunchAnchorY != INVALID_POP_UP_LAUNCH_POSITION &&
-                        !popUpLaunchProgress.isNaN()
-                ) {
-                    setPopUpViewLaunchPoint(
-                        popUpLaunchAnchorX,
-                        popUpLaunchAnchorY,
-                        popUpLaunchProgress,
-                    )
-                }
             }
         Executors.UI_HELPER_EXECUTOR.execute {
             Log.d(

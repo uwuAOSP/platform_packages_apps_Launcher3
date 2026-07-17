@@ -31,6 +31,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Message
 import android.os.RemoteException
+import android.os.SystemProperties
 import android.os.Trace
 import android.os.Trace.traceBegin
 import android.os.Trace.traceEnd
@@ -42,6 +43,7 @@ import android.view.MotionEvent
 import android.view.RemoteAnimationTarget
 import android.view.SurfaceControl
 import android.view.SurfaceControl.Transaction
+import android.view.ViewConfiguration
 import android.window.DesktopExperienceFlags
 import android.window.DesktopModeFlags.ENABLE_DESKTOP_WINDOWING_TASKBAR_RUNNING_APPS
 import android.window.IOnBackInvokedCallback
@@ -126,6 +128,9 @@ class SystemUiProxy @Inject constructor(
 ) : NavHandle {
 
     private var systemUiProxy: ISystemUiProxy? = null
+    private var lastNavHandleTapTime = 0L
+    private var lastNavHandleTapDisplayId = -1
+    private var lastNavHandleTapTaskId = INVALID_TASK_ID
     private var pip: IPip? = null
     private var bubbles: IBubbles? = null
     private var sysuiUnlockAnimationController: ISysuiUnlockAnimationController? = null
@@ -441,6 +446,48 @@ class SystemUiProxy @Inject constructor(
         executeWithErrorLog({ "Failed call animateNavBarLongPress" }) {
             systemUiProxy?.animateNavBarLongPress(isTouchDown, shrink, durationMs)
         }
+
+    override fun onNavHandleTap(eventTime: Long, displayId: Int, taskId: Int) {
+        if (SystemProperties.getBoolean(MOMENT_DEBUG_PROPERTY, false)) {
+            Log.d(
+                TAG,
+                "tap display=$displayId taskId=$taskId eventTime=$eventTime " +
+                    "previousDisplay=$lastNavHandleTapDisplayId",
+            )
+        }
+        if (displayId == lastNavHandleTapDisplayId &&
+            taskId == lastNavHandleTapTaskId &&
+            eventTime - lastNavHandleTapTime <= ViewConfiguration.getDoubleTapTimeout()
+        ) {
+            lastNavHandleTapTime = 0L
+            lastNavHandleTapDisplayId = -1
+            lastNavHandleTapTaskId = INVALID_TASK_ID
+            executeWithErrorLog({ "Failed call onNavHandleDoubleTap" }) {
+                if (SystemProperties.getBoolean(MOMENT_DEBUG_PROPERTY, false)) {
+                    Log.d(TAG, "double tap display=$displayId -> SystemUI")
+                }
+                systemUiProxy?.onNavHandleDoubleTap(displayId, taskId)
+            }
+        } else {
+            lastNavHandleTapTime = eventTime
+            lastNavHandleTapDisplayId = displayId
+            lastNavHandleTapTaskId = taskId
+        }
+    }
+
+    override fun onNavHandleTapCancelled(displayId: Int) {
+        if (SystemProperties.getBoolean(MOMENT_DEBUG_PROPERTY, false)) {
+            Log.d(
+                TAG,
+                "tap cancelled display=$displayId pendingDisplay=$lastNavHandleTapDisplayId",
+            )
+        }
+        if (displayId == lastNavHandleTapDisplayId) {
+            lastNavHandleTapTime = 0L
+            lastNavHandleTapDisplayId = -1
+            lastNavHandleTapTaskId = INVALID_TASK_ID
+        }
+    }
 
     fun setOverrideHomeButtonLongPress(duration: Long, slopMultiplier: Float, haptic: Boolean) =
         executeWithErrorLog({ "Failed call setOverrideHomeButtonLongPress" }) {
@@ -1505,6 +1552,7 @@ class SystemUiProxy @Inject constructor(
 
     companion object {
         private const val TAG = "SystemUiProxy"
+        private const val MOMENT_DEBUG_PROPERTY = "persist.debug.wm.moment"
 
         @JvmField val INSTANCE = DaggerSingletonObject(LauncherAppComponent::getSystemUiProxy)
 
