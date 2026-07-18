@@ -78,6 +78,8 @@ class TaskbarNavLayoutter(
         navButtonContainer.orientation = LinearLayout.HORIZONTAL
         navButtonContainer.layoutParams = navButtonParams
 
+        addThreeButtons()
+
         // Add the spaces in between the nav buttons
         val spaceInBetween = resources.getDimensionPixelSize(R.dimen.taskbar_button_space_inbetween)
         for (i in 0 until navButtonContainer.childCount) {
