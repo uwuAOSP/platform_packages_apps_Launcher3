@@ -153,6 +153,10 @@
     <string name="pref_navigation_bar_hint_summary">"在启动器任务栏中显示底部手势横条"</string>
     <string name="pref_enable_smartspacer_title">"在主屏幕显示 Smartspacer"</string>
     <string name="pref_enable_smartspacer_summary">"用 Smartspacer 替换首页顶部状态区域"</string>
+    <string name="pref_show_at_a_glance_title">"显示 At a Glance"</string>
+    <string name="pref_show_at_a_glance_summary">"在首个主屏幕顶部显示 At a Glance 组件"</string>
+    <string name="pref_show_search_bar_title">"显示搜索栏"</string>
+    <string name="pref_show_search_bar_summary">"在主屏幕底部显示 Google 搜索栏"</string>
     <string name="pref_popup_view_gesture_enabled_title">"小窗手势"</string>
     <string name="pref_popup_view_gesture_enabled_summary">"在最近任务手势中继续上滑，将当前应用以小窗打开"</string>
     <string name="pref_blur_background_at_app_launch_title">"动画背景模糊"</string>

@@ -315,6 +315,14 @@ constructor(@ApplicationContext private val encryptedContext: Context) {
             backedUpItem(SettingsActivity.SMARTSPACER_PREFERENCE_KEY, false)
 
         @JvmField
+        val SHOW_AT_A_GLANCE =
+            backedUpItem(SettingsActivity.SHOW_AT_A_GLANCE_PREFERENCE_KEY, true)
+
+        @JvmField
+        val SHOW_SEARCH_BAR =
+            backedUpItem(SettingsActivity.SHOW_SEARCH_BAR_PREFERENCE_KEY, true)
+
+        @JvmField
         val POPUP_VIEW_GESTURE_ENABLED = backedUpItem("pref_popup_view_gesture_enabled", false)
 
         @JvmField

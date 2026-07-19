@@ -422,7 +422,7 @@ public class Launcher extends StatefulActivity<LauncherState>
 
     private final SettingsCache.OnChangeListener mNaturalScrollingChangedListener =
             enabled -> mIsNaturalScrollingEnabled = enabled;
-    private final LauncherPrefChangeListener mSmartspacerChangedListener = key -> recreate();
+    private final LauncherPrefChangeListener mLayoutPreferenceChangedListener = key -> recreate();
 
     private StartupLatencyLogger mStartupLatencyLogger;
 
@@ -455,8 +455,10 @@ public class Launcher extends StatefulActivity<LauncherState>
         initDeviceProfile(idp);
         idp.addOnChangeListener(this);
         mSharedPrefs = LauncherPrefs.getPrefs(this);
-        LauncherPrefs.get(this).addListener(
-                mSmartspacerChangedListener, LauncherPrefs.SMARTSPACER_ENABLED);
+        LauncherPrefs.get(this).addListener(mLayoutPreferenceChangedListener,
+                LauncherPrefs.SMARTSPACER_ENABLED,
+                LauncherPrefs.SHOW_AT_A_GLANCE,
+                LauncherPrefs.SHOW_SEARCH_BAR);
         mAccessibilityDelegate = createAccessibilityDelegate();
 
         initDragController();
@@ -729,7 +731,9 @@ public class Launcher extends StatefulActivity<LauncherState>
      */
     protected boolean initDeviceProfile(InvariantDeviceProfile idp) {
         // Load configuration-specific DeviceProfile
-        DeviceProfile deviceProfile = idp.getDeviceProfile(this);
+        // DeviceProfile contains QSB layout dimensions, which depend on Launcher preferences.
+        // Build a fresh profile so preference changes are not masked by IDP's cached profile.
+        DeviceProfile deviceProfile = idp.getDeviceProfile(this).copy();
         if (mDeviceProfile == deviceProfile) {
             return false;
         }
@@ -1731,8 +1735,10 @@ public class Launcher extends StatefulActivity<LauncherState>
 
         mModel.removeCallbacks(this);
         mRotationHelper.destroy();
-        LauncherPrefs.get(this).removeListener(
-                mSmartspacerChangedListener, LauncherPrefs.SMARTSPACER_ENABLED);
+        LauncherPrefs.get(this).removeListener(mLayoutPreferenceChangedListener,
+                LauncherPrefs.SMARTSPACER_ENABLED,
+                LauncherPrefs.SHOW_AT_A_GLANCE,
+                LauncherPrefs.SHOW_SEARCH_BAR);
 
         mAppWidgetHolder.stopListening();
         mAppWidgetHolder.destroy();

@@ -56,6 +56,7 @@ data class HotseatProfile(
             isTaskbarPresent: Boolean,
             shouldApplyWidePortraitDimens: Boolean,
             isVerticalBarLayout: Boolean,
+            showSearchBar: Boolean,
             responsiveHotseatSpec: CalculatedHotseatSpec?,
             workspacePageIndicatorHeight: Int,
         ): HotseatProfile {
@@ -88,8 +89,10 @@ data class HotseatProfile(
             val hotseatBarWorkspaceSpacePx =
                 if (responsiveHotseatSpec != null) 0
                 else res.getDimensionPixelSize(R.dimen.dynamic_grid_hotseat_side_padding)
-            val hotseatQsbHeight = res.getDimensionPixelSize(R.dimen.qsb_widget_height)
-            val hotseatQsbShadowHeight = res.getDimensionPixelSize(R.dimen.qsb_shadow_height)
+            val hotseatQsbHeight =
+                if (showSearchBar) res.getDimensionPixelSize(R.dimen.qsb_widget_height) else 0
+            val hotseatQsbShadowHeight =
+                if (showSearchBar) res.getDimensionPixelSize(R.dimen.qsb_shadow_height) else 0
 
             return HotseatProfile(
                 areNavButtonsInline = areNavButtonsInline,

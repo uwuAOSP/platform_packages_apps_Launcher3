@@ -41,6 +41,20 @@
             android:persistent="true" />
 
         <SwitchPreferenceCompat
+            android:key="pref_show_at_a_glance"
+            android:title="@string/pref_show_at_a_glance_title"
+            android:summary="@string/pref_show_at_a_glance_summary"
+            android:defaultValue="true"
+            android:persistent="true" />
+
+        <SwitchPreferenceCompat
+            android:key="pref_show_search_bar"
+            android:title="@string/pref_show_search_bar_title"
+            android:summary="@string/pref_show_search_bar_summary"
+            android:defaultValue="true"
+            android:persistent="true" />
+
+        <SwitchPreferenceCompat
             android:defaultValue="true"
             android:key="pref_enable_minus_one"
             android:summary="@string/pref_show_google_now_summary"

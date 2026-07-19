@@ -106,6 +106,7 @@ public class DeviceProfile {
     // Device properties
 
     private final DeviceProperties mDeviceProperties;
+    private final boolean mShowSearchBar;
 
     public boolean isPredictiveBackSwipe;
     public final boolean isQsbInline;
@@ -208,6 +209,7 @@ public class DeviceProfile {
                 false,
                 false
         );
+        mShowSearchBar = false;
         mBottomSheetProfile = new BottomSheetProfile(0, 0, 0, 0f, 0f);
         overviewProfile = new OverviewProfile(
                 0,
@@ -326,6 +328,7 @@ public class DeviceProfile {
 
         numShownAllAppsColumns = displayOptionSpec.numAllAppsColumns;
 
+        mShowSearchBar = LauncherPrefs.get(context).get(LauncherPrefs.SHOW_SEARCH_BAR);
         int hotseatBarBottomSpace;
         int minQsbMargin = res.getDimensionPixelSize(R.dimen.min_qsb_margin);
 
@@ -341,7 +344,7 @@ public class DeviceProfile {
                             mDeviceProperties.getWidthPx())
                             : hotseatSpecsProvider.getCalculatedSpec(responsiveAspectRatio,
                                     DimensionType.HEIGHT, mDeviceProperties.getHeightPx());
-            hotseatQsbSpace = mResponsiveHotseatSpec.getHotseatQsbSpace();
+            hotseatQsbSpace = mShowSearchBar ? mResponsiveHotseatSpec.getHotseatQsbSpace() : 0;
             hotseatBarBottomSpace =
                     isVerticalBarLayout() ? 0 : mResponsiveHotseatSpec.getEdgePadding();
 
@@ -350,7 +353,8 @@ public class DeviceProfile {
             mResponsiveWorkspaceCellSpec = workspaceCellSpecs.getCalculatedSpec(
                     responsiveAspectRatio, mDeviceProperties.getHeightPx());
         } else {
-            hotseatQsbSpace = pxFromDp(inv.hotseatQsbSpace[mTypeIndex], mMetrics);
+            hotseatQsbSpace = mShowSearchBar
+                    ? pxFromDp(inv.hotseatQsbSpace[mTypeIndex], mMetrics) : 0;
             hotseatBarBottomSpace = pxFromDp(inv.hotseatBarBottomSpace[mTypeIndex], mMetrics);
         }
 
@@ -361,6 +365,7 @@ public class DeviceProfile {
                 isTaskbarPresent,
                 shouldApplyWidePortraitDimens,
                 isVerticalBarLayout(),
+                mShowSearchBar,
                 mResponsiveHotseatSpec,
                 // TODO(431261051) HotseatProfile is calculated before the WorkspaceProfile hence
                 //  this variable needs to be manually set here. A better way to handle this is
@@ -369,7 +374,7 @@ public class DeviceProfile {
         );
 
         // Whether QSB might be inline in appropriate orientation (e.g. landscape).
-        isQsbInline = isQsbInline(
+        isQsbInline = mShowSearchBar && isQsbInline(
                 inv,
                 hotseatProfile,
                 mDeviceProperties,
@@ -681,10 +686,9 @@ public class DeviceProfile {
             hotseatBarSizePx = max(hotseatIconSizePx, getHotseatProfile().getQsbHeight())
                     + hotseatBarBottomSpacePx;
         } else {
-            hotseatBarSizePx = hotseatIconSizePx
-                    + hotseatQsbSpace
-                    + getHotseatProfile().getQsbVisualHeight()
-                    + hotseatBarBottomSpacePx;
+            hotseatBarSizePx = hotseatIconSizePx + hotseatBarBottomSpacePx
+                    + (mShowSearchBar
+                    ? hotseatQsbSpace + getHotseatProfile().getQsbVisualHeight() : 0);
         }
     }
 

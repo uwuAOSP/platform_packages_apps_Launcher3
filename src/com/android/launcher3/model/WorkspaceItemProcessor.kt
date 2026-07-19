@@ -648,7 +648,7 @@ class WorkspaceItemProcessor(
             ArrayList(loadedItems.filter { it.container == Favorites.CONTAINER_DESKTOP })
         val excludedScreens = IntSet()
 
-        if (firstPagePinnedItemEnabled()) {
+        if (firstPagePinnedItemEnabled(context)) {
             // Reserve layout space for the fixed first page item. This is not required when
             // [Flags.FLAG_INJECTABLE_MODEL_ITEMS] is enabled as injected items will already be
             // accounted for in [knownDesktopContainerItems].

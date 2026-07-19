@@ -203,6 +203,10 @@
     <string name="all_apps_list_label">Apps list</string>
     <string name="google_folder_title" translatable="false">Google</string>
     <string name="pref_category_home_screen">Home screen</string>
+    <string name="pref_show_at_a_glance_title">Show At a Glance</string>
+    <string name="pref_show_at_a_glance_summary">Show the status widget at the top of the first home screen</string>
+    <string name="pref_show_search_bar_title">Show search bar</string>
+    <string name="pref_show_search_bar_summary">Show the Google search bar in the hotseat</string>
     <string name="pref_category_appearance">Appearance</string>
     <string name="pref_category_gestures">Gestures</string>
     <string name="pref_category_layout">Layout</string>

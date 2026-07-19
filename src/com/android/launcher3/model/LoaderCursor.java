@@ -638,7 +638,7 @@ public class LoaderCursor extends CursorWrapper {
 
         if (!mOccupied.containsKey(item.screenId)) {
             GridOccupancy screen = new GridOccupancy(countX + 1, countY + 1);
-            if (firstPagePinnedItemEnabled() && item.screenId == Workspace.FIRST_SCREEN_ID) {
+            if (firstPagePinnedItemEnabled(mContext) && item.screenId == Workspace.FIRST_SCREEN_ID) {
                 // Reserve the first row on screen 0 for the fixed pinned item.
                 int spanX = mIDP.numColumns;
                 int spanY = 1;
