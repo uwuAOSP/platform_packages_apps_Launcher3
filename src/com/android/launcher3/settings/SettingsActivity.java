@@ -83,6 +83,10 @@ public class SettingsActivity extends CollapsingToolbarBaseActivity
     private static final String NOTIFICATION_DOTS_PREFERENCE_KEY = "pref_icon_badging";
     private static final String NAVIGATION_BAR_HINT_PREFERENCE_KEY = "navigation_bar_hint";
     private static final String ALLAPPS_THEMED_ICONS_PREFERENCE_KEY = "pref_allapps_themed_icons";
+    private static final String POPUP_VIEW_GESTURE_ENABLED_PREFERENCE_KEY =
+            "pref_popup_view_gesture_enabled";
+    private static final String POPUP_VIEW_GESTURE_THRESHOLD_PREFERENCE_KEY =
+            "pref_popup_view_gesture_threshold";
     private static final Uri NAVIGATION_BAR_HINT_URI =
             Settings.Secure.getUriFor(NAVIGATION_BAR_HINT);
 
@@ -376,6 +380,9 @@ public class SettingsActivity extends CollapsingToolbarBaseActivity
                     });
                     updateThemeAllAppsIconsPref();
                     return true;
+                case POPUP_VIEW_GESTURE_ENABLED_PREFERENCE_KEY:
+                case POPUP_VIEW_GESTURE_THRESHOLD_PREFERENCE_KEY:
+                    return !info.isTablet(info.realBounds);
                 case FIXED_LANDSCAPE_MODE:
                     if (!Flags.oneGridSpecs()
                             // adding this condition until fixing b/378972567

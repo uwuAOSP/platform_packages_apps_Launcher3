@@ -82,6 +82,10 @@ class LauncherSearchIndexablesProvider : SearchIndexablesProvider() {
         } else {
             cursor.addRow(arrayOf(FIXED_LANDSCAPE_KEY))
         }
+        if (isDeviceTablet()) {
+            cursor.addRow(arrayOf(POPUP_VIEW_GESTURE_ENABLED_KEY))
+            cursor.addRow(arrayOf(POPUP_VIEW_GESTURE_THRESHOLD_KEY))
+        }
         if (!context!!.getSystemService(LauncherApps::class.java)?.hasShortcutHostPermission()!!) {
             // We are not the current launcher. Hide all preferences
             try {
@@ -113,5 +117,7 @@ class LauncherSearchIndexablesProvider : SearchIndexablesProvider() {
     companion object {
         private const val ALLOW_ROTATION_KEY = "pref_allowRotation"
         private const val FIXED_LANDSCAPE_KEY = "pref_fixed_landscape_mode"
+        private const val POPUP_VIEW_GESTURE_ENABLED_KEY = "pref_popup_view_gesture_enabled"
+        private const val POPUP_VIEW_GESTURE_THRESHOLD_KEY = "pref_popup_view_gesture_threshold"
     }
 }

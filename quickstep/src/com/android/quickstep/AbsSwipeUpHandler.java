@@ -2748,7 +2748,9 @@ public abstract class AbsSwipeUpHandler<
     }
 
     private boolean isPopUpGestureEnabled() {
-        return LauncherPrefs.get(mContext).get(LauncherPrefs.POPUP_VIEW_GESTURE_ENABLED);
+        DisplayController.Info info = DisplayController.INSTANCE.get(mContext).getInfo();
+        return !info.isTablet(info.realBounds)
+                && LauncherPrefs.get(mContext).get(LauncherPrefs.POPUP_VIEW_GESTURE_ENABLED);
     }
 
     private void clearPopUpGestureState(boolean animated) {
