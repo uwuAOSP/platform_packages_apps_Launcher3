@@ -62,6 +62,8 @@ import com.android.launcher3.deviceprofile.parser.GridOption;
 import com.android.launcher3.display.DisplayController;
 import com.android.launcher3.display.LauncherDisplayInfo;
 import com.android.launcher3.graphics.ThemeManager;
+import com.android.launcher3.grid.GridSizeOverrides;
+import com.android.launcher3.grid.GridSizeOverrides.GridSize;
 import com.android.launcher3.logging.FileLog;
 import com.android.launcher3.model.DeviceGridState;
 import com.android.launcher3.testing.shared.ResourceUtils;
@@ -314,9 +316,13 @@ public class InvariantDeviceProfile {
 
     private void initGrid(String gridName) {
         LauncherDisplayInfo displayInfo = mDisplayController.getInfo();
+        // A user-configured column count takes precedence over the persisted grid name: when set,
+        // we ignore GRID_NAME and select a profile purely by column count.
+        int customColumns = mPrefs.get(LauncherPrefs.WORKSPACE_COLUMNS);
+        String effectiveGridName = customColumns >= 0 ? null : gridName;
         List<DisplayOption> allOptions = getPredefinedDeviceProfiles(
                 displayInfo,
-                gridName,
+                effectiveGridName,
                 mPrefs.get(FIXED_LANDSCAPE_MODE)
         );
 
@@ -329,10 +335,12 @@ public class InvariantDeviceProfile {
                         .collect(Collectors.toList())
         );
 
-        // Filter out options that don't have the same number of columns as the grid
+        // Filter out options that don't have the same number of columns as the grid. A
+        // user-configured column count takes precedence over the device grid state.
         DeviceGridState deviceGridState = new DeviceGridState(mPrefs);
+        int filterColumns = customColumns >= 0 ? customColumns : deviceGridState.getColumns();
         List<DisplayOption> allOptionsFilteredByColCount =
-                filterByColumnCount(allOptions, deviceGridState.getColumns());
+                filterByColumnCount(allOptions, filterColumns);
 
         DisplayOption displayOption =
                 invDistWeightedInterpolate(displayInfo, allOptionsFilteredByColCount.isEmpty()
@@ -340,7 +348,7 @@ public class InvariantDeviceProfile {
                                 : new ArrayList<>(allOptionsFilteredByColCount),
                         displayInfo.getDeviceType());
 
-        if (!displayOption.grid.name.equals(gridName)) {
+        if (customColumns < 0 && !displayOption.grid.name.equals(gridName)) {
             mPrefs.put(GRID_NAME, displayOption.grid.name);
         }
 
@@ -378,10 +386,14 @@ public class InvariantDeviceProfile {
 
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
         GridOption closestProfile = displayOption.grid;
-        numRows = closestProfile.numRows;
-        numColumns = closestProfile.numColumns;
-        numSearchContainerColumns = closestProfile.numSearchContainerColumns;
-        dbFile = closestProfile.dbFile;
+        int deviceType = displayInfo.getDeviceType();
+        GridSizeOverrides gridSizeOverrides = GridSizeOverrides.get(context);
+        GridSize gridSize = gridSizeOverrides.getGridSize(closestProfile);
+        numRows = gridSize.getNumRows();
+        numColumns = gridSize.getNumColumns();
+        numSearchContainerColumns = deviceType == TYPE_MULTI_DISPLAY
+                ? closestProfile.numSearchContainerColumns : gridSize.getNumHotseatColumns();
+        dbFile = gridSize.getDbFile();
         gridType = closestProfile.gridType;
         defaultLayoutId = closestProfile.defaultLayoutId;
 
@@ -408,19 +420,12 @@ public class InvariantDeviceProfile {
         numAllAppsRowsForCellHeightCalculation =
                 closestProfile.numAllAppsRowsForCellHeightCalculation;
         appListAlignedWithWorkspaceRow = closestProfile.allAppsAlignedWithWorkspaceRow;
-        this.deviceType = displayInfo.getDeviceType();
+        this.deviceType = deviceType;
         this.displayInfo = displayInfo;
 
         inlineNavButtonsEndSpacing = closestProfile.inlineNavButtonsEndSpacing;
 
         iconSize = displayOption.iconSizes;
-        float maxIconSize = iconSize[0];
-        for (int i = 1; i < iconSize.length; i++) {
-            maxIconSize = Math.max(maxIconSize, iconSize[i]);
-        }
-        iconBitmapSize = ResourceUtils.pxFromDp(maxIconSize, metrics);
-
-        fillResIconDpi = getLauncherIconDensity(iconBitmapSize);
 
         iconTextSize = displayOption.textSizes;
 
@@ -430,9 +435,10 @@ public class InvariantDeviceProfile {
 
         horizontalMargin = displayOption.horizontalMargin;
 
-        numShownHotseatIcons = closestProfile.numHotseatIcons;
+        numShownHotseatIcons = deviceType == TYPE_MULTI_DISPLAY
+                ? closestProfile.numHotseatIcons : gridSize.getNumHotseatColumns();
         numDatabaseHotseatIcons = deviceType == TYPE_MULTI_DISPLAY || deviceType == TYPE_DESKTOP
-                ? closestProfile.numDatabaseHotseatIcons : closestProfile.numHotseatIcons;
+                ? closestProfile.numDatabaseHotseatIcons : numShownHotseatIcons;
 
         hotseatBarBottomSpace = displayOption.hotseatBarBottomSpace;
         hotseatQsbSpace = displayOption.hotseatQsbSpace;
@@ -461,6 +467,17 @@ public class InvariantDeviceProfile {
         // If the partner customization apk contains any grid overrides, apply them
         // Supported overrides: numRows, numColumns, iconSize
         applyPartnerDeviceProfileOverrides(context, metrics);
+
+        // Apply user-configurable grid overrides (drawer columns, folder size, icon size, dock).
+        gridSizeOverrides.applyOverrides(this, closestProfile);
+
+        float maxIconSize = iconSize[0];
+        for (int i = 1; i < iconSize.length; i++) {
+            maxIconSize = Math.max(maxIconSize, iconSize[i]);
+        }
+        iconBitmapSize = ResourceUtils.pxFromDp(maxIconSize, metrics);
+
+        fillResIconDpi = getLauncherIconDensity(iconBitmapSize);
 
         final List<DeviceProfile> localSupportedProfiles = new ArrayList<>();
         defaultWallpaperSize = new Point(displayInfo.currentSize);
@@ -530,6 +547,36 @@ public class InvariantDeviceProfile {
         mPrefs.put(GRID_NAME, newGridName);
         mMainExecutor.execute(() -> {
             Trace.beginSection("InvariantDeviceProfile#setCurrentGrid");
+            onConfigChanged();
+            Trace.endSection();
+        });
+    }
+
+    /**
+     * Updates the user-configurable grid size (rows, columns and hotseat columns). This triggers a
+     * new IDP, reloads the database and triggers a grid migration.
+     */
+    public void setGridSize(int rows, int columns, int hotseatColumns) {
+        mPrefs.put(LauncherPrefs.WORKSPACE_COLUMNS, columns);
+        mPrefs.put(LauncherPrefs.WORKSPACE_ROWS, rows);
+        mPrefs.put(LauncherPrefs.HOTSEAT_COLUMNS, hotseatColumns);
+        mMainExecutor.execute(() -> {
+            Trace.beginSection("InvariantDeviceProfile#setGridSize");
+            onConfigChanged();
+            Trace.endSection();
+        });
+    }
+
+    /**
+     * Clears the user-configured grid size, reverting to the predefined grid selected via
+     * {@link #setCurrentGrid}.
+     */
+    public void resetGridSize() {
+        mPrefs.put(LauncherPrefs.WORKSPACE_COLUMNS, -1);
+        mPrefs.put(LauncherPrefs.WORKSPACE_ROWS, -1);
+        mPrefs.put(LauncherPrefs.HOTSEAT_COLUMNS, -1);
+        mMainExecutor.execute(() -> {
+            Trace.beginSection("InvariantDeviceProfile#resetGridSize");
             onConfigChanged();
             Trace.endSection();
         });

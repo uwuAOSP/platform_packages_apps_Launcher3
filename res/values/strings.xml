@@ -432,6 +432,17 @@
     <!-- Title for Developer Options setting. [CHAR LIMIT=50] -->
     <string name="developer_options_title">Developer Options</string>
 
+    <!-- Title for the home screen grid size setting. [CHAR LIMIT=50] -->
+    <string name="home_screen_grid">Home screen grid</string>
+    <!-- Label for the grid columns slider. [CHAR LIMIT=50] -->
+    <string name="grid_columns">Columns</string>
+    <!-- Label for the grid rows slider. [CHAR LIMIT=50] -->
+    <string name="grid_rows">Rows</string>
+    <!-- Label for the dock icons slider. [CHAR LIMIT=50] -->
+    <string name="dock_icons">Dock icons</string>
+    <!-- Button text that applies the pending grid size change. [CHAR LIMIT=50] -->
+    <string name="action_apply">Apply</string>
+
     <!-- Label for the setting that allows the automatic placement of launcher shortcuts for applications and games installed on the device [CHAR LIMIT=60] -->
     <string name="auto_add_shortcuts_label">Add app icons to home screen</string>
     <!-- Text description of the setting that allows the automatic placement of launcher shortcuts for applications and games installed on the device [CHAR LIMIT=NONE] -->

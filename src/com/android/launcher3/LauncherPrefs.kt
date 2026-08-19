@@ -323,6 +323,48 @@ constructor(@ApplicationContext private val encryptedContext: Context) {
         @JvmField
         val WORKSPACE_ITEMS_LABEL_HIDDEN = backedUpItem("pref_workspace_items_label_hidden", false)
 
+        // Customizable grid size preferences. A value of -1 means "unset": fall back to the value
+        // defined by the selected device profile (GridOption).
+        @JvmField
+        val WORKSPACE_COLUMNS = backedUpItem("pref_workspace_columns", -1)
+
+        @JvmField
+        val WORKSPACE_ROWS = backedUpItem("pref_workspace_rows", -1)
+
+        @JvmField
+        val HOTSEAT_COLUMNS = backedUpItem("pref_hotseat_columns", -1)
+
+        @JvmField
+        val HOTSEAT_COLUMNS_UNFOLDED = backedUpItem("pref_hotseat_columns_unfolded", -1)
+
+        @JvmField
+        val HOTSEAT_ROWS = backedUpItem("pref_hotseat_rows", 1)
+
+        @JvmField
+        val DOCK_PAGES = backedUpItem("pref_dock_pages", 1)
+
+        @JvmField
+        val FOLDER_ROWS = backedUpItem("pref_folder_rows", -1)
+
+        @JvmField
+        val FOLDER_COLUMNS = backedUpItem("pref_folder_columns", -1)
+
+        @JvmField
+        val DRAWER_COLUMNS = backedUpItem("pref_drawer_columns", -1)
+
+        @JvmField
+        val DRAWER_COLUMNS_UNFOLDED = backedUpItem("pref_drawer_columns_unfolded", -1)
+
+        @JvmField
+        val HOME_ICON_SIZE_FACTOR = backedUpItem("pref_home_icon_size_factor", 1.0f)
+
+        @JvmField
+        val DRAWER_ICON_SIZE_FACTOR = backedUpItem("pref_drawer_icon_size_factor", 1.0f)
+
+        @JvmField
+        val DRAWER_ICON_TEXT_SIZE_FACTOR =
+            backedUpItem("pref_drawer_icon_text_size_factor", 1.0f)
+
         @JvmField
         val EXPANDED_POPUP_MENU_SECTION =
             backedUpItem("pref_expanded_popup_menu", ExpandedSection.SYSTEM)

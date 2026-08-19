@@ -41,7 +41,13 @@ sealed class GridMigrationOption(val columns: Int, val rows: Int) {
         // We check if the destination grid is a valid destination for the current grid, or if
         // we're in a restore scenario, in which case we allow any existing grid as a
         // destination.
-        return validDestinations.contains(destGridMigrationOption) || isAfterRestore
+        if (isAfterRestore) return true
+
+        // User-defined (Custom) grids use the generic cell-shifting migration algorithm, so any
+        // custom grid is a valid destination for any source grid (and vice versa).
+        if (this is Custom || destGridMigrationOption is Custom) return true
+
+        return validDestinations.contains(destGridMigrationOption)
     }
 
     private val validDestinations: List<GridMigrationOption>
@@ -57,6 +63,7 @@ sealed class GridMigrationOption(val columns: Int, val rows: Int) {
                 EightByThree,
                 SevenByThree -> validDestinationsForPhone
                 SixByFive -> validDestinationsForTablet
+                is Custom -> emptyList()
             }
 
     private val validDestinationsForPhone: List<GridMigrationOption>
@@ -96,7 +103,17 @@ sealed class GridMigrationOption(val columns: Int, val rows: Int) {
 
     data object SevenByThree : GridMigrationOption(columns = 7, rows = 3)
 
+    /**
+     * A user-defined grid size that isn't part of the predefined set above. These grids are
+     * migrated with the generic cell-shifting algorithm, which works for arbitrary dimensions.
+     */
+    data class Custom(val customColumns: Int, val customRows: Int) :
+        GridMigrationOption(customColumns, customRows)
+
     companion object {
+        const val MIN_CUSTOM_GRID = 2
+        const val MAX_CUSTOM_GRID = 12
+
         /**
          * Factory method that creates an instance of GridMigrationOption if valid.
          *
@@ -115,6 +132,8 @@ sealed class GridMigrationOption(val columns: Int, val rows: Int) {
                 columns == 6 && rows == 5 -> SixByFive
                 columns == 8 && rows == 3 -> EightByThree
                 columns == 7 && rows == 3 -> SevenByThree
+                columns in MIN_CUSTOM_GRID..MAX_CUSTOM_GRID &&
+                    rows in MIN_CUSTOM_GRID..MAX_CUSTOM_GRID -> Custom(columns, rows)
                 else -> null
             }
     }

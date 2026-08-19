@@ -468,6 +468,8 @@ android_library {
     static_libs: [
         "QuickstepResLib",
         "androidx.room_room-runtime",
+        // SettingsLib Spa (Compose settings components) used by the Compose settings UI.
+        "SpaLib",
         // Compose dep
         "androidx.compose.runtime_runtime",
     ],
@@ -511,6 +513,8 @@ android_library {
     static_libs: [
         "SystemUI-statsd",
         "QuickstepResLib",
+        // SettingsLib Spa (Compose settings components) used by the Compose settings UI.
+        "SpaLib",
         // Compose dep
         "androidx.compose.runtime_runtime",
     ],

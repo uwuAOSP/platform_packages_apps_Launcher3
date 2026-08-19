@@ -39,21 +39,18 @@ import static com.android.launcher3.shapes.ShapesProvider.SEVEN_SIDED_COOKIE_KEY
 import static com.android.launcher3.shapes.ShapesProvider.SQUARE_KEY;
 import static com.android.launcher3.util.Executors.MAIN_EXECUTOR;
 import static com.android.launcher3.util.SettingsCache.NOTIFICATION_BADGING_URI;
-import static com.android.launcher3.util.XmlElement.getRootElement;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.content.res.TypedArray;
 import android.util.ArrayMap;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
 import com.android.launcher3.Flags;
 import com.android.launcher3.LauncherPrefs;
-import com.android.launcher3.R;
+import com.android.launcher3.SessionCommitReceiver;
 import com.android.launcher3.dagger.ApplicationContext;
 import com.android.launcher3.dagger.LauncherAppSingleton;
 import com.android.launcher3.display.DisplayController;
@@ -73,15 +70,10 @@ import com.android.launcher3.util.DaggerSingletonTracker;
 import com.android.launcher3.util.ListenableDiffAwareRef;
 import com.android.launcher3.util.NavigationMode;
 import com.android.launcher3.util.SettingsCache;
-import com.android.launcher3.util.XmlElement;
 import com.android.quickstep.dagger.QuickstepBaseAppComponent;
 
 import kotlin.Unit;
 
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-
-import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -101,7 +93,6 @@ public class SettingsChangeLogger implements OnSharedPreferenceChangeListener {
             new DaggerSingletonObject<>(QuickstepBaseAppComponent::getSettingsChangeLogger);
 
     private static final String TAG = "SettingsChangeLogger";
-    private static final String BOOLEAN_PREF = "SwitchPreference";
 
     private final Context mContext;
     private final ArrayMap<String, LoggablePref> mLoggablePrefs;
@@ -156,26 +147,14 @@ public class SettingsChangeLogger implements OnSharedPreferenceChangeListener {
     }
 
     private static ArrayMap<String, LoggablePref> loadPrefKeys(Context context) {
-        XmlPullParser parser = context.getResources().getXml(R.xml.launcher_preferences);
         ArrayMap<String, LoggablePref> result = new ArrayMap<>();
-
-        try {
-            for (XmlElement el : getRootElement(parser).childIterator(BOOLEAN_PREF)) {
-                TypedArray a = el.obtainAttrs(context, R.styleable.LoggablePref);
-                String key = a.getString(R.styleable.LoggablePref_android_key);
-                LoggablePref pref = new LoggablePref();
-                pref.defaultValue =
-                        a.getBoolean(R.styleable.LoggablePref_android_defaultValue, true);
-                pref.eventIdOn = a.getInt(R.styleable.LoggablePref_logIdOn, 0);
-                pref.eventIdOff = a.getInt(R.styleable.LoggablePref_logIdOff, 0);
-                if (pref.eventIdOff > 0 && pref.eventIdOn > 0) {
-                    result.put(key, pref);
-                }
-                a.recycle();
-            }
-        } catch (XmlPullParserException | IOException e) {
-            Log.e(TAG, "Error parsing preference xml", e);
-        }
+        LoggablePref addIconsToHome = new LoggablePref();
+        addIconsToHome.defaultValue = true;
+        addIconsToHome.eventIdOn =
+                LauncherEvent.LAUNCHER_ADD_NEW_APPS_TO_HOME_SCREEN_ENABLED.getId();
+        addIconsToHome.eventIdOff =
+                LauncherEvent.LAUNCHER_ADD_NEW_APPS_TO_HOME_SCREEN_DISABLED.getId();
+        result.put(SessionCommitReceiver.ADD_ICON_PREFERENCE_KEY, addIconsToHome);
         return result;
     }
 
