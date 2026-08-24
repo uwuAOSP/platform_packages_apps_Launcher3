@@ -413,6 +413,8 @@
     </dimen>
     <dimen name="taskbar_stashed_size">0dp</dimen>
     <dimen name="qsb_widget_height">63dp</dimen>
+    <dimen name="uwu_qsb_icon_width">48dp</dimen>
+    <dimen name="uwu_qsb_icon_padding">12dp</dimen>
     <dimen name="qsb_shadow_height">6dp</dimen>
     <dimen name="qsb_default_widget_height">52dp</dimen>
     <dimen name="qsb_search_icon_tap_size">48dp</dimen>
