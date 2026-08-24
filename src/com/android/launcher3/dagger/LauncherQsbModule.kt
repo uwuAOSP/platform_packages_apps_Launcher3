@@ -1,5 +1,4 @@
 /*
- * Copyright (C) 2024 Lawnchair
  * Copyright (C) 2026 The uwuAOSP Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,19 +14,16 @@
  * limitations under the License.
  */
 
-package com.android.launcher3.qsb
+package com.android.launcher3.dagger
 
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import com.android.launcher3.R
-import javax.inject.Inject
+import com.android.launcher3.qsb.QsbWidgetFactory
+import com.android.launcher3.qsb.UwUQsbWidgetFactory
+import dagger.Binds
+import dagger.Module
 
-/** Provides the Lawnchair-compatible Compose implementation for the Hotseat QSB. */
-class UwUQsbWidgetFactory @Inject constructor() : QsbWidgetFactory() {
+/** Binds the home-screen QSB; taskbar boot uses its own no-op binding. */
+@Module
+abstract class LauncherQsbModule {
 
-    override fun createView(container: ViewGroup): View {
-        return LayoutInflater.from(container.context)
-            .inflate(R.layout.search_container_hotseat, container, false)
-    }
+    @Binds abstract fun bindQsbWidgetFactory(impl: UwUQsbWidgetFactory): QsbWidgetFactory
 }

@@ -37,8 +37,6 @@ import com.android.launcher3.popup.FolderSystemShortcuts
 import com.android.launcher3.popup.PopupDataMapper
 import com.android.launcher3.popup.PopupDataRepository.Companion.POPUP_DATA_MAPPER
 import com.android.launcher3.qsb.OseCustomWidget
-import com.android.launcher3.qsb.QsbWidgetFactory
-import com.android.launcher3.qsb.UwUQsbWidgetFactory
 import com.android.launcher3.widget.custom.CustomWidget
 import com.android.launcher3.widget.custom.CustomWidgetManager.NAMED_CUSTOM_WIDGETS
 import dagger.Binds
@@ -53,8 +51,6 @@ import javax.inject.Named
 
 @Module
 abstract class LauncherModelModule {
-
-    @Binds abstract fun bindQsbWidgetFactory(impl: UwUQsbWidgetFactory): QsbWidgetFactory
 
     @Binds
     @LauncherAppSingleton

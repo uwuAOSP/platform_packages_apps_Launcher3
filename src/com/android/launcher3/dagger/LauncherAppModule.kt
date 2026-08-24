@@ -36,6 +36,7 @@ class LauncherAppModule
             ExecutorsModule::class,
             LauncherExecutorsModule::class,
             LauncherModelModule::class,
+            LauncherQsbModule::class,
             SettingsModule::class,
             HomeScreenFilesModule::class,
             DesktopModule::class,

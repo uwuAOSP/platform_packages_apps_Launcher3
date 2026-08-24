@@ -542,7 +542,8 @@ public interface ActivityContext extends SavedStateRegistryOwner {
     default CellPosMapper getCellPosMapper() {
         DeviceProfile dp = getDeviceProfile();
         return new CellPosMapper(dp.isVerticalBarLayout(),
-                dp.getHotseatProfile().getNumShownIcons());
+                dp.getHotseatProfile().getNumShownIcons(), dp.numHotseatRows,
+                dp.numHotseatPages);
     }
 
     /** Returns a writer for updating model properties */
