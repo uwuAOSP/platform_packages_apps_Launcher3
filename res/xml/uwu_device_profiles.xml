@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Custom Launcher3 grid profiles.
+
+     This file is parsed together with the AOSP device_profiles resource.
+ -->
+<profiles xmlns:launcher="http://schemas.android.com/apk/res-auto">
+    <grid-option
+        launcher:name="4_by_6"
+        launcher:numRows="6"
+        launcher:numColumns="4"
+        launcher:numFolderRows="3"
+        launcher:numFolderColumns="3"
+        launcher:numHotseatIcons="4"
+        launcher:hotseatQsbSpace="24"
+        launcher:numExtendedHotseatIcons="6"
+        launcher:inlineNavButtonsEndSpacing="@dimen/taskbar_button_margin_split"
+        launcher:devicePaddingId="@xml/paddings_split_4x5"
+        launcher:defaultLayoutId="@xml/default_workspace_splitdisplay_4x6"
+        launcher:deviceCategory="phone|multi_display">
+
+        <display-option
+            launcher:name="Short Stubby"
+            launcher:minWidthDps="275"
+            launcher:minHeightDps="420"
+            launcher:iconImageSize="65"
+            launcher:iconTextSize="13.0"
+            launcher:allAppsBorderSpace="16"
+            launcher:allAppsCellHeight="104"
+            launcher:canBeDefault="true" />
+
+        <display-option
+            launcher:name="Stubby"
+            launcher:minWidthDps="255"
+            launcher:minHeightDps="450"
+            launcher:iconImageSize="65"
+            launcher:iconTextSize="13.0"
+            launcher:allAppsBorderSpace="16"
+            launcher:allAppsCellHeight="104"
+            launcher:canBeDefault="true" />
+
+        <display-option
+            launcher:name="Nexus S"
+            launcher:minWidthDps="296"
+            launcher:minHeightDps="491.33"
+            launcher:iconImageSize="65"
+            launcher:iconTextSize="13.0"
+            launcher:allAppsBorderSpace="16"
+            launcher:allAppsCellHeight="104"
+            launcher:canBeDefault="true" />
+
+        <display-option
+            launcher:name="Nexus 4"
+            launcher:minWidthDps="359"
+            launcher:minHeightDps="567"
+            launcher:iconImageSize="65"
+            launcher:iconTextSize="13.0"
+            launcher:allAppsBorderSpace="16"
+            launcher:allAppsCellHeight="104"
+            launcher:canBeDefault="true" />
+
+        <display-option
+            launcher:name="Nexus 5"
+            launcher:minWidthDps="335"
+            launcher:minHeightDps="567"
+            launcher:iconImageSize="65"
+            launcher:iconTextSize="13.0"
+            launcher:allAppsBorderSpace="16"
+            launcher:allAppsCellHeight="104"
+            launcher:canBeDefault="true" />
+    </grid-option>
+</profiles>

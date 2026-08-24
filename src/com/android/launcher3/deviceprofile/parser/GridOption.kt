@@ -432,17 +432,19 @@ class GridOption private constructor(ta: TypedArray, displayInfo: LauncherDispla
             filter: (GridOption) -> Boolean = { true },
             mapper: (GridOption, XmlElement) -> T,
         ): List<T> {
-            return context.resources.getXml(R.xml.device_profiles).use { xml ->
-                xml.getRootElement()
-                    .children(TAG_NAME)
-                    .mapNotNull { el ->
-                        val ta = el.obtainAttrs(displayInfo.context, R.styleable.GridDisplayOption)
-                        val option = GridOption(ta, displayInfo)
-                        ta.recycle()
+            return listOf(R.xml.device_profiles, R.xml.uwu_device_profiles).flatMap { resourceId ->
+                context.resources.getXml(resourceId).use { xml ->
+                    xml.getRootElement()
+                        .children(TAG_NAME)
+                        .mapNotNull { el ->
+                            val ta = el.obtainAttrs(displayInfo.context, R.styleable.GridDisplayOption)
+                            val option = GridOption(ta, displayInfo)
+                            ta.recycle()
 
-                        if (filter.invoke(option)) mapper.invoke(option, el) else null
-                    }
-                    .toList()
+                            if (filter.invoke(option)) mapper.invoke(option, el) else null
+                        }
+                        .toList()
+                }
             }
         }
 

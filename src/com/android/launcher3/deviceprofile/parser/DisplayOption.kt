@@ -102,7 +102,7 @@ private constructor(@JvmField val grid: GridOption, context: Context, ta: TypedA
     @JvmField
     val hotseatQsbSpace: FloatArray =
         ta.parseTypedMap(
-                context.resources.getFloat(R.dimen.hotseat_qsb_space_default),
+                context.resources.getFloat(R.dimen.uwu_hotseat_qsb_space_default),
                 R.styleable.ProfileDisplayOption_hotseatQsbSpace,
                 R.styleable.ProfileDisplayOption_hotseatQsbSpaceLandscape,
                 R.styleable.ProfileDisplayOption_hotseatQsbSpaceTwoPanelPortrait,
