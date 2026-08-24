@@ -25,6 +25,7 @@ import com.android.launcher3.dagger.AutomationModule
 import com.android.launcher3.dagger.DesktopModule
 import com.android.launcher3.dagger.HomeScreenFilesModule
 import com.android.launcher3.dagger.LauncherModelModule
+import com.android.launcher3.dagger.LauncherQsbModule
 import com.android.launcher3.dagger.OrganizerLauncherModule
 import com.android.launcher3.dagger.PerDisplayModule
 import com.android.launcher3.dagger.SettingsModule
@@ -57,6 +58,7 @@ abstract class FakePrefsModule {
             LauncherExecutorsModule::class,
             NoOpWidgetPickerModule::class,
             LauncherModelModule::class,
+            LauncherQsbModule::class,
             HomeScreenFilesModule::class,
             DesktopModule::class,
             SettingsModule::class,

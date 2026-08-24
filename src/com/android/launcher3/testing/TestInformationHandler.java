@@ -353,8 +353,11 @@ public class TestInformationHandler {
                 int cellIndex = extra.getInt(TestProtocol.TEST_INFO_PARAM_INDEX);
                 return getLauncherUIProperty(Bundle::putParcelable, launcher -> {
                     final Hotseat hotseat = launcher.getHotseat();
+                    final CellLayout hotseatPage = hotseat.getPageAt(
+                            hotseat.getPageFromOrder(cellIndex));
                     final Rect cellRect = getDescendantRectRelativeToDragLayerForCell(launcher,
-                            hotseat, cellIndex, /* cellY= */ 0,
+                            hotseatPage, hotseat.getCellXFromOrder(cellIndex),
+                            hotseat.getCellYFromOrder(cellIndex),
                             /* spanX= */ 1, /* spanY= */ 1);
                     // TODO(b/234322284): return the real center point.
                     return new Point(cellRect.left + (cellRect.right - cellRect.left) / 3,
