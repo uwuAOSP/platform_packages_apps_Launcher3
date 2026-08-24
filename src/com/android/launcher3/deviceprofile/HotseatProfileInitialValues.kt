@@ -20,6 +20,7 @@ import android.content.res.Resources
 import android.util.DisplayMetrics
 import com.android.launcher3.InvariantDeviceProfile
 import com.android.launcher3.R
+import com.android.launcher3.Utilities
 import com.android.launcher3.deviceprofile.parser.DeviceTypedMap.INDEX_DEFAULT
 import com.android.launcher3.deviceprofile.parser.DeviceTypedMap.INDEX_LANDSCAPE
 import com.android.launcher3.deviceprofile.parser.DeviceTypedMap.INDEX_TWO_PANEL_LANDSCAPE
@@ -27,6 +28,9 @@ import com.android.launcher3.deviceprofile.parser.DeviceTypedMap.INDEX_TWO_PANEL
 import com.android.launcher3.responsive.CalculatedCellSpec
 import com.android.launcher3.responsive.CalculatedHotseatSpec
 import com.android.launcher3.testing.shared.ResourceUtils.pxFromDp
+import com.android.launcher3.folder.ClippedFolderIconLayoutRule.ICON_OVERLAP_FACTOR
+import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.math.max
 
 /**
@@ -60,6 +64,7 @@ data class HotseatProfileInitialValues(
     companion object Factory {
 
         /** Updates hotseatCellHeightPx and hotseatBarSizePx */
+        @JvmStatic
         fun calculateHotseatBarSizePx(
             hotseatIconSizePx: Int,
             barEdgePaddingPx: Int,
@@ -91,6 +96,9 @@ data class HotseatProfileInitialValues(
             workspacePageIndicatorHeight: Int,
             responsiveWorkspaceCellSpec: CalculatedCellSpec?,
             qsbHeight: Int,
+            numHotseatRows: Int,
+            hotseatBottomFactor: Float,
+            showHotseatLabels: Boolean,
         ): HotseatProfileInitialValues {
             return when {
                 responsiveHotseatSpec != null && responsiveWorkspaceCellSpec != null ->
@@ -104,6 +112,9 @@ data class HotseatProfileInitialValues(
                         isVerticalBarLayout = isVerticalBarLayout,
                         typeIndex = typeIndex,
                         qsbHeight = qsbHeight,
+                        numHotseatRows = numHotseatRows,
+                        hotseatBottomFactor = hotseatBottomFactor,
+                        showHotseatLabels = showHotseatLabels,
                     )
                 else ->
                     createNonResponsiveHotseatProfileInitialValues(
@@ -116,6 +127,9 @@ data class HotseatProfileInitialValues(
                         isVerticalBarLayout = isVerticalBarLayout,
                         workspacePageIndicatorHeight = workspacePageIndicatorHeight,
                         qsbHeight = qsbHeight,
+                        numHotseatRows = numHotseatRows,
+                        hotseatBottomFactor = hotseatBottomFactor,
+                        showHotseatLabels = showHotseatLabels,
                     )
             }
         }
@@ -130,6 +144,9 @@ data class HotseatProfileInitialValues(
             responsiveWorkspaceCellSpec: CalculatedCellSpec,
             qsbHeight: Int,
             typeIndex: Int,
+            numHotseatRows: Int,
+            hotseatBottomFactor: Float,
+            showHotseatLabels: Boolean,
         ): HotseatProfileInitialValues {
 
             // For foldable (two panel), we inline the qsb if we have the screen open and we are in
@@ -171,7 +188,8 @@ data class HotseatProfileInitialValues(
             val hotseatQsbShadowHeight = res.getDimensionPixelSize(R.dimen.qsb_shadow_height)
 
             var hotseatQsbSpace: Int = responsiveHotseatSpec.hotseatQsbSpace
-            val hotseatBarBottomSpace: Int = responsiveHotseatSpec.edgePadding
+            val hotseatBarBottomSpace: Int =
+                (responsiveHotseatSpec.edgePadding * hotseatBottomFactor).toInt()
             var minQsbMargin = res.getDimensionPixelSize(R.dimen.min_qsb_margin)
 
             var barBottomSpacePx = 0
@@ -199,6 +217,25 @@ data class HotseatProfileInitialValues(
             // and bottom for shadows, similar to the icon shadows.
             // This (2 * hotseatQsbShadowHeight) is to account for the top space and the bottom.
             val qsbVisualHeight = hotseatQsbHeight - (2 * hotseatQsbShadowHeight)
+            val labelHeight = if (showHotseatLabels) {
+                Utilities.calculateTextHeight(
+                    Utilities.pxFromSp(inv.iconTextSize[typeIndex], res.displayMetrics).toFloat()
+                )
+            } else {
+                0
+            }
+            if (showHotseatLabels && hotseatQsbHeight > 0) hotseatQsbSpace += labelHeight / 2
+            val hotseatCellHeight =
+                ceil(responsiveWorkspaceCellSpec.iconSize * 2 * ICON_OVERLAP_FACTOR).toInt() -
+                    responsiveWorkspaceCellSpec.iconSize / 2 + labelHeight
+            val extraBarSpace = if (
+                isVerticalBarLayout ||
+                    (!isQsbInline && !deviceProperties.taskbarConfiguration.isTaskbarPresent)
+            ) {
+                abs(hotseatCellHeight / 2) - 16
+            } else {
+                0
+            }
             return HotseatProfileInitialValues(
                 areNavButtonsInline = areNavButtonsInline,
                 navButtonsLayoutWidthPx = navButtonsLayoutWidthPx,
@@ -228,7 +265,9 @@ data class HotseatProfileInitialValues(
                         barBottomSpacePx = barBottomSpacePx,
                         qsbSpace = hotseatQsbSpace,
                         isQsbInline = isQsbInline,
-                    ),
+                    ) +
+                        (numHotseatRows - 1).coerceAtLeast(0) * hotseatCellHeight +
+                        extraBarSpace,
                 isQsbInline = isQsbInline,
             )
         }
@@ -243,6 +282,9 @@ data class HotseatProfileInitialValues(
             isVerticalBarLayout: Boolean,
             workspacePageIndicatorHeight: Int,
             qsbHeight: Int,
+            numHotseatRows: Int,
+            hotseatBottomFactor: Float,
+            showHotseatLabels: Boolean,
         ): HotseatProfileInitialValues {
             // For foldable (two panel), we inline the qsb if we have the screen open and we are in
             // either Landscape or Portrait. This cal also be disabled in the device_profile.xml
@@ -290,7 +332,8 @@ data class HotseatProfileInitialValues(
             val hotseatQsbShadowHeight = res.getDimensionPixelSize(R.dimen.qsb_shadow_height)
 
             var hotseatQsbSpace = pxFromDp(inv.hotseatQsbSpace[typeIndex], metrics)
-            var hotseatBarBottomSpace = pxFromDp(inv.hotseatBarBottomSpace[typeIndex], metrics)
+            var hotseatBarBottomSpace =
+                (pxFromDp(inv.hotseatBarBottomSpace[typeIndex], metrics) * hotseatBottomFactor).toInt()
 
             var minQsbMargin = res.getDimensionPixelSize(R.dimen.min_qsb_margin)
 
@@ -323,6 +366,26 @@ data class HotseatProfileInitialValues(
             val barEdgePaddingPx = hotseatBarEdgePaddingPx
             val barWorkspaceSpacePx = hotseatBarWorkspaceSpacePx
             val qsbVisualHeight = hotseatQsbHeight - 2 * hotseatQsbShadowHeight
+            val labelHeight = if (showHotseatLabels) {
+                Utilities.calculateTextHeight(
+                    Utilities.pxFromSp(inv.iconTextSize[typeIndex], metrics).toFloat()
+                )
+            } else {
+                0
+            }
+            if (showHotseatLabels && hotseatQsbHeight > 0) hotseatQsbSpace += labelHeight / 2
+            val hotseatIconSize = pxFromDp(inv.iconSize[typeIndex], metrics)
+            val hotseatCellHeight =
+                ceil(hotseatIconSize * 2 * ICON_OVERLAP_FACTOR).toInt() -
+                    hotseatIconSize / 2 + labelHeight
+            val extraBarSpace = if (
+                isVerticalBarLayout ||
+                    (!isQsbInline && !deviceProperties.taskbarConfiguration.isTaskbarPresent)
+            ) {
+                abs(hotseatCellHeight / 2) - 16
+            } else {
+                0
+            }
             return HotseatProfileInitialValues(
                 areNavButtonsInline = areNavButtonsInline,
                 navButtonsLayoutWidthPx = navButtonsLayoutWidthPx,
@@ -344,7 +407,7 @@ data class HotseatProfileInitialValues(
                 qsbSpace = hotseatQsbSpace,
                 barSizePx =
                     calculateHotseatBarSizePx(
-                        hotseatIconSizePx = pxFromDp(inv.iconSize[typeIndex], metrics),
+                        hotseatIconSizePx = hotseatIconSize,
                         barEdgePaddingPx = barEdgePaddingPx,
                         isVerticalBarLayout = isVerticalBarLayout,
                         barWorkspaceSpacePx = barWorkspaceSpacePx,
@@ -352,7 +415,9 @@ data class HotseatProfileInitialValues(
                         barBottomSpacePx = barBottomSpacePx,
                         qsbSpace = hotseatQsbSpace,
                         isQsbInline = isQsbInline,
-                    ),
+                    ) +
+                        (numHotseatRows - 1).coerceAtLeast(0) * hotseatCellHeight +
+                        extraBarSpace,
                 isQsbInline = isQsbInline,
             )
         }

@@ -114,6 +114,7 @@ import com.android.launcher3.dragndrop.SystemDragItemInfo;
 import com.android.launcher3.dragndrop.SystemDragParams;
 import com.android.launcher3.folder.Folder;
 import com.android.launcher3.folder.FolderIcon;
+import com.android.launcher3.hotseat.HotseatPagedView;
 import com.android.launcher3.folder.PreviewBackground;
 import com.android.launcher3.graphics.DragPreviewProvider;
 import com.android.launcher3.homescreenfiles.HomeScreenFile;
@@ -1067,6 +1068,10 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         if (index != -1) {
             return mWorkspaceScreens.keyAt(index);
         }
+        Hotseat hotseat = mLauncher.getHotseat();
+        if (hotseat != null && hotseat.isHotseatPage(layout)) {
+            return layout.getHotseatPageIndex();
+        }
         return -1;
     }
 
@@ -1787,7 +1792,12 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
                         protected void enableAccessibleDrag(boolean enable,
                                 @Nullable DragObject dragObject) {
                             super.enableAccessibleDrag(enable, dragObject);
-                            setEnableForLayout(mLauncher.getHotseat(), enable);
+                            Hotseat hotseat = mLauncher.getHotseat();
+                            if (hotseat != null) {
+                                for (CellLayout page : hotseat.getPageLayouts()) {
+                                    setEnableForLayout(page, enable);
+                                }
+                            }
                             if (enable && dragObject != null
                                     && dragObject.dragInfo instanceof LauncherAppWidgetInfo) {
                                 mLauncher.getHotseat().setImportantForAccessibility(
@@ -2889,7 +2899,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     private boolean setDropLayoutForDragObject(DragObject d, float centerX, float centerY) {
         CellLayout layout = null;
         if (shouldUseHotseatAsDropLayout(d)) {
-            layout = mLauncher.getHotseat();
+            layout = resolveHotseatDropLayout(d);
         } else {
             // Check neighbour pages
             layout = checkDragObjectIsOverNeighbourPages(d, centerX);
@@ -2918,8 +2928,24 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         if (hotseat == null || !hotseat.isValidDropTarget(dragObject)) {
             return false;
         }
-        getViewBoundsRelativeToWorkspace(hotseat.getShortcutsAndWidgets(), mTempRect);
+        getViewBoundsRelativeToWorkspace(hotseat.getPagedView(), mTempRect);
         return mTempRect.contains(dragObject.x, dragObject.y);
+    }
+
+    @Nullable
+    private CellLayout resolveHotseatDropLayout(DragObject dragObject) {
+        Hotseat hotseat = mLauncher.getHotseat();
+        if (hotseat == null) return null;
+        CellLayout current = hotseat.getCurrentPageLayout();
+        HotseatPagedView pager = hotseat.getPagedView();
+        if (pager.isPageInTransition()) {
+            float[] xy = new float[] {dragObject.x, dragObject.y};
+            mLauncher.getDragLayer().getDescendantCoordRelativeToSelf(this, xy, true);
+            mLauncher.getDragLayer().mapCoordInSelfToDescendant(pager, xy);
+            CellLayout underFinger = pager.findPageAtLocalX(xy[0]);
+            if (underFinger != null) return underFinger;
+        }
+        return current;
     }
 
     private CellLayout checkDragObjectIsOverNeighbourPages(DragObject d, float centerX) {
@@ -3649,16 +3675,13 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
      */
     private CellLayout[] getWorkspaceAndHotseatCellLayouts() {
         int screenCount = getChildCount();
-        final CellLayout[] layouts;
-        if (mLauncher.getHotseat() != null) {
-            layouts = new CellLayout[screenCount + 1];
-            layouts[screenCount] = mLauncher.getHotseat();
-        } else {
-            layouts = new CellLayout[screenCount];
-        }
+        CellLayout[] hotseatPages = mLauncher.getHotseat() == null
+                ? new CellLayout[0] : mLauncher.getHotseat().getPageLayouts();
+        final CellLayout[] layouts = new CellLayout[screenCount + hotseatPages.length];
         for (int screen = 0; screen < screenCount; screen++) {
             layouts[screen] = (CellLayout) getChildAt(screen);
         }
+        System.arraycopy(hotseatPages, 0, layouts, screenCount, hotseatPages.length);
         return layouts;
     }
 

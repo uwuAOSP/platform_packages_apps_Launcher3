@@ -66,7 +66,11 @@ class HybridHotseatOrganizer(
         }
 
     init {
-        hotseat.shortcutsAndWidgets.setOnHierarchyChangeListener(this)
+        hotseat.shortcutsAndWidgets?.setOnHierarchyChangeListener(this)
+        hotseat.pagedView.setOnDockPageChangeListener {
+            hotseat.shortcutsAndWidgets?.setOnHierarchyChangeListener(this)
+            onHotseatHierarchyChanged()
+        }
     }
 
     override fun onChildViewAdded(parent: View?, child: View?) {
@@ -126,18 +130,21 @@ class HybridHotseatOrganizer(
             return
         }
 
-        val hotseatCount = activity.getDeviceProfile().getHotseatProfile().numShownIcons
+        val profile = activity.getDeviceProfile()
+        val hotseatCount = profile.getHotseatProfile().numShownIcons * profile.numHotseatRows
+        val startRank = hotseat.pagedView.nextPage.coerceAtLeast(0) * hotseatCount
+        val page = hotseat.currentPageLayout ?: return
 
         pauseFlags = pauseFlags or FLAG_FILL_IN_PROGRESS
-        for (rank in 0..<hotseatCount) {
+        for (rank in startRank..<(startRank + hotseatCount)) {
             val child =
-                hotseat.getChildAt(hotseat.getCellXFromOrder(rank), hotseat.getCellYFromOrder(rank))
+                page.getChildAt(hotseat.getCellXFromOrder(rank), hotseat.getCellYFromOrder(rank))
 
             if (child != null && !isPredictedIcon(child)) continue
 
             if (predictedItems.size <= predictionIndex) {
                 // Remove predicted apps from the past
-                if (isPredictedIcon(child)) hotseat.removeView(child)
+                if (isPredictedIcon(child)) page.removeView(child)
                 continue
             }
             val predictedItem = predictedItems[predictionIndex++] as WorkspaceItemInfo
@@ -193,15 +200,16 @@ class HybridHotseatOrganizer(
 
     private fun removeOutlineDrawings() {
         if (outlineDrawings.isEmpty()) return
+        val page = hotseat.currentPageLayout ?: return
         for (outlineDrawing in outlineDrawings) {
-            hotseat.removeDelegatedCellDrawing(outlineDrawing)
+            page.removeDelegatedCellDrawing(outlineDrawing)
         }
-        hotseat.invalidate()
+        page.invalidate()
         outlineDrawings.clear()
     }
 
     fun getPredictedIcons(): List<PredictedAppIcon> = buildList {
-        val vg = hotseat.shortcutsAndWidgets
+        val vg = hotseat.shortcutsAndWidgets ?: return@buildList
         for (i in 0..<vg.childCount) {
             val child = vg.getChildAt(i)
             if (isPredictedIcon(child)) {
@@ -256,7 +264,9 @@ class HybridHotseatOrganizer(
      */
     fun removeIconWithoutNotify(icon: PredictedAppIcon) {
         pauseFlags = pauseFlags or FLAG_REMOVING_PREDICTED_ICON
-        hotseat.removeView(icon)
+        val parent = icon.parent
+        val page = (parent?.parent as? com.android.launcher3.CellLayout)
+        if (page != null) page.removeView(icon) else (parent as? android.view.ViewGroup)?.removeView(icon)
         pauseFlags = pauseFlags and FLAG_REMOVING_PREDICTED_ICON.inv()
     }
 
@@ -266,11 +276,12 @@ class HybridHotseatOrganizer(
         }
         removePredictedApps(outlineDrawings, dragObject)
         if (outlineDrawings.isEmpty()) return
+        val page = hotseat.currentPageLayout ?: return
         for (outlineDrawing in outlineDrawings) {
-            hotseat.addDelegatedCellDrawing(outlineDrawing)
+            page.addDelegatedCellDrawing(outlineDrawing)
         }
         pauseFlags = pauseFlags or FLAG_DRAG_IN_PROGRESS
-        hotseat.invalidate()
+        page.invalidate()
     }
 
     override fun onDragEnd() {

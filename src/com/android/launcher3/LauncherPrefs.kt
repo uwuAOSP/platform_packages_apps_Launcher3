@@ -344,6 +344,73 @@ constructor(@ApplicationContext private val encryptedContext: Context) {
         val DOCK_PAGES = backedUpItem("pref_dock_pages", 1)
 
         @JvmField
+        val HOTSEAT_ENABLED = backedUpItem("pref_show_hotseat", true)
+
+        @JvmField
+        val HOTSEAT_MODE = backedUpItem("hotseat_mode", "lawnchair")
+
+        @JvmField
+        val HOTSEAT_LABELS = backedUpItem("enable_label_dock", false)
+
+        @JvmField
+        val HOTSEAT_BOTTOM_FACTOR = backedUpItem("hotseat_bottom_factor", 1.0f)
+
+        @JvmField
+        val HOTSEAT_PAGE_INDICATOR_HEIGHT_FACTOR =
+            backedUpItem("page_indicator_height_factor", 1.0f)
+
+        @JvmField
+        val HOTSEAT_BACKGROUND_ENABLED = backedUpItem("pref_hotseatBG", false)
+
+        @JvmField
+        val HOTSEAT_BACKGROUND_COLOR = backedUpItem("hotseat_bg_color", 0)
+
+        @JvmField
+        val HOTSEAT_BACKGROUND_ALPHA = backedUpItem("pref_hotseatBGTransparency", 100)
+
+        @JvmField
+        val HOTSEAT_BACKGROUND_CORNER_RADIUS =
+            backedUpItem("hotseat_bg_corner_radius", 24.0f)
+
+        @JvmField
+        val HOTSEAT_BACKGROUND_INSET_LEFT = backedUpItem("pref_hotseatBGHRinsetLeft", 0)
+
+        @JvmField
+        val HOTSEAT_BACKGROUND_INSET_TOP = backedUpItem("pref_hotseatBGVRinsetTop", 0)
+
+        @JvmField
+        val HOTSEAT_BACKGROUND_INSET_RIGHT = backedUpItem("pref_hotseatBGHRinsetRight", 0)
+
+        @JvmField
+        val HOTSEAT_BACKGROUND_INSET_BOTTOM = backedUpItem("pref_hotseatBGVRinsetBottom", 0)
+
+        @JvmField
+        val HOTSEAT_QSB_PROVIDER = backedUpItem("dock_search_bar_provider", "google")
+
+        @JvmField
+        val HOTSEAT_QSB_FORCE_WEBSITE =
+            backedUpItem("dock_search_bar_force_website", false)
+
+        @JvmField
+        val HOTSEAT_QSB_THEMED = backedUpItem("themed_hotseat_qsb", true)
+
+        @JvmField
+        val HOTSEAT_QSB_CORNER_RADIUS = backedUpItem("pref_hotseatQsbCornerRadius", 1.0f)
+
+        @JvmField
+        val HOTSEAT_QSB_ALPHA = backedUpItem("pref_searchHotseatTranparency", 100)
+
+        @JvmField
+        val HOTSEAT_QSB_STROKE_WIDTH = backedUpItem("pref_searchStrokeWidth", 0.0f)
+
+        /** Zero means to use the current theme accent color. */
+        @JvmField
+        val HOTSEAT_QSB_STROKE_COLOR = backedUpItem("stroke_color", 0)
+
+        @JvmField
+        val HOTSEAT_QSB_MATCH_DRAWER = backedUpItem("use_drawer_search_icon", false)
+
+        @JvmField
         val FOLDER_ROWS = backedUpItem("pref_folder_rows", -1)
 
         @JvmField

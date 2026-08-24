@@ -51,11 +51,13 @@ public interface WorkspaceLayoutManager {
         CellPos presenterPos = getCellPosMapper().mapModelToPresenter(info);
         int x = presenterPos.cellX;
         int y = presenterPos.cellY;
+        int screenId = presenterPos.screenId;
         if (info.container == LauncherSettings.Favorites.CONTAINER_HOTSEAT
                 || info.container == LauncherSettings.Favorites.CONTAINER_HOTSEAT_PREDICTION) {
-            int screenId = presenterPos.screenId;
-            x = getHotseat().getCellXFromOrder(screenId);
-            y = getHotseat().getCellYFromOrder(screenId);
+            int rank = info.screenId;
+            x = getHotseat().getCellXFromOrder(rank);
+            y = getHotseat().getCellYFromOrder(rank);
+            screenId = getHotseat().getPageFromOrder(rank);
             // TODO(b/335141365): Remove this log after the bug is fixed.
             Log.d(TAG, "addInScreenFromBind: hotseat inflation with x = " + x
                     + " and y = " + y);
@@ -67,7 +69,7 @@ public interface WorkspaceLayoutManager {
                     + info);
         }
 
-        addInScreen(child, info.container, presenterPos.screenId, x, y, info.spanX, info.spanY);
+        addInScreen(child, info.container, screenId, x, y, info.spanX, info.spanY);
     }
 
     /**
@@ -110,11 +112,18 @@ public interface WorkspaceLayoutManager {
         final CellLayout layout;
         if (container == LauncherSettings.Favorites.CONTAINER_HOTSEAT
                 || container == LauncherSettings.Favorites.CONTAINER_HOTSEAT_PREDICTION) {
-            layout = getHotseat();
+            Hotseat hotseat = getHotseat();
+            CellLayout requestedPage = hotseat.getPageAt(screenId);
+            layout = requestedPage != null ? requestedPage : hotseat.getCurrentPageLayout();
+            if (layout == null) {
+                Log.e(TAG, "Skipping child, hotseat page " + screenId + " not found");
+                return;
+            }
 
-            // Hide folder title in the hotseat
+            // Lawnchair optionally shows labels for dock folders.
             if (child instanceof FolderIcon) {
-                ((FolderIcon) child).setTextVisible(false);
+                ((FolderIcon) child).setTextVisible(
+                        LauncherPrefs.get(child.getContext()).get(LauncherPrefs.HOTSEAT_LABELS));
             }
         } else {
             // Show folder title if not in the hotseat

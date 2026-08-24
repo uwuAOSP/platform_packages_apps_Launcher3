@@ -187,6 +187,7 @@ public class CellLayout extends ViewGroup {
     public static final int FOLDER = 2;
 
     @ContainerType private final int mContainerType;
+    private int mHotseatPageIndex = 0;
 
     public static final float DEFAULT_SCALE = 1f;
 
@@ -328,6 +329,20 @@ public class CellLayout extends ViewGroup {
 
     public void setCellLayoutContainer(CellLayoutContainer cellLayoutContainer) {
         mCellLayoutContainer = cellLayoutContainer;
+    }
+
+    /** Sets which dock page this layout represents when used as a hotseat page. */
+    public void setHotseatPageIndex(int pageIndex) {
+        mHotseatPageIndex = pageIndex;
+    }
+
+    /** Returns the dock page index for multi-page hotseat layouts. */
+    public int getHotseatPageIndex() {
+        return mHotseatPageIndex;
+    }
+
+    public boolean isHotseat() {
+        return mContainerType == HOTSEAT;
     }
 
     /**
@@ -1476,7 +1491,7 @@ public class CellLayout extends ViewGroup {
         int container = Favorites.CONTAINER_DESKTOP;
 
         if (mContainerType == HOTSEAT) {
-            screenId = -1;
+            screenId = mHotseatPageIndex;
             container = Favorites.CONTAINER_HOTSEAT;
         }
 

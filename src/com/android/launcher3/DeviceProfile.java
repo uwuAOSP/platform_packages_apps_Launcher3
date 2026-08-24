@@ -124,6 +124,8 @@ public class DeviceProfile {
 
     // Hotseat
     private HotseatProfile mHotseatProfile;
+    public int numHotseatRows;
+    public int numHotseatPages;
 
     private SysuiProfile mSysuiProfile;
 
@@ -175,6 +177,8 @@ public class DeviceProfile {
         );
         mHotseatProfile = new HotseatProfile(false, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, false);
+        numHotseatRows = 1;
+        numHotseatPages = 1;
         mTaskbarProfile = new TaskbarProfile(0, 0, 0, 0, 0, false, false, false);
         mFolderProfile = new FolderProfile(0, 0, 0, 0, 0, new Point(), 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0);
@@ -229,6 +233,11 @@ public class DeviceProfile {
                 mDeviceProperties.createWindowBounds());
 
         final Resources res = context.getResources();
+        LauncherPrefs launcherPrefs = LauncherPrefs.get(context);
+        numHotseatRows = Math.max(1, Math.min(2,
+                launcherPrefs.get(LauncherPrefs.HOTSEAT_ROWS)));
+        numHotseatPages = Math.max(1, Math.min(5,
+                launcherPrefs.get(LauncherPrefs.DOCK_PAGES)));
 
         overviewProfile = OverviewProfile.Factory.createOverviewProfile(res);
 
@@ -271,7 +280,10 @@ public class DeviceProfile {
                     responsiveAspectRatio, mDeviceProperties.getHeightPx());
         }
 
-        int qsbHeight = res.getDimensionPixelSize(R.dimen.qsb_widget_height);
+        boolean isDockEnabled = launcherPrefs.get(LauncherPrefs.HOTSEAT_ENABLED);
+        boolean isQsbEnabled = !"disabled".equals(launcherPrefs.get(LauncherPrefs.HOTSEAT_MODE));
+        int qsbHeight = isQsbEnabled
+                ? res.getDimensionPixelSize(R.dimen.qsb_widget_height) : 0;
 
         HotseatProfileInitialValues hotseatProfileInitialValues =
                 HotseatProfileInitialValues.Factory.createHotseatProfileInitialValues(
@@ -287,8 +299,42 @@ public class DeviceProfile {
                                 R.dimen.workspace_page_indicator_height
                         ),
                         /*responsiveWorkspaceCellSpec*/ mResponsiveWorkspaceCellSpec,
-                        qsbHeight
+                        qsbHeight,
+                        numHotseatRows,
+                        launcherPrefs.get(LauncherPrefs.HOTSEAT_BOTTOM_FACTOR),
+                        launcherPrefs.get(LauncherPrefs.HOTSEAT_LABELS)
                 );
+        if (!isDockEnabled) {
+            int qsbOnlyBarSize = isQsbEnabled
+                    ? HotseatProfileInitialValues.calculateHotseatBarSizePx(
+                            0,
+                            hotseatProfileInitialValues.getBarEdgePaddingPx(),
+                            isVerticalBarLayout(),
+                            hotseatProfileInitialValues.getBarWorkspaceSpacePx(),
+                            hotseatProfileInitialValues.getQsbVisualHeight(),
+                            hotseatProfileInitialValues.getBarBottomSpacePx(),
+                            hotseatProfileInitialValues.getQsbSpace(),
+                            hotseatProfileInitialValues.isQsbInline())
+                    : 0;
+            hotseatProfileInitialValues = hotseatProfileInitialValues.copy(
+                    hotseatProfileInitialValues.getAreNavButtonsInline(),
+                    hotseatProfileInitialValues.getNavButtonsLayoutWidthPx(),
+                    hotseatProfileInitialValues.getInlineNavButtonsEndSpacingPx(),
+                    hotseatProfileInitialValues.getBarEndOffset(),
+                    hotseatProfileInitialValues.getSpringLoadedBarTopMarginPx(),
+                    hotseatProfileInitialValues.getBarEdgePaddingPx(),
+                    hotseatProfileInitialValues.getBarWorkspaceSpacePx(),
+                    hotseatProfileInitialValues.getQsbHeight(),
+                    hotseatProfileInitialValues.getQsbShadowHeight(),
+                    hotseatProfileInitialValues.getQsbVisualHeight(),
+                    hotseatProfileInitialValues.getMinIconSpacePx(),
+                    hotseatProfileInitialValues.getMinQsbWidthPx(),
+                    hotseatProfileInitialValues.getMaxIconSpacePx(),
+                    hotseatProfileInitialValues.getBarBottomSpacePx(),
+                    hotseatProfileInitialValues.getQsbSpace(),
+                    qsbOnlyBarSize,
+                    hotseatProfileInitialValues.isQsbInline());
+        }
 
         int allAppsTopPadding = mDeviceProperties.getInsets().top;
 
@@ -440,7 +486,9 @@ public class DeviceProfile {
                 /*displayOptionSpec*/ displayOptionSpec,
                 /*deviceProperties*/ mDeviceProperties,
                 /*panelCount*/ getPanelCount(),
-                /*mIsScalableGrid*/ mIsScalableGrid
+                /*mIsScalableGrid*/ mIsScalableGrid,
+                /*numHotseatRows*/ numHotseatRows,
+                /*showHotseatLabels*/ launcherPrefs.get(LauncherPrefs.HOTSEAT_LABELS)
         );
 
         mDropTargetProfile = DropTargetProfile
@@ -846,7 +894,7 @@ public class DeviceProfile {
                             + mWorkspaceProfile.getWorkspacePadding().left
                             + mWorkspaceProfile.getCellLayoutPaddingPx().left,
                     mHotseatProfile.getBarSizePx() - hotseatBarBottomPadding
-                            - mHotseatProfile.getCellHeightPx(),
+                            - mHotseatProfile.getCellHeightPx() * numHotseatRows,
                     remainingSpaceOnSide
                             + mDeviceProperties.getInsets().right
                             + mWorkspaceProfile.getWorkspacePadding().right
@@ -864,7 +912,7 @@ public class DeviceProfile {
             int hotseatBarTopPadding =
                     mHotseatProfile.getBarSizePx()
                             - hotseatBarBottomPadding
-                            - mHotseatProfile.getCellHeightPx();
+                            - mHotseatProfile.getCellHeightPx() * numHotseatRows;
 
             int hotseatWidth = getHotseatRequiredWidth();
             int startSpacing;
@@ -1005,7 +1053,8 @@ public class DeviceProfile {
                     mHotseatProfile.getCellHeightPx()
                             - getWorkspaceProfile().getIconSizePx()) / 2);
         } else {
-            return mHotseatProfile.getBarSizePx() - mHotseatProfile.getCellHeightPx();
+            return mHotseatProfile.getBarSizePx()
+                    - mHotseatProfile.getCellHeightPx() * numHotseatRows;
         }
     }
 

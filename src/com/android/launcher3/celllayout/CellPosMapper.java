@@ -16,6 +16,8 @@
 package com.android.launcher3.celllayout;
 
 import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_DESKTOP;
+import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_HOTSEAT;
+import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_HOTSEAT_PREDICTION;
 
 import com.android.launcher3.LauncherSettings.Favorites;
 import com.android.launcher3.model.data.ItemInfo;
@@ -27,19 +29,39 @@ import java.util.Objects;
  */
 public class CellPosMapper {
 
-    public static final CellPosMapper DEFAULT = new CellPosMapper(false, -1);
+    public static final CellPosMapper DEFAULT = new CellPosMapper(false, -1, 1, 1);
     private final boolean mHasVerticalHotseat;
     private final int mNumOfHotseat;
+    private final int mNumHotseatRows;
 
     public CellPosMapper(boolean hasVerticalHotseat, int numOfHotseat) {
+        this(hasVerticalHotseat, numOfHotseat, 1, 1);
+    }
+
+    public CellPosMapper(boolean hasVerticalHotseat, int numOfHotseat, int numHotseatRows,
+            int numHotseatPages) {
         mHasVerticalHotseat = hasVerticalHotseat;
         mNumOfHotseat = numOfHotseat;
+        mNumHotseatRows = Math.max(1, numHotseatRows);
+    }
+
+    private static boolean isHotseatContainer(int container) {
+        return container == CONTAINER_HOTSEAT || container == CONTAINER_HOTSEAT_PREDICTION;
     }
 
     /**
      * Maps the position in model to the position in view
      */
     public CellPos mapModelToPresenter(ItemInfo info) {
+        if (isHotseatContainer(info.container) && mNumOfHotseat > 0) {
+            if (mHasVerticalHotseat) {
+                return new CellPos(0, mNumOfHotseat - info.screenId - 1, 0);
+            }
+            int slotsPerPage = Math.max(1, mNumOfHotseat * mNumHotseatRows);
+            int localRank = info.screenId % slotsPerPage;
+            return new CellPos(localRank % mNumOfHotseat, localRank / mNumOfHotseat,
+                    info.screenId / slotsPerPage);
+        }
         return new CellPos(info.cellX, info.cellY, info.screenId);
     }
 
@@ -48,9 +70,16 @@ public class CellPosMapper {
      */
     public CellPos mapPresenterToModel(int presenterX, int presenterY, int presenterScreen,
             int container) {
-        if (container == Favorites.CONTAINER_HOTSEAT) {
-            presenterScreen = mHasVerticalHotseat
-                    ? mNumOfHotseat - presenterY - 1 : presenterX;
+        if (isHotseatContainer(container)) {
+            if (mHasVerticalHotseat && mNumOfHotseat > 0) {
+                presenterScreen = mNumOfHotseat - presenterY - 1;
+            } else if (mNumOfHotseat > 0) {
+                int slotsPerPage = Math.max(1, mNumOfHotseat * mNumHotseatRows);
+                presenterScreen = Math.max(0, presenterScreen) * slotsPerPage
+                        + presenterY * mNumOfHotseat + presenterX;
+            } else {
+                presenterScreen = presenterX;
+            }
         }
         return new CellPos(presenterX, presenterY, presenterScreen);
     }

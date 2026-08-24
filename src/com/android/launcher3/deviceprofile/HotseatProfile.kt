@@ -18,9 +18,11 @@ package com.android.launcher3.deviceprofile
 
 import com.android.launcher3.DeviceProfile
 import com.android.launcher3.InvariantDeviceProfile
+import com.android.launcher3.Utilities
 import com.android.launcher3.Utilities.getIconVisibleSizePx
 import com.android.launcher3.deviceprofile.HotseatProfileInitialValues.Factory.calculateHotseatBarSizePx
 import com.android.launcher3.folder.ClippedFolderIconLayoutRule.ICON_OVERLAP_FACTOR
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.min
 
@@ -375,6 +377,8 @@ data class HotseatProfile(
             deviceProperties: DeviceProperties,
             panelCount: Int,
             mIsScalableGrid: Boolean,
+            numHotseatRows: Int,
+            showHotseatLabels: Boolean,
         ): HotseatProfile {
 
             val hotseatWithBorderAndSpace =
@@ -388,6 +392,31 @@ data class HotseatProfile(
                     isVerticalBarLayout = isVerticalBarLayout,
                     numShownHotseatIconsParam = displayOptionSpec.numShownHotseatIcons,
                 )
+
+            val labelHeight = if (showHotseatLabels) {
+                Utilities.calculateTextHeight(workspaceProfile.iconTextSizePx.toFloat())
+            } else {
+                0
+            }
+            val cellHeight =
+                ceil(workspaceProfile.iconSizePx * 2 * ICON_OVERLAP_FACTOR).toInt() -
+                    workspaceProfile.iconSizePx / 2 + labelHeight
+            val iconBandSpace = abs(cellHeight / 2) - 16
+            val qsbSpace = hotseatProfileInitialValues.qsbSpace
+            val extraRowsHeight = if (isVerticalBarLayout) {
+                0
+            } else {
+                (numHotseatRows - 1).coerceAtLeast(0) * cellHeight
+            }
+            val extraBarSpace = if (
+                isVerticalBarLayout ||
+                    (!hotseatProfileInitialValues.isQsbInline &&
+                        !deviceProperties.taskbarConfiguration.isTaskbarPresent)
+            ) {
+                iconBandSpace
+            } else {
+                0
+            }
 
             return HotseatProfile(
                 areNavButtonsInline = hotseatProfileInitialValues.areNavButtonsInline,
@@ -405,8 +434,8 @@ data class HotseatProfile(
                 minQsbWidthPx = hotseatProfileInitialValues.minQsbWidthPx,
                 maxIconSpacePx = hotseatProfileInitialValues.maxIconSpacePx,
                 barBottomSpacePx = hotseatProfileInitialValues.barBottomSpacePx,
-                qsbSpace = hotseatProfileInitialValues.qsbSpace,
-                cellHeightPx = ceil(workspaceProfile.iconSizePx * ICON_OVERLAP_FACTOR).toInt(),
+                qsbSpace = qsbSpace,
+                cellHeightPx = cellHeight,
                 barSizePx =
                     calculateHotseatBarSizePx(
                         hotseatIconSizePx = workspaceProfile.iconSizePx,
@@ -415,9 +444,9 @@ data class HotseatProfile(
                         barWorkspaceSpacePx = hotseatProfileInitialValues.barWorkspaceSpacePx,
                         qsbVisualHeight = hotseatProfileInitialValues.qsbVisualHeight,
                         barBottomSpacePx = hotseatProfileInitialValues.barBottomSpacePx,
-                        qsbSpace = hotseatProfileInitialValues.qsbSpace,
+                        qsbSpace = qsbSpace,
                         isQsbInline = hotseatProfileInitialValues.isQsbInline,
-                    ),
+                    ) + extraRowsHeight + extraBarSpace,
                 widthPx = hotseatWithBorderAndSpace.widthPx,
                 numShownIcons = hotseatWithBorderAndSpace.numShownIcons,
                 columnSpan = hotseatWithBorderAndSpace.columnSpan,

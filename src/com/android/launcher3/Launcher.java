@@ -679,7 +679,8 @@ public class Launcher extends StatefulActivity<LauncherState>
             mCellPosMapper = new TwoPanelCellPosMapper(mDeviceProfile.inv.numColumns);
         } else {
             mCellPosMapper = new CellPosMapper(mDeviceProfile.isVerticalBarLayout(),
-                    mDeviceProfile.getHotseatProfile().getNumShownIcons());
+                    mDeviceProfile.getHotseatProfile().getNumShownIcons(),
+                    mDeviceProfile.numHotseatRows, mDeviceProfile.numHotseatPages);
         }
         mModelWriter = mModel.getWriter(true, this, modelCallbacks);
         updateFixedLandscape();
@@ -2010,7 +2011,7 @@ public class Launcher extends StatefulActivity<LauncherState>
 
     boolean isHotseatLayout(View layout) {
         // TODO: Remove this method
-        return mHotseat != null && (layout == mHotseat);
+        return mHotseat != null && (layout == mHotseat || mHotseat.isHotseatPage(layout));
     }
 
     @Override
@@ -2225,7 +2226,8 @@ public class Launcher extends StatefulActivity<LauncherState>
         }
 
         List<CellLayout> containers = new ArrayList<>(mWorkspace.getPanelCount() + 1);
-        containers.add(mWorkspace.getHotseat());
+        CellLayout currentHotseatPage = mWorkspace.getHotseat().getCurrentPageLayout();
+        if (currentHotseatPage != null) containers.add(currentHotseatPage);
         mWorkspace.forEachVisiblePage(page -> containers.add((CellLayout) page));
         CellLayout[] containerArray = containers.toArray(new CellLayout[0]);
         LauncherBindableItemsContainer visibleContainer =
@@ -2589,7 +2591,7 @@ public class Launcher extends StatefulActivity<LauncherState>
      */
     public SparseArray<ItemInfo> getPinnedItems() {
         SparseArray<ItemInfo> items = new SparseArray<>();
-        mapOverCellLayouts(new CellLayout[]{getHotseat()}, (info, view) -> {
+        mapOverCellLayouts(getHotseat().getPageLayouts(), (info, view) -> {
             // Always return false to make sure all items in the hotseat are checked.
             if (info == null) return false;
             if (info.isPredictedItem()) return false;
@@ -2757,8 +2759,12 @@ public class Launcher extends StatefulActivity<LauncherState>
      * @param screenId must be presenterPos and not modelPos.
      */
     public CellLayout getCellLayout(int container, int screenId) {
-        return (container == LauncherSettings.Favorites.CONTAINER_HOTSEAT)
-                ? mHotseat : mWorkspace.getScreenWithId(screenId);
+        if (container == LauncherSettings.Favorites.CONTAINER_HOTSEAT
+                || container == LauncherSettings.Favorites.CONTAINER_HOTSEAT_PREDICTION) {
+            CellLayout page = mHotseat.getPageAt(screenId);
+            return page != null ? page : mHotseat.getCurrentPageLayout();
+        }
+        return mWorkspace.getScreenWithId(screenId);
     }
 
     @Override
