@@ -184,7 +184,7 @@ data class HotseatProfileInitialValues(
                     )
                 else res.getDimensionPixelSize(R.dimen.spring_loaded_hotseat_top_margin)
 
-            val hotseatQsbHeight = res.getDimensionPixelSize(R.dimen.qsb_widget_height)
+            val hotseatQsbHeight = res.getDimensionPixelSize(R.dimen.uwu_qsb_widget_height)
             val hotseatQsbShadowHeight = res.getDimensionPixelSize(R.dimen.qsb_shadow_height)
 
             var hotseatQsbSpace: Int = responsiveHotseatSpec.hotseatQsbSpace
@@ -328,7 +328,7 @@ data class HotseatProfileInitialValues(
                 }
             val hotseatBarWorkspaceSpacePx =
                 res.getDimensionPixelSize(R.dimen.dynamic_grid_hotseat_side_padding)
-            val hotseatQsbHeight = res.getDimensionPixelSize(R.dimen.qsb_widget_height)
+            val hotseatQsbHeight = res.getDimensionPixelSize(R.dimen.uwu_qsb_widget_height)
             val hotseatQsbShadowHeight = res.getDimensionPixelSize(R.dimen.qsb_shadow_height)
 
             var hotseatQsbSpace = pxFromDp(inv.hotseatQsbSpace[typeIndex], metrics)

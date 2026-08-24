@@ -283,7 +283,7 @@ public class DeviceProfile {
         boolean isDockEnabled = launcherPrefs.get(LauncherPrefs.HOTSEAT_ENABLED);
         boolean isQsbEnabled = !"disabled".equals(launcherPrefs.get(LauncherPrefs.HOTSEAT_MODE));
         int qsbHeight = isQsbEnabled
-                ? res.getDimensionPixelSize(R.dimen.qsb_widget_height) : 0;
+                ? res.getDimensionPixelSize(R.dimen.uwu_qsb_widget_height) : 0;
 
         HotseatProfileInitialValues hotseatProfileInitialValues =
                 HotseatProfileInitialValues.Factory.createHotseatProfileInitialValues(

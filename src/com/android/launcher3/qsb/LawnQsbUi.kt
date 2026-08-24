@@ -158,8 +158,8 @@ fun buildQsbStyle(
 
 fun getHotseatQsbCornerRadius(context: Context, factor: Float): Float {
     val resources = context.resources
-    val height = resources.getDimension(R.dimen.qsb_widget_height)
-    val padding = resources.getDimension(R.dimen.qsb_widget_vertical_padding)
+    val height = resources.getDimension(R.dimen.uwu_qsb_widget_height)
+    val padding = resources.getDimension(R.dimen.uwu_qsb_widget_vertical_padding)
     return (height - 2 * padding) / 2 * factor
 }
 
@@ -191,7 +191,7 @@ fun LawnQsbUi(
 
     Row(container, verticalAlignment = Alignment.CenterVertically) {
         Box(
-            Modifier.requiredWidth(dimensionResource(R.dimen.qsb_icon_width)).fillMaxHeight(),
+            Modifier.requiredWidth(dimensionResource(R.dimen.uwu_qsb_icon_width)).fillMaxHeight(),
             contentAlignment = Alignment.Center,
         ) {
             ThemedImage(state.startIcon, Modifier.size(24.dp))
@@ -220,7 +220,7 @@ fun LawnQsbUi(
 @Composable
 private fun QsbIcon(icon: QsbIconState, shape: Shape, onClick: () -> Unit, modifier: Modifier) {
     Box(
-        modifier.requiredWidth(dimensionResource(R.dimen.qsb_icon_width))
+        modifier.requiredWidth(dimensionResource(R.dimen.uwu_qsb_icon_width))
             .fillMaxHeight()
             .clip(shape)
             .clickable(
@@ -229,7 +229,7 @@ private fun QsbIcon(icon: QsbIconState, shape: Shape, onClick: () -> Unit, modif
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple(color = MaterialTheme.colorScheme.onSurface),
             )
-            .padding(dimensionResource(R.dimen.qsb_icon_padding)),
+            .padding(dimensionResource(R.dimen.uwu_qsb_icon_padding)),
         contentAlignment = Alignment.Center,
     ) {
         ThemedIcon(icon, Modifier.fillMaxSize())

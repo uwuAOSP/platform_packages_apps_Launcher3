@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="label_search">Search</string>
+    <string name="label_voice_search">Voice search</string>
+    <string name="google_folder_title" translatable="false">Google</string>
+
+    <string name="home_screen_grid">Home screen grid</string>
+    <string name="grid_columns">Columns</string>
+    <string name="grid_rows">Rows</string>
+    <string name="dock_icons">Dock icons</string>
+    <string name="action_apply">Apply</string>
+
+    <string name="dock_settings">Dock</string>
+    <string name="drawer_settings">App drawer</string>
+    <string name="folder_settings">Folders</string>
+    <string name="dock_rows">Dock rows</string>
+    <string name="dock_pages">Dock pages</string>
+    <string name="dock_icons_unfolded">Unfolded dock icons</string>
+    <string name="action_reset">Restore defaults</string>
+
+    <string name="action_customize">Customize</string>
+    <string name="label_lens">Google Lens</string>
+    <string name="search_provider_app_search">App search</string>
+    <string name="search_provider_google" translatable="false">Google</string>
+    <string name="search_provider_google_go" translatable="false">Google Go</string>
+    <string name="search_provider_youtube" translatable="false">YouTube</string>
+    <string name="search_provider_pixel_search" translatable="false">Pixel Search</string>
+    <string name="search_provider_sesame" translatable="false">Sesame</string>
+    <string name="search_provider_wikipedia" translatable="false">Wikipedia</string>
+    <string name="search_provider_github" translatable="false">GitHub</string>
+    <string name="search_provider_duckduckgo" translatable="false">DuckDuckGo</string>
+    <string name="search_provider_ecosia" translatable="false">Ecosia</string>
+    <string name="search_provider_presearch" translatable="false">Presearch</string>
+    <string name="search_provider_bing" translatable="false">Bing</string>
+    <string name="search_provider_brave" translatable="false">Brave</string>
+    <string name="search_provider_yandex" translatable="false">Yandex</string>
+    <string name="search_provider_fennec" translatable="false">Fennec</string>
+    <string name="search_provider_firefox" translatable="false">Firefox</string>
+    <string name="search_provider_iceraven" translatable="false">Iceraven</string>
+    <string name="search_provider_startpage" translatable="false">Startpage</string>
+    <string name="search_provider_startpage_eu" translatable="false">Startpage (EU)</string>
+    <string name="search_provider_ironfox" translatable="false">IronFox</string>
+    <string name="search_provider_waterfox" translatable="false">Waterfox</string>
+    <string name="search_provider_kagi" translatable="false">Kagi</string>
+    <string name="search_provider_cromite" translatable="false">Cromite</string>
+    <string name="search_provider_vivaldi" translatable="false">Vivaldi</string>
+
+    <string name="search_bar_settings">Search bar settings</string>
+    <string name="search_provider">Search provider</string>
+    <string name="apply_accent_color_label">Apply accent color</string>
+    <string name="corner_radius_label">Corner radius</string>
+    <string name="qsb_hotseat_background_transparency">Background opacity</string>
+    <string name="qsb_hotseat_stroke_width">Outline width</string>
+    <string name="force_website_search">Always use website</string>
+    <string name="show_dock">Show dock</string>
+    <string name="show_dock_labels">Show icon labels</string>
+    <string name="dock_background">Dock background</string>
+    <string name="dock_background_opacity">Dock background opacity</string>
+    <string name="dock_background_corner_radius">Dock background corner radius</string>
+    <string name="dock_background_inset_left">Dock background left inset</string>
+    <string name="dock_background_inset_top">Dock background top inset</string>
+    <string name="dock_background_inset_right">Dock background right inset</string>
+    <string name="dock_background_inset_bottom">Dock background bottom inset</string>
+    <string name="dock_bottom_spacing">Dock bottom spacing</string>
+    <string name="dock_page_indicator_spacing">Page indicator spacing</string>
+    <string name="match_drawer_search">Use app drawer search</string>
+    <string name="dock_layout_section">Layout</string>
+    <string name="dock_appearance_section">Appearance</string>
+    <string name="dock_search_section">Search</string>
+    <string name="show_dock_search">Show Dock search bar</string>
+    <string name="dock_rows_value">Dock rows: %1$d</string>
+    <string name="dock_pages_value">Dock pages: %1$d</string>
+    <string name="settings_general_section">General</string>
+    <string name="settings_layout_section">Layout</string>
+    <string name="settings_search">Search settings</string>
+    <string name="settings_search_results">Search results</string>
+    <string name="settings_search_no_results">No matching settings</string>
+    <string name="clear_search">Clear search</string>
+</resources>

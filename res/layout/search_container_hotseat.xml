@@ -2,7 +2,7 @@
 <com.android.launcher3.qsb.LawnQsbLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@id/search_container_hotseat"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/qsb_widget_height"
+    android:layout_height="@dimen/uwu_qsb_widget_height"
     android:layout_gravity="center|top"
     android:contentDescription="@string/label_search"
-    android:paddingVertical="@dimen/qsb_widget_vertical_padding" />
+    android:paddingVertical="@dimen/uwu_qsb_widget_vertical_padding" />
