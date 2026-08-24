@@ -114,10 +114,19 @@ public class LauncherPreviewRenderer extends BaseContext
             ColorsOverride colorsOverride,
             LauncherModel model,
             int themeRes) {
+        this(context, workspaceScreenId, colorsOverride, model, themeRes, null);
+    }
+
+    public LauncherPreviewRenderer(Context context,
+            int workspaceScreenId,
+            ColorsOverride colorsOverride,
+            LauncherModel model,
+            int themeRes,
+            @Nullable InvariantDeviceProfile previewIdp) {
 
         super(context, themeRes);
         mUiHandler = new Handler(Looper.getMainLooper());
-        mIdp = InvariantDeviceProfile.INSTANCE.get(context);
+        mIdp = previewIdp != null ? previewIdp : InvariantDeviceProfile.INSTANCE.get(context);
 
         DeviceProfile.Builder dpBuilder = getDeviceProfileForPreview(context)
                 .toBuilder();
@@ -332,12 +341,17 @@ public class LauncherPreviewRenderer extends BaseContext
 
     @Override
     public CellPosMapper getCellPosMapper() {
-        return CellPosMapper.DEFAULT;
+        return new CellPosMapper(mDp.isVerticalBarLayout(),
+                mDp.getHotseatProfile().getNumShownIcons(), mDp.numHotseatRows,
+                mDp.numHotseatPages);
     }
 
     private List<CellLayout> getAllLayouts() {
         List<CellLayout> screens = new ArrayList<>(mWorkspaceScreens.values());
-        screens.add(getHotseat());
+        Hotseat hotseat = getHotseat();
+        if (hotseat != null) {
+            for (CellLayout page : hotseat.getPageLayouts()) screens.add(page);
+        }
         return screens;
     }
 
@@ -397,12 +411,15 @@ public class LauncherPreviewRenderer extends BaseContext
     private void populateHotseatPredictions(WorkspaceData itemIdMap) {
         List<ItemInfo> predictions = itemIdMap.getPredictedContents(CONTAINER_HOTSEAT_PREDICTION);
         int predictionIndex = 0;
-        for (int rank = 0; rank < mDp.getHotseatProfile().getNumShownIcons(); rank++) {
+        int totalHotseatSlots = mDp.getHotseatProfile().getNumShownIcons()
+                * mDp.numHotseatRows;
+        for (int rank = 0; rank < totalHotseatSlots; rank++) {
             if (predictions.size() <= predictionIndex) continue;
 
             int cellX = mHotseat.getCellXFromOrder(rank);
             int cellY = mHotseat.getCellYFromOrder(rank);
-            if (mHotseat.isOccupied(cellX, cellY)) continue;
+            CellLayout page = mHotseat.getPageAt(mHotseat.getPageFromOrder(rank));
+            if (page == null || page.isOccupied(cellX, cellY)) continue;
 
             WorkspaceItemInfo itemInfo =
                     new WorkspaceItemInfo((WorkspaceItemInfo) predictions.get(predictionIndex));

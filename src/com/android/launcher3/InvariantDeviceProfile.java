@@ -69,6 +69,7 @@ import com.android.launcher3.model.DeviceGridState;
 import com.android.launcher3.testing.shared.ResourceUtils;
 import com.android.launcher3.util.DaggerSingletonObject;
 import com.android.launcher3.util.DaggerSingletonTracker;
+import com.android.launcher3.dagger.LauncherComponentProvider;
 import com.android.launcher3.util.ListenableDiffAwareRef;
 import com.android.launcher3.util.LooperExecutor;
 import com.android.launcher3.util.Partner;
@@ -314,11 +315,48 @@ public class InvariantDeviceProfile {
         lifeCycle.addCloseable(localeReceiver);
     }
 
+    /** Creates an isolated profile used by the settings preview without changing user preferences. */
+    public InvariantDeviceProfile(Context context, GridSize previewGrid) {
+        LauncherAppComponent component = LauncherComponentProvider.get(context);
+        mDisplayController = component.getDisplayController();
+        mWMProxy = component.getWmProxy();
+        mPrefs = component.getLauncherPrefs();
+        mThemeManager = component.getThemeManager();
+        taskbarModeUtil = component.getTaskbarModeUtil();
+        mMainExecutor = MAIN_EXECUTOR;
+        initGridForPreview(context, previewGrid);
+    }
+
+    private void initGridForPreview(Context context, GridSize previewGrid) {
+        LauncherDisplayInfo displayInfo = mDisplayController.getInfo();
+        List<DisplayOption> allOptions = getPredefinedDeviceProfiles(
+                displayInfo,
+                null,
+                mPrefs.get(FIXED_LANDSCAPE_MODE));
+        List<DisplayOption> matchingOptions = filterByColumnCount(
+                allOptions, previewGrid.getNumColumns());
+        if (matchingOptions.isEmpty()) {
+            matchingOptions = allOptions;
+        }
+
+        List<DisplayOption> optionsWithEnoughRows = matchingOptions.stream()
+                .filter(option -> option.grid.numRows >= previewGrid.getNumRows())
+                .collect(Collectors.toList());
+        if (!optionsWithEnoughRows.isEmpty()) {
+            matchingOptions = optionsWithEnoughRows;
+        }
+
+        DisplayOption displayOption = invDistWeightedInterpolate(
+                displayInfo, new ArrayList<>(matchingOptions), displayInfo.getDeviceType());
+        initGridForDisplayOption(displayInfo, displayOption, previewGrid);
+    }
+
     private void initGrid(String gridName) {
         LauncherDisplayInfo displayInfo = mDisplayController.getInfo();
         // A user-configured column count takes precedence over the persisted grid name: when set,
-        // we ignore GRID_NAME and select a profile purely by column count.
+        // we ignore GRID_NAME and select a profile by the requested grid dimensions.
         int customColumns = mPrefs.get(LauncherPrefs.WORKSPACE_COLUMNS);
+        int customRows = mPrefs.get(LauncherPrefs.WORKSPACE_ROWS);
         String effectiveGridName = customColumns >= 0 ? null : gridName;
         List<DisplayOption> allOptions = getPredefinedDeviceProfiles(
                 displayInfo,
@@ -342,6 +380,35 @@ public class InvariantDeviceProfile {
         List<DisplayOption> allOptionsFilteredByColCount =
                 filterByColumnCount(allOptions, filterColumns);
 
+        if (allOptionsFilteredByColCount.isEmpty() && !allOptions.isEmpty()) {
+            int closestColumnDistance = allOptions.stream()
+                    .mapToInt(option -> Math.abs(option.grid.numColumns - filterColumns))
+                    .min()
+                    .orElse(0);
+            allOptionsFilteredByColCount = allOptions.stream()
+                    .filter(option -> Math.abs(option.grid.numColumns - filterColumns)
+                            == closestColumnDistance)
+                    .collect(Collectors.toList());
+        }
+
+        if (customRows >= 0 && !allOptionsFilteredByColCount.isEmpty()) {
+            List<DisplayOption> optionsWithEnoughRows = allOptionsFilteredByColCount.stream()
+                    .filter(option -> option.grid.numRows >= customRows)
+                    .collect(Collectors.toList());
+            if (!optionsWithEnoughRows.isEmpty()) {
+                allOptionsFilteredByColCount = optionsWithEnoughRows;
+            } else {
+                int closestRowDistance = allOptionsFilteredByColCount.stream()
+                        .mapToInt(option -> Math.abs(option.grid.numRows - customRows))
+                        .min()
+                        .orElse(0);
+                allOptionsFilteredByColCount = allOptionsFilteredByColCount.stream()
+                        .filter(option -> Math.abs(option.grid.numRows - customRows)
+                                == closestRowDistance)
+                        .collect(Collectors.toList());
+            }
+        }
+
         DisplayOption displayOption =
                 invDistWeightedInterpolate(displayInfo, allOptionsFilteredByColCount.isEmpty()
                                 ? new ArrayList<>(allOptions)
@@ -352,7 +419,7 @@ public class InvariantDeviceProfile {
             mPrefs.put(GRID_NAME, displayOption.grid.name);
         }
 
-        initGridForDisplayOption(displayInfo, displayOption);
+        initGridForDisplayOption(displayInfo, displayOption, null);
         FileLog.d(TAG, "After initGrid:"
                 + "gridName:" + gridName
                 + ", dbFile:" + dbFile
@@ -377,7 +444,8 @@ public class InvariantDeviceProfile {
     }
 
     private void initGridForDisplayOption(
-            LauncherDisplayInfo displayInfo, DisplayOption displayOption) {
+            LauncherDisplayInfo displayInfo, DisplayOption displayOption,
+            @Nullable GridSize previewGrid) {
         Context context = displayInfo.context;
         enableTwoLinesInAllApps = Flags.enableTwolineToggle()
                 && Utilities.isEnglishLanguage(context)
@@ -388,7 +456,8 @@ public class InvariantDeviceProfile {
         GridOption closestProfile = displayOption.grid;
         int deviceType = displayInfo.getDeviceType();
         GridSizeOverrides gridSizeOverrides = GridSizeOverrides.get(context);
-        GridSize gridSize = gridSizeOverrides.getGridSize(closestProfile);
+        GridSize gridSize = previewGrid != null
+                ? previewGrid : gridSizeOverrides.getGridSize(closestProfile);
         numRows = gridSize.getNumRows();
         numColumns = gridSize.getNumColumns();
         numSearchContainerColumns = deviceType == TYPE_MULTI_DISPLAY
@@ -435,10 +504,11 @@ public class InvariantDeviceProfile {
 
         horizontalMargin = displayOption.horizontalMargin;
 
-        numShownHotseatIcons = deviceType == TYPE_MULTI_DISPLAY
-                ? closestProfile.numHotseatIcons : gridSize.getNumHotseatColumns();
+        numShownHotseatIcons = gridSize.getNumHotseatColumns();
         numDatabaseHotseatIcons = deviceType == TYPE_MULTI_DISPLAY || deviceType == TYPE_DESKTOP
-                ? closestProfile.numDatabaseHotseatIcons : numShownHotseatIcons;
+                ? Math.max(closestProfile.numDatabaseHotseatIcons,
+                        gridSize.getNumHotseatColumnsUnfolded())
+                : numShownHotseatIcons;
 
         hotseatBarBottomSpace = displayOption.hotseatBarBottomSpace;
         hotseatQsbSpace = displayOption.hotseatQsbSpace;
@@ -557,9 +627,16 @@ public class InvariantDeviceProfile {
      * new IDP, reloads the database and triggers a grid migration.
      */
     public void setGridSize(int rows, int columns, int hotseatColumns) {
-        mPrefs.put(LauncherPrefs.WORKSPACE_COLUMNS, columns);
-        mPrefs.put(LauncherPrefs.WORKSPACE_ROWS, rows);
-        mPrefs.put(LauncherPrefs.HOTSEAT_COLUMNS, hotseatColumns);
+        setGridSize(rows, columns, hotseatColumns, hotseatColumns);
+    }
+
+    public void setGridSize(
+            int rows, int columns, int hotseatColumns, int hotseatColumnsUnfolded) {
+        mPrefs.put(
+                LauncherPrefs.WORKSPACE_COLUMNS.to((Object) columns),
+                LauncherPrefs.WORKSPACE_ROWS.to((Object) rows),
+                LauncherPrefs.HOTSEAT_COLUMNS.to((Object) hotseatColumns),
+                LauncherPrefs.HOTSEAT_COLUMNS_UNFOLDED.to((Object) hotseatColumnsUnfolded));
         mMainExecutor.execute(() -> {
             Trace.beginSection("InvariantDeviceProfile#setGridSize");
             onConfigChanged();
@@ -572,14 +649,21 @@ public class InvariantDeviceProfile {
      * {@link #setCurrentGrid}.
      */
     public void resetGridSize() {
-        mPrefs.put(LauncherPrefs.WORKSPACE_COLUMNS, -1);
-        mPrefs.put(LauncherPrefs.WORKSPACE_ROWS, -1);
-        mPrefs.put(LauncherPrefs.HOTSEAT_COLUMNS, -1);
+        mPrefs.put(
+                LauncherPrefs.WORKSPACE_COLUMNS.to(Integer.valueOf(-1)),
+                LauncherPrefs.WORKSPACE_ROWS.to(Integer.valueOf(-1)),
+                LauncherPrefs.HOTSEAT_COLUMNS.to(Integer.valueOf(-1)),
+                LauncherPrefs.HOTSEAT_COLUMNS_UNFOLDED.to(Integer.valueOf(-1)));
         mMainExecutor.execute(() -> {
             Trace.beginSection("InvariantDeviceProfile#resetGridSize");
             onConfigChanged();
             Trace.endSection();
         });
+    }
+
+    /** Rebuilds device profiles after launcher layout preferences have changed. */
+    public void refreshAfterPreferencesChanged() {
+        onConfigChanged();
     }
 
     private Object[] toModelState() {

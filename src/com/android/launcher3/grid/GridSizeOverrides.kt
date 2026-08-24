@@ -34,17 +34,24 @@ class GridSizeOverrides private constructor(private val prefs: LauncherPrefs) {
         val numRows: Int,
         val numColumns: Int,
         val numHotseatColumns: Int,
+        val numHotseatColumnsUnfolded: Int,
     ) {
         val dbFile: String get() = "launcher_${numRows}_${numColumns}_$numHotseatColumns.db"
     }
 
     fun getGridSize(defaultGrid: GridOption): GridSize {
+        val hotseatColumns =
+            resolve(prefs.get(LauncherPrefs.HOTSEAT_COLUMNS), defaultGrid.numHotseatIcons)
         return GridSize(
             numRows = resolve(prefs.get(LauncherPrefs.WORKSPACE_ROWS), defaultGrid.numRows),
             numColumns =
                 resolve(prefs.get(LauncherPrefs.WORKSPACE_COLUMNS), defaultGrid.numColumns),
-            numHotseatColumns =
-                resolve(prefs.get(LauncherPrefs.HOTSEAT_COLUMNS), defaultGrid.numHotseatIcons),
+            numHotseatColumns = hotseatColumns,
+            numHotseatColumnsUnfolded =
+                resolve(
+                    prefs.get(LauncherPrefs.HOTSEAT_COLUMNS_UNFOLDED),
+                    maxOf(hotseatColumns, defaultGrid.numDatabaseHotseatIcons),
+                ).coerceAtLeast(hotseatColumns),
         )
     }
 
@@ -54,13 +61,20 @@ class GridSizeOverrides private constructor(private val prefs: LauncherPrefs) {
         idp.numAllAppsColumns = drawerColumns
         idp.numDatabaseAllAppsColumns = drawerColumns
 
-        idp.numFolderRows[INDEX_DEFAULT] =
-            resolve(prefs.get(LauncherPrefs.FOLDER_ROWS), defaultGrid.numFolderRows[INDEX_DEFAULT])
-        idp.numFolderColumns[INDEX_DEFAULT] =
-            resolve(
-                prefs.get(LauncherPrefs.FOLDER_COLUMNS),
-                defaultGrid.numFolderColumns[INDEX_DEFAULT],
+        val folderRows = prefs.get(LauncherPrefs.FOLDER_ROWS)
+        val folderColumns = prefs.get(LauncherPrefs.FOLDER_COLUMNS)
+        val folderIndices =
+            intArrayOf(
+                INDEX_DEFAULT,
+                INDEX_LANDSCAPE,
+                INDEX_TWO_PANEL_PORTRAIT,
+                INDEX_TWO_PANEL_LANDSCAPE,
             )
+        for (index in folderIndices) {
+            idp.numFolderRows[index] = resolve(folderRows, defaultGrid.numFolderRows[index])
+            idp.numFolderColumns[index] =
+                resolve(folderColumns, defaultGrid.numFolderColumns[index])
+        }
 
         val homeIconSizeFactor = prefs.get(LauncherPrefs.HOME_ICON_SIZE_FACTOR)
         val drawerIconSizeFactor = prefs.get(LauncherPrefs.DRAWER_ICON_SIZE_FACTOR)

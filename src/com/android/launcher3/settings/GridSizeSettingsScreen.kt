@@ -17,23 +17,25 @@ package com.android.launcher3.settings
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.android.launcher3.InvariantDeviceProfile
+import com.android.launcher3.LauncherPrefs
 import com.android.launcher3.R
 import com.android.settingslib.spa.widget.preference.SliderPreference
 import com.android.settingslib.spa.widget.preference.SliderPreferenceModel
@@ -43,68 +45,147 @@ private const val MIN_GRID = 3
 private const val MAX_GRID = 10
 
 @Composable
-fun GridSizeSettingsContent(contentPadding: PaddingValues, onBack: () -> Unit) {
+fun GridSizeSettingsContent(contentPadding: PaddingValues) {
     val context = LocalContext.current
     val idp = InvariantDeviceProfile.INSTANCE.get(context)
+    val prefs = LauncherPrefs.get(context)
+    val isFoldable = idp.deviceType == InvariantDeviceProfile.TYPE_MULTI_DISPLAY
+    val storedUnfoldedHotseatColumns = prefs.get(LauncherPrefs.HOTSEAT_COLUMNS_UNFOLDED)
+    val currentUnfoldedHotseatColumns =
+        storedUnfoldedHotseatColumns.coerceAtLeast(idp.numShownHotseatIcons)
+    val maxGrid =
+        maxOf(MAX_GRID, idp.numColumns, idp.numRows, idp.numShownHotseatIcons,
+            currentUnfoldedHotseatColumns)
 
     var columns by rememberSaveable { mutableIntStateOf(idp.numColumns) }
     var rows by rememberSaveable { mutableIntStateOf(idp.numRows) }
     var hotseatColumns by rememberSaveable { mutableIntStateOf(idp.numShownHotseatIcons) }
-
-    Column(
-        modifier =
-            Modifier.padding(contentPadding)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
-    ) {
-        GridOverridesPreview(
-            columns = columns,
-            rows = rows,
-            hotseatColumns = hotseatColumns,
-            modifier = Modifier.fillMaxWidth().height(220.dp).padding(horizontal = 16.dp),
+    var unfoldedHotseatColumns by rememberSaveable {
+        mutableIntStateOf(
+            currentUnfoldedHotseatColumns,
         )
+    }
 
-        Category {
-            SliderPreference(
-                model =
-                    object : SliderPreferenceModel {
-                        override val title = context.getString(R.string.grid_columns)
-                        override val initValue = columns
-                        override val valueRange = MIN_GRID..MAX_GRID
-                        override val showSteps = true
-                        override val onValueChange = { value: Int -> columns = value }
-                    }
-            )
-            SliderPreference(
-                model =
-                    object : SliderPreferenceModel {
-                        override val title = context.getString(R.string.grid_rows)
-                        override val initValue = rows
-                        override val valueRange = MIN_GRID..MAX_GRID
-                        override val showSteps = true
-                        override val onValueChange = { value: Int -> rows = value }
-                    }
-            )
-            SliderPreference(
-                model =
-                    object : SliderPreferenceModel {
-                        override val title = context.getString(R.string.dock_icons)
-                        override val initValue = hotseatColumns
-                        override val valueRange = MIN_GRID..MAX_GRID
-                        override val showSteps = true
-                        override val onValueChange = { value: Int -> hotseatColumns = value }
-                    }
-            )
-        }
+    Column(modifier = Modifier.padding(contentPadding).fillMaxSize()) {
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            val isPortrait = LocalConfiguration.current.orientation ==
+                android.content.res.Configuration.ORIENTATION_PORTRAIT
+            val settingsMinHeight = (maxHeight * if (isPortrait) 0.40f else 0.52f)
+                .coerceAtLeast(if (isPortrait) 315.dp else 280.dp)
+            val previewMaxHeight = (maxHeight - settingsMinHeight)
+                .coerceAtLeast(if (isPortrait) 180.dp else 140.dp)
 
-        Button(
-            onClick = {
-                idp.setGridSize(rows, columns, hotseatColumns)
-                onBack()
-            },
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp),
-        ) {
-            Text(stringResource(R.string.action_apply))
+            Column(modifier = Modifier.fillMaxHeight()) {
+                GridOverridesPreview(
+                    columns = columns,
+                    rows = rows,
+                    hotseatColumns = hotseatColumns,
+                    hotseatColumnsUnfolded = unfoldedHotseatColumns,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = previewMaxHeight)
+                        .padding(horizontal = 16.dp, vertical = if (isPortrait) 16.dp else 12.dp),
+                )
+
+                Column(
+                    modifier = Modifier.weight(1f).heightIn(min = settingsMinHeight),
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                    ) {
+                        Category(title = context.getString(R.string.home_screen_grid)) {
+                            GridSlider(
+                                title = R.string.grid_columns,
+                                value = columns,
+                                range = MIN_GRID..maxGrid,
+                                onValueChange = { columns = it },
+                                onValueChangeFinished = {
+                                    idp.setGridSize(
+                                        rows,
+                                        columns,
+                                        hotseatColumns,
+                                        if (isFoldable) unfoldedHotseatColumns else hotseatColumns,
+                                    )
+                                },
+                            )
+                            GridSlider(
+                                title = R.string.grid_rows,
+                                value = rows,
+                                range = MIN_GRID..maxGrid,
+                                onValueChange = { rows = it },
+                                onValueChangeFinished = {
+                                    idp.setGridSize(
+                                        rows,
+                                        columns,
+                                        hotseatColumns,
+                                        if (isFoldable) unfoldedHotseatColumns else hotseatColumns,
+                                    )
+                                },
+                            )
+                            GridSlider(
+                                title = R.string.dock_icons,
+                                value = hotseatColumns,
+                                range = MIN_GRID..maxGrid,
+                                onValueChange = {
+                                    hotseatColumns = it
+                                    if (isFoldable) {
+                                        unfoldedHotseatColumns = unfoldedHotseatColumns.coerceAtLeast(it)
+                                    }
+                                },
+                                onValueChangeFinished = {
+                                    idp.setGridSize(
+                                        rows,
+                                        columns,
+                                        hotseatColumns,
+                                        if (isFoldable) unfoldedHotseatColumns else hotseatColumns,
+                                    )
+                                },
+                            )
+                            if (isFoldable) {
+                                GridSlider(
+                                    title = R.string.dock_icons_unfolded,
+                                    value = unfoldedHotseatColumns,
+                                    range = hotseatColumns..maxGrid,
+                                     onValueChange = {
+                                         unfoldedHotseatColumns = it.coerceAtLeast(hotseatColumns)
+                                     },
+                                     onValueChangeFinished = {
+                                         idp.setGridSize(
+                                             rows,
+                                             columns,
+                                             hotseatColumns,
+                                             unfoldedHotseatColumns,
+                                         )
+                                     },
+                                 )
+                            }
+                        }
+                    }
+
+                }
+            }
         }
     }
+}
+
+@Composable
+private fun GridSlider(
+    title: Int,
+    value: Int,
+    range: IntRange,
+    onValueChange: (Int) -> Unit,
+    onValueChangeFinished: () -> Unit,
+) {
+    val context = LocalContext.current
+    SliderPreference(
+        model =
+            object : SliderPreferenceModel {
+                override val title = context.getString(title)
+                override val initValue = value
+                override val valueRange = range
+                override val showSteps = true
+                override val onValueChange = onValueChange
+                override val onValueChangeFinished = onValueChangeFinished
+            },
+    )
 }

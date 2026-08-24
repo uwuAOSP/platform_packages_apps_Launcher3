@@ -329,6 +329,7 @@ android_library {
         "androidx.compose.ui_ui-tooling-preview",
         "androidx.compose.ui_ui-tooling",
         "androidx.navigation_navigation-compose",
+        "PlatformComposeCore",
         "cuebarlib",
     ],
     manifest: "AndroidManifest-common.xml",
