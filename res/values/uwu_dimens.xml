@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <item name="uwu_hotseat_qsb_space_default" type="dimen" format="float">24</item>
+    <dimen name="uwu_smartspacer_horizontal_padding">16dp</dimen>
     <dimen name="uwu_qsb_widget_height">64dp</dimen>
     <dimen name="uwu_qsb_widget_vertical_padding">6dp</dimen>
     <dimen name="uwu_qsb_icon_width">56dp</dimen>

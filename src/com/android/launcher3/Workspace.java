@@ -138,6 +138,7 @@ import com.android.launcher3.pageindicators.PageIndicator;
 import com.android.launcher3.pageindicators.PageIndicatorDotsWithArrows;
 import com.android.launcher3.popup.Poppable;
 import com.android.launcher3.popup.Popup;
+import com.android.launcher3.smartspacer.LauncherSmartspacer;
 import com.android.launcher3.statemanager.StateManager;
 import com.android.launcher3.statemanager.StateManager.StateHandler;
 import com.android.launcher3.statemanager.StateManager.StateListener;
@@ -292,6 +293,8 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     private boolean mAddToExistingFolderOnDrop = false;
 
     private boolean mIsDownOverHorizontalScrollContent;
+    private View mFirstPagePinnedItem;
+    private boolean mIsEventOverFirstPagePinnedItem;
 
     final static float START_DAMPING_TOUCH_SLOP_ANGLE = (float) Math.PI / 6;
     final static float MAX_SWIPE_ANGLE = (float) Math.PI / 3;
@@ -727,13 +730,33 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
      */
     public void bindAndInitFirstWorkspaceScreen() {
         // Add the first page
-        insertNewWorkspaceScreen(Workspace.FIRST_SCREEN_ID, getChildCount());
+        CellLayout firstPage = insertNewWorkspaceScreen(Workspace.FIRST_SCREEN_ID, getChildCount());
+        if (!LauncherSmartspacer.isEnabled(getContext())) {
+            mFirstPagePinnedItem = null;
+            return;
+        }
+        if (mFirstPagePinnedItem == null) {
+            mFirstPagePinnedItem = LayoutInflater.from(getContext())
+                    .inflate(R.layout.search_container_smartspacer, firstPage, false);
+        }
+        int cellHSpan = mLauncher.getDeviceProfile().inv.numColumns;
+        CellLayoutLayoutParams lp = new CellLayoutLayoutParams(0, 0, cellHSpan, 1);
+        lp.canReorder = false;
+        if (!firstPage.addViewToCellLayout(
+                mFirstPagePinnedItem, 0, R.id.search_container_workspace, lp, true)) {
+            Log.e(TAG, "Failed to add Smartspacer to the first workspace row");
+            mFirstPagePinnedItem = null;
+        }
     }
 
     public void removeAllWorkspaceScreens() {
         // Disable all layout transitions before removing all pages to ensure that we don't get the
         // transition animations competing with us changing the scroll when we add pages
         disableLayoutTransitions();
+
+        if (mFirstPagePinnedItem != null && mFirstPagePinnedItem.getParent() != null) {
+            ((ViewGroup) mFirstPagePinnedItem.getParent()).removeView(mFirstPagePinnedItem);
+        }
 
         // Remove the pages and clear the screen models
         removeAllViews();
@@ -1285,6 +1308,12 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         float x = ev.getX();
         float y = ev.getY();
 
+        mIsEventOverFirstPagePinnedItem = false;
+        if (mFirstPagePinnedItem != null) {
+            getViewBoundsRelativeToWorkspace(mFirstPagePinnedItem, mTempRect);
+            mIsEventOverFirstPagePinnedItem = mTempRect.contains((int) x, (int) y);
+        }
+
         mIsDownOverHorizontalScrollContent = false;
         int childCount = getChildCount();
         if (childCount <= 0) return;
@@ -1315,7 +1344,9 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
 
     @Override
     protected void determineScrollingStart(MotionEvent ev) {
-        if (!isFinishedSwitchingState() || mIsDownOverHorizontalScrollContent) return;
+        if (!isFinishedSwitchingState()
+                || mIsDownOverHorizontalScrollContent
+                || mIsEventOverFirstPagePinnedItem) return;
 
         float deltaX = ev.getX() - getDownMotionX();
         float absDeltaX = Math.abs(deltaX);
@@ -2900,7 +2931,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         CellLayout layout = null;
         if (shouldUseHotseatAsDropLayout(d)) {
             layout = resolveHotseatDropLayout(d);
-        } else {
+        } else if (!isDragObjectOverSmartspace(d)) {
             // Check neighbour pages
             layout = checkDragObjectIsOverNeighbourPages(d, centerX);
 
@@ -2921,6 +2952,12 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
             return true;
         }
         return false;
+    }
+
+    private boolean isDragObjectOverSmartspace(DragObject dragObject) {
+        if (mFirstPagePinnedItem == null) return false;
+        getViewBoundsRelativeToWorkspace(mFirstPagePinnedItem, mTempRect);
+        return mTempRect.contains((int) dragObject.x, (int) dragObject.y);
     }
 
     private boolean shouldUseHotseatAsDropLayout(DragObject dragObject) {

@@ -59,6 +59,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.android.launcher3.BuildConfig
 import com.android.launcher3.LauncherFiles
+import com.android.launcher3.LauncherPrefs
 import com.android.launcher3.R
 import com.android.launcher3.SessionCommitReceiver
 import com.android.launcher3.util.SettingsCache
@@ -289,6 +290,7 @@ private val SETTINGS_SEARCH_RESULTS = listOf(
     SettingsSearchResult(R.string.show_dock_search, SEARCH_ROUTE, "search bar"),
     SettingsSearchResult(R.string.force_website_search, SEARCH_ROUTE, "website search"),
     SettingsSearchResult(R.string.match_drawer_search, SEARCH_ROUTE, "drawer search"),
+    SettingsSearchResult(R.string.smartspacer_title, MAIN_ROUTE, "smartspace smartspacer"),
 )
 
 @Composable
@@ -348,6 +350,8 @@ private fun MainSettingsContent(
                 NotificationDotsPreference(context)
 
                 AddIconsToHomePreference(context)
+
+                SmartspacerPreference(context)
             }
             Category(title = context.getString(R.string.settings_layout_section)) {
 
@@ -451,5 +455,23 @@ private fun AddIconsToHomePreference(context: Context) {
                         .apply()
                 }
             }
+    )
+}
+
+@Composable
+private fun SmartspacerPreference(context: Context) {
+    val prefs = remember { LauncherPrefs.get(context) }
+    var enabled by remember { mutableStateOf(prefs.get(LauncherPrefs.SMARTSPACER_ENABLED)) }
+
+    SwitchPreference(
+        model = object : SwitchPreferenceModel {
+            override val title = context.getString(R.string.smartspacer_title)
+            override val summary = { context.getString(R.string.smartspacer_summary) }
+            override val checked = { enabled }
+            override val onCheckedChange = { newChecked: Boolean ->
+                enabled = newChecked
+                prefs.put(LauncherPrefs.SMARTSPACER_ENABLED.to(newChecked))
+            }
+        }
     )
 }

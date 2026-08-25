@@ -29,5 +29,6 @@ class SettingsActivity : ComponentActivity() {
 
     companion object {
         const val FIXED_LANDSCAPE_MODE = "pref_fixed_landscape_mode"
+        const val SMARTSPACER_PREFERENCE_KEY = "pref_enable_smartspacer"
     }
 }

@@ -21,6 +21,8 @@ import android.graphics.Point
 import android.util.Log
 import androidx.annotation.VisibleForTesting
 import com.android.launcher3.LauncherPrefs
+import com.android.launcher3.WorkspaceLayoutManager.FIRST_SCREEN_ID
+import com.android.launcher3.smartspacer.LauncherSmartspacer
 import com.android.launcher3.LauncherSettings
 import com.android.launcher3.LauncherSettings.Favorites
 import com.android.launcher3.LauncherSettings.Favorites.TABLE_NAME
@@ -508,6 +510,9 @@ constructor(
             for (entry in existedEntries) {
                 occupied.markCells(entry, true)
             }
+        }
+        if (screenId == FIRST_SCREEN_ID && LauncherSmartspacer.isEnabled(context)) {
+            occupied.markCells(0, 0, trgX, 1, true)
         }
         extraItemsProvider.get().forEach {
             if (it.container == Favorites.CONTAINER_DESKTOP && it.screenId == screenId) {

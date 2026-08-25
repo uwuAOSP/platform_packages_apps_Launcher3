@@ -38,6 +38,7 @@ internal fun resetSearchSettings(context: Context) {
         context,
         LauncherPrefs.HOTSEAT_MODE.to("lawnchair"),
         LauncherPrefs.HOTSEAT_QSB_PROVIDER.to("google"),
+        LauncherPrefs.SMARTSPACER_ENABLED.to(false),
         LauncherPrefs.HOTSEAT_QSB_THEMED.to(true),
         LauncherPrefs.HOTSEAT_QSB_FORCE_WEBSITE.to(false),
         LauncherPrefs.HOTSEAT_QSB_MATCH_DRAWER.to(false),

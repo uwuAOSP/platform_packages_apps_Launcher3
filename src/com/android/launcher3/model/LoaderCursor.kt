@@ -56,7 +56,9 @@ import com.android.launcher3.model.data.ItemInfoWithIcon
 import com.android.launcher3.model.data.WorkspaceItemInfo
 import com.android.launcher3.pm.UserManagerState
 import com.android.launcher3.shortcuts.ShortcutKey
+import com.android.launcher3.smartspacer.LauncherSmartspacer
 import com.android.launcher3.util.ApiWrapper
+import com.android.launcher3.WorkspaceLayoutManager.FIRST_SCREEN_ID
 import com.android.launcher3.util.ContentWriter
 import com.android.launcher3.util.ContentWriter.CommitParams
 import com.android.launcher3.util.GridOccupancy
@@ -469,6 +471,9 @@ constructor(
 
         if (!occupied.containsKey(item.screenId)) {
             occupied.put(item.screenId, GridOccupancy(countX + 1, countY + 1))
+            if (item.screenId == FIRST_SCREEN_ID && LauncherSmartspacer.isEnabled(context)) {
+                occupied[item.screenId].markCells(0, 0, countX, 1, true)
+            }
         }
         val occupancy = occupied[item.screenId]
 

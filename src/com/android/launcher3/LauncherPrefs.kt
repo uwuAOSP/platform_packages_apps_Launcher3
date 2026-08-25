@@ -321,6 +321,10 @@ constructor(@ApplicationContext private val encryptedContext: Context) {
         val FIXED_LANDSCAPE_MODE = backedUpItem(SettingsActivity.FIXED_LANDSCAPE_MODE, false)
 
         @JvmField
+        val SMARTSPACER_ENABLED =
+            backedUpItem(SettingsActivity.SMARTSPACER_PREFERENCE_KEY, false)
+
+        @JvmField
         val WORKSPACE_ITEMS_LABEL_HIDDEN = backedUpItem("pref_workspace_items_label_hidden", false)
 
         // Customizable grid size preferences. A value of -1 means "unset": fall back to the value

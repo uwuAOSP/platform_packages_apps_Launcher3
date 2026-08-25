@@ -276,6 +276,86 @@ java_library {
     min_sdk_version: min_launcher3_sdk_version,
 }
 
+java_library_static {
+    name: "Launcher3SmartspacerViewBindingStub",
+    srcs: [
+        "smartspacer/viewbinding-stub/src/main/java/**/*.java",
+        "smartspacer/viewbinding-stub/src/main/java/**/*.kt",
+    ],
+    sdk_version: "current",
+    min_sdk_version: "29",
+}
+
+android_library_import {
+    name: "Launcher3SmartspacerBalloon",
+    aars: [
+        "smartspacer/balloon/balloon-1.6.13.aar",
+    ],
+    sdk_version: "current",
+    min_sdk_version: "29",
+    static_libs: [
+        "androidx.activity_activity-ktx",
+        "androidx.annotation_annotation",
+        "androidx.appcompat_appcompat",
+        "androidx.fragment_fragment-ktx",
+        "androidx.lifecycle_lifecycle-runtime-ktx",
+        "kotlin-stdlib",
+    ],
+}
+
+android_library {
+    name: "Launcher3SmartspacerSdkCore",
+    srcs: [
+        "smartspacer/sdk-core/src/main/aidl/**/*.aidl",
+        "smartspacer/sdk-core/src/main/java/**/*.java",
+        "smartspacer/sdk-core/src/main/java/**/*.kt",
+        "smartspacer/sdk-core/soong/**/*.java",
+    ],
+    manifest: "smartspacer/sdk-core/src/main/AndroidManifest.xml",
+    aidl: {
+        local_include_dirs: ["smartspacer/sdk-core/src/main/aidl"],
+    },
+    sdk_version: "current",
+    min_sdk_version: "29",
+    kotlin_plugins: ["kotlin-parcelize-compiler-plugin"],
+    static_libs: [
+        "androidx.core_core-ktx",
+        "kotlin-parcelize-runtime",
+    ],
+}
+
+android_library {
+    name: "Launcher3SmartspacerSdkClient",
+    srcs: [
+        "smartspacer/sdk-client/src/main/aidl/**/*.aidl",
+        "smartspacer/sdk-client/src/main/java/**/*.java",
+        "smartspacer/sdk-client/src/main/java/**/*.kt",
+        "smartspacer/sdk-client/soong/**/*.java",
+        "smartspacer/sdk-client/soong/**/*.kt",
+    ],
+    manifest: "smartspacer/sdk-client/src/main/AndroidManifest.xml",
+    resource_dirs: ["smartspacer/sdk-client/src/main/res"],
+    aidl: {
+        local_include_dirs: [
+            "smartspacer/sdk-client/src/main/aidl",
+            "smartspacer/sdk-core/src/main/aidl",
+        ],
+    },
+    sdk_version: "current",
+    min_sdk_version: "29",
+    static_libs: [
+        "Launcher3SmartspacerSdkCore",
+        "Launcher3SmartspacerViewBindingStub",
+        "androidx-constraintlayout_constraintlayout",
+        "androidx.core_core-ktx",
+        "androidx.fragment_fragment-ktx",
+        "androidx.lifecycle_lifecycle-runtime-ktx",
+        "androidx.lifecycle_lifecycle-service",
+        "kotlinx_coroutines",
+        "Launcher3SmartspacerBalloon",
+    ],
+}
+
 // Library with all the dependencies for building Launcher3
 android_library {
     name: "Launcher3ResLib",
@@ -285,6 +365,7 @@ android_library {
         "dynamiccolors",
         "LauncherPluginLib",
         "launcher_quickstep_log_protos_lite",
+        "Launcher3SmartspacerSdkClient",
         "androidx-constraintlayout_constraintlayout",
         "androidx.recyclerview_recyclerview",
         "androidx.dynamicanimation_dynamicanimation",

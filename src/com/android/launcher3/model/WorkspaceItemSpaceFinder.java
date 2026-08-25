@@ -17,13 +17,16 @@ package com.android.launcher3.model;
 
 import static com.android.launcher3.WorkspaceLayoutManager.FIRST_SCREEN_ID;
 
+import android.content.Context;
 import android.util.SparseArray;
 
 import com.android.launcher3.InvariantDeviceProfile;
 import com.android.launcher3.LauncherModel;
 import com.android.launcher3.LauncherSettings;
+import com.android.launcher3.dagger.ApplicationContext;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.model.data.WorkspaceItemCoordinates;
+import com.android.launcher3.smartspacer.LauncherSmartspacer;
 import com.android.launcher3.util.GridOccupancy;
 import com.android.launcher3.util.IntSet;
 
@@ -40,13 +43,21 @@ public class WorkspaceItemSpaceFinder {
     private final BgDataModel mDataModel;
     private final InvariantDeviceProfile mIDP;
     private final LauncherModel mModel;
+    private final Context mContext;
+
+    WorkspaceItemSpaceFinder(
+            BgDataModel dataModel, InvariantDeviceProfile idp, LauncherModel model) {
+        this(dataModel, idp, model, null);
+    }
 
     @Inject
     WorkspaceItemSpaceFinder(
-            BgDataModel dataModel, InvariantDeviceProfile idp, LauncherModel model) {
+            BgDataModel dataModel, InvariantDeviceProfile idp, LauncherModel model,
+            @ApplicationContext Context context) {
         mDataModel = dataModel;
         mIDP = idp;
         mModel = model;
+        mContext = context;
     }
 
     /**
@@ -138,8 +149,8 @@ public class WorkspaceItemSpaceFinder {
             screenId = screenItems.keyAt(screenIndex);
             if (!excludedScreens.contains(screenId)
                     && findNextAvailableIconSpaceInScreen(
-                            screenItems.get(screenId), startingFromCellX, startingFromCellY, spanX,
-                            spanY, cellXY)) {
+                            screenId, screenItems.get(screenId), startingFromCellX,
+                            startingFromCellY, spanX, spanY, cellXY)) {
                 found = true;
                 break;
             }
@@ -153,8 +164,8 @@ public class WorkspaceItemSpaceFinder {
 
             // If we still can't find an empty space, then God help us all!!!
             if (!findNextAvailableIconSpaceInScreen(
-                    screenItems.get(screenId), startingFromCellX, startingFromCellY, spanX, spanY,
-                    cellXY)) {
+                    screenId, screenItems.get(screenId), startingFromCellX, startingFromCellY,
+                    spanX, spanY, cellXY)) {
                 throw new RuntimeException("Can't find space to add the item");
             }
         }
@@ -163,9 +174,13 @@ public class WorkspaceItemSpaceFinder {
     }
 
     private boolean findNextAvailableIconSpaceInScreen(
-            List<ItemInfo> occupiedPos, int startingFromCellX, int startingFromCellY, int spanX,
-            int spanY, int[] cellXY) {
+            int screenId, List<ItemInfo> occupiedPos, int startingFromCellX,
+            int startingFromCellY, int spanX, int spanY, int[] cellXY) {
         GridOccupancy occupied = new GridOccupancy(mIDP.numColumns, mIDP.numRows);
+        if (screenId == FIRST_SCREEN_ID && mContext != null
+                && LauncherSmartspacer.isEnabled(mContext)) {
+            occupied.markCells(0, 0, mIDP.numColumns, 1, true);
+        }
 
         // Mark cells left-to-right, top-to-bottom as occupied from [0, 0] until
         // (startingFromCellX, startingFromCellY).

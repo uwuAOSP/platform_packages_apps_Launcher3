@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="smartspacer_title">Show Smartspacer on home screen</string>
+    <string name="smartspacer_summary">Replace the first home screen row with Smartspacer</string>
     <string name="label_search">Search</string>
     <string name="label_voice_search">Voice search</string>
     <string name="google_folder_title" translatable="false">Google</string>
