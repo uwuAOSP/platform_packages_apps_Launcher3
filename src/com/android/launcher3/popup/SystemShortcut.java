@@ -34,6 +34,8 @@ import com.android.launcher3.Flags;
 import com.android.launcher3.LauncherModel;
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.R;
+import com.android.launcher3.Launcher;
+import com.android.launcher3.icons.LauncherIconCustomizeActivity;
 import com.android.launcher3.SecondaryDropTarget;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.accessibility.LauncherAccessibilityDelegate;
@@ -191,6 +193,28 @@ public abstract class SystemShortcut<T extends ActivityContext> extends ItemInfo
     }
 
     public static final Factory<ActivityContext> APP_INFO = AppInfo::new;
+
+    public static final Factory<ActivityContext> CUSTOMIZE_ICON = (context, itemInfo, originalView) -> {
+        if (!(context instanceof Launcher)
+                || itemInfo.getTargetComponent() == null
+                || !(itemInfo instanceof ItemInfoWithIcon)) {
+            return null;
+        }
+        return new CustomizeIcon<>(context, itemInfo, originalView);
+    };
+
+    public static class CustomizeIcon<T extends ActivityContext> extends SystemShortcut<T> {
+        public CustomizeIcon(T target, ItemInfo itemInfo, @NonNull View originalView) {
+            super(R.drawable.gm_edit_24, R.string.customize_icon, target, itemInfo, originalView);
+        }
+
+        @Override
+        public void onClick(View view) {
+            view.getContext().startActivity(LauncherIconCustomizeActivity.createIntent(
+                    view.getContext(), new ComponentKey(
+                            mItemInfo.getTargetComponent(), mItemInfo.user)));
+        }
+    }
 
     public static class AppInfo<T extends ActivityContext> extends SystemShortcut<T> {
 

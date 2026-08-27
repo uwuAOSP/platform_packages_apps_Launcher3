@@ -16,17 +16,30 @@
 package com.android.launcher3.icons;
 
 import android.content.Context;
+import android.content.ComponentName;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.ComponentInfo;
+import android.content.pm.LauncherApps;
+import android.content.pm.PackageItemInfo;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
+import android.graphics.drawable.Drawable;
+import android.os.UserHandle;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.Log;
 
 import com.android.launcher3.R;
+import com.android.launcher3.LauncherPrefs;
 import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.dagger.ApplicationContext;
 import com.android.launcher3.dagger.LauncherAppSingleton;
 import com.android.launcher3.graphics.ThemeManager;
+import com.android.launcher3.icons.iconpack.IconPackEntry;
+import com.android.launcher3.icons.iconpack.IconPackRepository;
+import com.android.launcher3.icons.iconpack.IconOverrideRepository;
+import com.android.launcher3.icons.iconpack.CustomIconPack;
+import com.android.launcher3.util.ComponentKey;
 
 import org.xmlpull.v1.XmlPullParser;
 
@@ -72,6 +85,56 @@ public class LauncherIconProvider extends IconProvider {
         mSystemState = mSystemState.withTheme(
                 mThemeManager.getIconState().getThemeCode(),
                 mThemeManager.getIconState().isCircle());
+    }
+
+    @Override
+    protected Drawable loadPackageIcon(
+            PackageItemInfo info, ApplicationInfo appInfo, int density) {
+        Drawable icon = getIconPackDrawable(info, appInfo, density);
+        return icon != null ? icon : super.loadPackageIcon(info, appInfo, density);
+    }
+
+    /** Returns a per-component icon-pack override, or the selected pack's mapping. */
+    protected final Drawable getIconPackDrawable(
+            PackageItemInfo info, ApplicationInfo appInfo, int density) {
+        ComponentName componentName = info instanceof ComponentInfo
+                ? new ComponentName(info.packageName, ((ComponentInfo) info).name) : null;
+        UserHandle user = UserHandle.getUserHandleForUid(appInfo.uid);
+        if (componentName == null) {
+            LauncherApps launcherApps = mContext.getSystemService(LauncherApps.class);
+            if (launcherApps != null) {
+                for (android.content.pm.LauncherActivityInfo activity
+                        : launcherApps.getActivityList(appInfo.packageName, user)) {
+                    componentName = activity.getComponentName();
+                    break;
+                }
+            }
+        }
+        if (componentName == null) return null;
+
+        ComponentKey key = new ComponentKey(componentName, user);
+        IconPackEntry entry = IconOverrideRepository.INSTANCE.get(mContext, key);
+        if (entry == null) {
+            String packageName = LauncherPrefs.get(mContext)
+                    .get(LauncherPrefs.ICON_PACK_PACKAGE);
+            if (packageName.isEmpty()) return null;
+            CustomIconPack pack = IconPackRepository.INSTANCE.getPack(mContext, packageName);
+            if (pack != null) {
+                entry = pack.getIcon(componentName);
+            }
+        }
+        return entry == null ? null
+                : IconPackRepository.INSTANCE.getDrawable(mContext, entry, density);
+    }
+
+    @Override
+    public PersistedItemState getStateForApp(ApplicationInfo info) {
+        if (info == null) return super.getStateForApp(null);
+        UserHandle user = UserHandle.getUserHandleForUid(info.uid);
+        return super.getStateForApp(info).withAdditionalValues(
+                LauncherPrefs.get(mContext).get(LauncherPrefs.ICON_PACK_PACKAGE),
+                IconOverrideRepository.INSTANCE.getPackageState(
+                        mContext, info.packageName, user));
     }
 
     private Map<String, ThemeData> getThemedIconMap() {

@@ -178,6 +178,18 @@
     <string name="title_change_settings" msgid="1376365968844349552">"更改设置"</string>
     <string name="notification_dots_service_title" msgid="4284221181793592871">"显示通知圆点"</string>
     <string name="developer_options_title" msgid="700788437593726194">"开发者选项"</string>
+    <string name="icon_pack_title">"图标包"</string>
+    <string name="icon_pack_none">"系统图标"</string>
+    <string name="customize_icon">"自定义图标"</string>
+    <string name="reset_icon">"重置图标"</string>
+    <string name="icon_picker_empty">"请先在主屏幕设置中选择图标包"</string>
+    <string name="icon_picker_loading">"正在加载图标"</string>
+    <string name="icon_info_version">"版本 %1$s"</string>
+    <string name="icon_info_component">"Activity：%1$s"</string>
+    <string name="icon_name_label">"应用名称"</string>
+    <string name="icon_picker_choose_icon">"选择图标"</string>
+    <string name="icon_editor_cancel">"取消"</string>
+    <string name="icon_editor_save">"保存"</string>
     <string name="auto_add_shortcuts_label" msgid="4926805029653694105">"将应用图标添加到主屏幕"</string>
     <string name="auto_add_shortcuts_description" msgid="7117251166066978730">"适用于新应用"</string>
     <string name="package_state_unknown" msgid="7592128424511031410">"未知"</string>

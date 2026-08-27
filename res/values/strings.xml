@@ -432,6 +432,19 @@
     <!-- Title for Developer Options setting. [CHAR LIMIT=50] -->
     <string name="developer_options_title">Developer Options</string>
 
+    <string name="icon_pack_title">Icon pack</string>
+    <string name="icon_pack_none">System icons</string>
+    <string name="customize_icon">Customize icon</string>
+    <string name="reset_icon">Reset icon</string>
+    <string name="icon_picker_empty">Select an icon pack in Home settings first</string>
+    <string name="icon_picker_loading">Loading icons</string>
+    <string name="icon_info_version">Version %1$s</string>
+    <string name="icon_info_component">Activity: %1$s</string>
+    <string name="icon_name_label">App name</string>
+    <string name="icon_picker_choose_icon">Choose icon</string>
+    <string name="icon_editor_cancel">Cancel</string>
+    <string name="icon_editor_save">Save</string>
+
     <!-- Label for the setting that allows the automatic placement of launcher shortcuts for applications and games installed on the device [CHAR LIMIT=60] -->
     <string name="auto_add_shortcuts_label">Add app icons to home screen</string>
     <!-- Text description of the setting that allows the automatic placement of launcher shortcuts for applications and games installed on the device [CHAR LIMIT=NONE] -->

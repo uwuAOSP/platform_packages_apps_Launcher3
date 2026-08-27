@@ -74,6 +74,8 @@ constructor(
         appInfo: ApplicationInfo,
         density: Int,
     ): Drawable? {
+        getIconPackDrawable(info, appInfo, density)?.let { return it }
+
         fun Drawable.preprocess(resId: Int) =
             processor?.preprocessDrawable(this, resId, appInfo) ?: this
 

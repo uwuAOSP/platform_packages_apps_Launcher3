@@ -62,6 +62,7 @@ import com.android.launcher3.LauncherFiles
 import com.android.launcher3.LauncherPrefs
 import com.android.launcher3.R
 import com.android.launcher3.SessionCommitReceiver
+import com.android.launcher3.icons.iconpack.IconPackRepository
 import com.android.launcher3.util.SettingsCache
 import com.android.settingslib.spa.widget.preference.Preference
 import com.android.settingslib.spa.widget.preference.PreferenceModel
@@ -77,12 +78,16 @@ private const val DOCK_ROUTE = "dock"
 private const val SEARCH_ROUTE = "search"
 private const val DRAWER_ROUTE = "drawer"
 private const val FOLDER_ROUTE = "folder"
+private const val ICON_PACK_ROUTE = "icon_pack"
 
 @Composable
 fun LauncherSettingsScreen() {
     val context = LocalContext.current
     val navController = rememberNavController()
     var searchQuery by rememberSaveable { mutableStateOf("") }
+    var selectedIconPack by remember {
+        mutableStateOf(LauncherPrefs.get(context).get(LauncherPrefs.ICON_PACK_PACKAGE))
+    }
 
     androidx.compose.runtime.CompositionLocalProvider(navController.localNavController()) {
         NavHost(
@@ -126,12 +131,14 @@ fun LauncherSettingsScreen() {
                         contentPadding = padding,
                         searchQuery = searchQuery,
                         onSearchQueryChange = { searchQuery = it },
+                        selectedIconPack = selectedIconPack,
                         onOpenRoute = { navController.navigate(it) },
                         onOpenGrid = { navController.navigate(GRID_ROUTE) },
                         onOpenDock = { navController.navigate(DOCK_ROUTE) },
                         onOpenSearch = { navController.navigate(SEARCH_ROUTE) },
                         onOpenDrawer = { navController.navigate(DRAWER_ROUTE) },
-                        onOpenFolder = { navController.navigate(FOLDER_ROUTE) },
+                         onOpenFolder = { navController.navigate(FOLDER_ROUTE) },
+                         onOpenIconPack = { navController.navigate(ICON_PACK_ROUTE) },
                     )
                 }
             }
@@ -198,6 +205,15 @@ fun LauncherSettingsScreen() {
                     },
                 ) { padding ->
                     LayoutSettingsContent(LayoutSettingsKind.Folder, padding)
+                }
+            }
+            composable(ICON_PACK_ROUTE) {
+                SettingsScaffold(title = context.getString(R.string.icon_pack_title)) { padding ->
+                    IconPackSettingsContent(
+                        contentPadding = padding,
+                        selectedPackage = selectedIconPack,
+                        onSelectedPackageChange = { selectedIconPack = it },
+                    )
                 }
             }
         }
@@ -291,6 +307,7 @@ private val SETTINGS_SEARCH_RESULTS = listOf(
     SettingsSearchResult(R.string.force_website_search, SEARCH_ROUTE, "website search"),
     SettingsSearchResult(R.string.match_drawer_search, SEARCH_ROUTE, "drawer search"),
     SettingsSearchResult(R.string.smartspacer_title, MAIN_ROUTE, "smartspace smartspacer"),
+    SettingsSearchResult(R.string.icon_pack_title, ICON_PACK_ROUTE, "icons icon pack theme"),
 )
 
 @Composable
@@ -327,12 +344,14 @@ private fun MainSettingsContent(
     contentPadding: PaddingValues,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
+    selectedIconPack: String,
     onOpenRoute: (String) -> Unit,
     onOpenGrid: () -> Unit,
     onOpenDock: () -> Unit,
     onOpenSearch: () -> Unit,
     onOpenDrawer: () -> Unit,
     onOpenFolder: () -> Unit,
+    onOpenIconPack: () -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -346,12 +365,31 @@ private fun MainSettingsContent(
         if (searchQuery.isNotBlank()) {
             SettingsSearchResults(searchQuery, onOpenRoute)
         } else {
+            val availableIconPacks = remember {
+                IconPackRepository.getAvailablePacks(context)
+            }
+            val selectedIconPackLabel = remember(selectedIconPack, availableIconPacks) {
+                if (selectedIconPack.isEmpty()) {
+                    context.getString(R.string.icon_pack_none)
+                } else {
+                    availableIconPacks.firstOrNull { it.packageName == selectedIconPack }
+                        ?.label ?: context.getString(R.string.icon_pack_none)
+                }
+            }
             Category(title = context.getString(R.string.settings_general_section)) {
                 NotificationDotsPreference(context)
 
                 AddIconsToHomePreference(context)
 
                 SmartspacerPreference(context)
+
+                Preference(
+                    model = object : PreferenceModel {
+                        override val title = context.getString(R.string.icon_pack_title)
+                        override val summary = { selectedIconPackLabel }
+                        override val onClick = onOpenIconPack
+                    }
+                )
             }
             Category(title = context.getString(R.string.settings_layout_section)) {
 

@@ -68,6 +68,7 @@ import com.android.launcher3.shortcuts.ShortcutRequest
 import com.android.launcher3.util.ApplicationInfoWrapper
 import com.android.launcher3.util.CancellableTask
 import com.android.launcher3.util.ComponentKey
+import com.android.launcher3.icons.iconpack.IconOverrideRepository
 import com.android.launcher3.util.DaggerSingletonTracker
 import com.android.launcher3.util.Executors
 import com.android.launcher3.util.Executors.MAIN_EXECUTOR
@@ -590,17 +591,30 @@ constructor(
             info.bitmap = getDefaultIcon(info.user)
         }
 
-        // apply package override
-        if (!Flags.enableSupportForArchiving() || !info.isArchived) return
+        // Apply package override before the per-component customization.
+        if (Flags.enableSupportForArchiving() && info.isArchived) {
+            val targetPackage = info.targetPackage
+            val packageEntry = targetPackage?.let {
+                getInMemoryPackageEntryLocked(it, info.user)
+            }
+            if (packageEntry != null && !packageEntry.bitmap.isLowRes) {
+                info.appTitle = Utilities.trim(info.title)
+                info.title = Utilities.trim(packageEntry.title)
+                info.contentDescription = packageEntry.contentDescription
+                info.bitmap = packageEntry.bitmap
+            }
+        }
 
-        val targetPackage = info.targetPackage ?: return
-        val packageEntry = getInMemoryPackageEntryLocked(targetPackage, info.user)
-        if (packageEntry == null || packageEntry.bitmap.isLowRes) return
-
-        info.appTitle = Utilities.trim(info.title)
-        info.title = Utilities.trim(packageEntry.title)
-        info.contentDescription = packageEntry.contentDescription
-        info.bitmap = packageEntry.bitmap
+        val targetComponent = info.targetComponent
+        if (targetComponent != null) {
+            IconOverrideRepository.getLabel(
+                context,
+                ComponentKey(targetComponent, info.user),
+            )?.let { label ->
+                info.title = Utilities.trim(label)
+                info.contentDescription = getUserBadgedLabel(label, info.user)
+            }
+        }
     }
 
     fun updateSessionCache(key: PackageUserKey, info: SessionInfo) =

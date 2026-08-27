@@ -151,6 +151,12 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name="com.android.launcher3.icons.LauncherIconCustomizeActivity"
+            android:label="@string/customize_icon"
+            android:theme="@style/WidgetPickerActivityTheme"
+            android:exported="false" />
+
         <provider
             android:name="com.android.launcher3.testing.TestInformationProvider"
             android:authorities="${applicationId}.TestInfo"
