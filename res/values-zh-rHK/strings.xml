@@ -178,8 +178,16 @@
     <string name="title_change_settings" msgid="1376365968844349552">"變更設定"</string>
     <string name="notification_dots_service_title" msgid="4284221181793592871">"顯示通知圓點"</string>
     <string name="developer_options_title" msgid="700788437593726194">"開發人員選項"</string>
-    <string name="icon_pack_title">"圖示包"</string>
+    <string name="icon_pack_title">"圖示"</string>
+    <string name="icon_pack_select_title">"圖示包"</string>
     <string name="icon_pack_none">"系統圖示"</string>
+    <string name="icon_themed_title">"主題圖示"</string>
+    <string name="icon_themed_summary_on">"使用主題圖示"</string>
+    <string name="icon_themed_summary_off">"使用應用程式圖示"</string>
+    <string name="icon_shape_title">"圖示形狀"</string>
+    <string name="icon_labels_title">"應用程式名稱"</string>
+    <string name="icon_labels_summary_on">"顯示應用程式名稱"</string>
+    <string name="icon_labels_summary_off">"隱藏應用程式名稱"</string>
     <string name="customize_icon">"自訂圖示"</string>
     <string name="reset_icon">"重設圖示"</string>
     <string name="icon_picker_empty">"請先在主畫面設定中選擇圖示包"</string>

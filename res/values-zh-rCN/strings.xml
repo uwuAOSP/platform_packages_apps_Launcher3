@@ -178,8 +178,16 @@
     <string name="title_change_settings" msgid="1376365968844349552">"更改设置"</string>
     <string name="notification_dots_service_title" msgid="4284221181793592871">"显示通知圆点"</string>
     <string name="developer_options_title" msgid="700788437593726194">"开发者选项"</string>
-    <string name="icon_pack_title">"图标包"</string>
+    <string name="icon_pack_title">"图标"</string>
+    <string name="icon_pack_select_title">"图标包"</string>
     <string name="icon_pack_none">"系统图标"</string>
+    <string name="icon_themed_title">"主题图标"</string>
+    <string name="icon_themed_summary_on">"使用主题图标"</string>
+    <string name="icon_themed_summary_off">"使用应用图标"</string>
+    <string name="icon_shape_title">"图标形状"</string>
+    <string name="icon_labels_title">"应用名称"</string>
+    <string name="icon_labels_summary_on">"显示应用名称"</string>
+    <string name="icon_labels_summary_off">"隐藏应用名称"</string>
     <string name="customize_icon">"自定义图标"</string>
     <string name="reset_icon">"重置图标"</string>
     <string name="icon_picker_empty">"请先在主屏幕设置中选择图标包"</string>

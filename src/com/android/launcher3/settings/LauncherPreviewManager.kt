@@ -22,9 +22,12 @@ class LauncherPreviewManager(private val context: Context) : RememberObserver {
 
     private var activePreview: LauncherPreviewView? = null
 
-    fun createPreviewView(idp: com.android.launcher3.InvariantDeviceProfile): LauncherPreviewView {
+    fun createPreviewView(
+        idp: com.android.launcher3.InvariantDeviceProfile,
+        iconShapeKey: String? = null,
+    ): LauncherPreviewView {
         destroyActivePreview()
-        return LauncherPreviewView(context, idp).also { activePreview = it }
+        return LauncherPreviewView(context, idp, iconShapeKey).also { activePreview = it }
     }
 
     private fun destroyActivePreview() {

@@ -62,7 +62,6 @@ import com.android.launcher3.LauncherFiles
 import com.android.launcher3.LauncherPrefs
 import com.android.launcher3.R
 import com.android.launcher3.SessionCommitReceiver
-import com.android.launcher3.icons.iconpack.IconPackRepository
 import com.android.launcher3.util.SettingsCache
 import com.android.settingslib.spa.widget.preference.Preference
 import com.android.settingslib.spa.widget.preference.PreferenceModel
@@ -209,7 +208,7 @@ fun LauncherSettingsScreen() {
             }
             composable(ICON_PACK_ROUTE) {
                 SettingsScaffold(title = context.getString(R.string.icon_pack_title)) { padding ->
-                    IconPackSettingsContent(
+                    IconSettingsContent(
                         contentPadding = padding,
                         selectedPackage = selectedIconPack,
                         onSelectedPackageChange = { selectedIconPack = it },
@@ -365,41 +364,28 @@ private fun MainSettingsContent(
         if (searchQuery.isNotBlank()) {
             SettingsSearchResults(searchQuery, onOpenRoute)
         } else {
-            val availableIconPacks = remember {
-                IconPackRepository.getAvailablePacks(context)
-            }
-            val selectedIconPackLabel = remember(selectedIconPack, availableIconPacks) {
-                if (selectedIconPack.isEmpty()) {
-                    context.getString(R.string.icon_pack_none)
-                } else {
-                    availableIconPacks.firstOrNull { it.packageName == selectedIconPack }
-                        ?.label ?: context.getString(R.string.icon_pack_none)
-                }
-            }
-            Category(title = context.getString(R.string.settings_general_section)) {
-                NotificationDotsPreference(context)
+             Category(title = context.getString(R.string.settings_general_section)) {
+                 NotificationDotsPreference(context)
 
-                AddIconsToHomePreference(context)
+                 AddIconsToHomePreference(context)
 
-                SmartspacerPreference(context)
+                 SmartspacerPreference(context)
+             }
+             Category(title = context.getString(R.string.settings_layout_section)) {
 
-                Preference(
-                    model = object : PreferenceModel {
-                        override val title = context.getString(R.string.icon_pack_title)
-                        override val summary = { selectedIconPackLabel }
-                        override val onClick = onOpenIconPack
-                    }
-                )
-            }
-            Category(title = context.getString(R.string.settings_layout_section)) {
-
-            Preference(
-                model =
-                    object : PreferenceModel {
-                        override val title = context.getString(R.string.home_screen_grid)
-                        override val onClick = onOpenGrid
-                    }
-            )
+             Preference(
+                 model =
+                     object : PreferenceModel {
+                         override val title = context.getString(R.string.home_screen_grid)
+                         override val onClick = onOpenGrid
+                     }
+             )
+             Preference(
+                 model = object : PreferenceModel {
+                     override val title = context.getString(R.string.icon_pack_title)
+                     override val onClick = onOpenIconPack
+                 }
+             )
             Preference(
                 model =
                     object : PreferenceModel {

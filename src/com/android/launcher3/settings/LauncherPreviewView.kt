@@ -17,12 +17,17 @@ package com.android.launcher3.settings
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
 import com.android.launcher3.InvariantDeviceProfile
 import com.android.launcher3.LauncherAppState
+import com.android.launcher3.LauncherModel
+import com.android.launcher3.LauncherPrefs
 import com.android.launcher3.R
+import com.android.launcher3.dagger.LauncherComponentProvider
 import com.android.launcher3.preview.LauncherPreviewRenderer
+import com.android.launcher3.preview.PreviewContext
 import com.android.launcher3.util.Executors.MAIN_EXECUTOR
 import com.android.launcher3.util.Themes
 import kotlin.math.min
@@ -31,23 +36,46 @@ import kotlin.math.min
 class LauncherPreviewView(
     context: Context,
     private val idp: InvariantDeviceProfile,
+    private val iconShapeKey: String? = null,
 ) : FrameLayout(context) {
 
     private var destroyed = false
     private var rendererStarted = false
     private var rendererView: View? = null
     private var renderer: LauncherPreviewRenderer? = null
+    private var previewContext: PreviewContext? = null
+    private var previewComponent: PreviewContext.PreviewAppComponent? = null
+    private var currentIconShapeKey = iconShapeKey
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         if (rendererStarted) return
         rendererStarted = true
+        val rendererContext: Context
+        val rendererModel: LauncherModel
+        if (currentIconShapeKey != null) {
+            val prefs = LauncherPrefs.get(context)
+            previewContext = PreviewContext(
+                context,
+                prefs.get(LauncherPrefs.GRID_NAME),
+                workspaceHideItemsLabel = prefs.get(LauncherPrefs.WORKSPACE_ITEMS_LABEL_HIDDEN),
+                iconShapeKey = currentIconShapeKey,
+            )
+            rendererContext = previewContext!!
+            previewComponent = LauncherComponentProvider.get(rendererContext)
+                as PreviewContext.PreviewAppComponent
+            rendererModel = previewComponent!!.model
+            previewComponent!!.modelInitializer.initializeDisplayEvents(rendererModel)
+        } else {
+            rendererContext = context
+            rendererModel = LauncherAppState.getInstance(context.applicationContext).model
+        }
         renderer = LauncherPreviewRenderer(
-            context,
+            rendererContext,
             0,
             null,
-            LauncherAppState.getInstance(context.applicationContext).model,
-            Themes.getActivityThemeRes(context),
+            rendererModel,
+            Themes.getActivityThemeRes(rendererContext),
             idp,
         )
         renderer!!.initialRender.thenAcceptAsync({ view ->
@@ -63,7 +91,20 @@ class LauncherPreviewView(
         renderer = null
         rendererView = null
         removeAllViews()
+        previewComponent = null
+        previewContext?.onDestroy()
+        previewContext = null
     }
+
+    fun updateIconShape(iconShapeKey: String?) {
+        if (currentIconShapeKey == iconShapeKey) return
+        currentIconShapeKey = iconShapeKey
+        previewContext?.setIconShapeKey(iconShapeKey)
+    }
+
+    override fun onInterceptTouchEvent(event: MotionEvent): Boolean = true
+
+    override fun onTouchEvent(event: MotionEvent): Boolean = true
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)

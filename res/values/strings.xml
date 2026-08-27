@@ -432,8 +432,16 @@
     <!-- Title for Developer Options setting. [CHAR LIMIT=50] -->
     <string name="developer_options_title">Developer Options</string>
 
-    <string name="icon_pack_title">Icon pack</string>
+    <string name="icon_pack_title">Icons</string>
+    <string name="icon_pack_select_title">Icon pack</string>
     <string name="icon_pack_none">System icons</string>
+    <string name="icon_themed_title">Themed icons</string>
+    <string name="icon_themed_summary_on">Use themed icons</string>
+    <string name="icon_themed_summary_off">Use app icons</string>
+    <string name="icon_shape_title">Icon shape</string>
+    <string name="icon_labels_title">App names</string>
+    <string name="icon_labels_summary_on">Show app names</string>
+    <string name="icon_labels_summary_off">Hide app names</string>
     <string name="customize_icon">Customize icon</string>
     <string name="reset_icon">Reset icon</string>
     <string name="icon_picker_empty">Select an icon pack in Home settings first</string>

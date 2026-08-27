@@ -31,6 +31,7 @@ import com.android.launcher3.dagger.LauncherComponentProvider.appComponent
 import com.android.launcher3.dagger.NoOpLoggerModule
 import com.android.launcher3.dagger.PerDisplayModule
 import com.android.launcher3.graphics.theme.ThemePreference
+import com.android.launcher3.graphics.ThemeManager
 import com.android.launcher3.model.ModelInitializer
 import com.android.launcher3.model.data.LoaderParams
 import com.android.launcher3.organizer.dagger.NoOpGeneratorModule
@@ -67,20 +68,23 @@ constructor(
     layoutXml: String? = null,
     workspacePageId: Int = WorkspaceLayoutManager.FIRST_SCREEN_ID,
     workspaceHideItemsLabel: Boolean = false,
+    iconShapeKey: String? = null,
 ) : SandboxContext(base) {
     private val mPrefName: String
+    private lateinit var mPrefs: LauncherPrefs
 
     private val mDbDir: File?
 
     init {
         val randomUid = UUID.randomUUID().toString()
         mPrefName = "preview-$randomUid"
-        val prefs = ProxyPrefs(this, getSharedPreferences(mPrefName, MODE_PRIVATE))
-        prefs.putOrRemove(LauncherPrefs.GRID_NAME, gridName)
-        prefs.put(LauncherPrefs.FIXED_LANDSCAPE_MODE, false)
+        mPrefs = ProxyPrefs(this, getSharedPreferences(mPrefName, MODE_PRIVATE))
+        mPrefs.putOrRemove(LauncherPrefs.GRID_NAME, gridName)
+        mPrefs.put(LauncherPrefs.FIXED_LANDSCAPE_MODE, false)
         if (com.android.systemui.shared.Flags.workspaceItemsLabelHidden()) {
-            prefs.put(LauncherPrefs.WORKSPACE_ITEMS_LABEL_HIDDEN, workspaceHideItemsLabel)
+            mPrefs.put(LauncherPrefs.WORKSPACE_ITEMS_LABEL_HIDDEN, workspaceHideItemsLabel)
         }
+        mPrefs.putOrRemove(ThemeManager.PREF_ICON_SHAPE, iconShapeKey)
 
         val isTwoPanel =
             base.appComponent.idp.supportedProfiles.any { it.deviceProperties.isTwoPanels }
@@ -89,7 +93,7 @@ constructor(
             if (isTwoPanel) selectionForWorkspaceScreen(closestEvenPageId, closestEvenPageId + 1)
             else selectionForWorkspaceScreen(workspacePageId)
 
-        val builder = DaggerPreviewContext_PreviewAppComponent.builder().bindPrefs(prefs)
+        val builder = DaggerPreviewContext_PreviewAppComponent.builder().bindPrefs(mPrefs)
         builder.bindLoaderParams(
             LoaderParams(
                 workspaceSelection = selectionQuery,
@@ -125,6 +129,10 @@ constructor(
 
     fun <T : Any> LauncherPrefs.putOrRemove(item: Item, value: T?) {
         if (value != null) put(item, value) else remove(item)
+    }
+
+    fun setIconShapeKey(iconShapeKey: String?) {
+        mPrefs.putOrRemove(ThemeManager.PREF_ICON_SHAPE, iconShapeKey)
     }
 
     private fun emptyDbDir() {

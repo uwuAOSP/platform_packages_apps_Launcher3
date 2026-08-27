@@ -54,6 +54,7 @@ fun GridOverridesPreview(
     rows: Int,
     hotseatColumns: Int,
     hotseatColumnsUnfolded: Int = hotseatColumns,
+    iconShapeKey: String? = null,
     modifier: Modifier = Modifier,
 ) {
     val previewIdp = createPreviewIdp(
@@ -89,6 +90,7 @@ fun GridOverridesPreview(
 
         DummyLauncherBox(
             idp = previewIdp,
+            iconShapeKey = iconShapeKey,
             modifier = previewModifier.clip(MaterialTheme.shapes.large),
         )
     }
@@ -97,6 +99,7 @@ fun GridOverridesPreview(
 @Composable
 private fun DummyLauncherBox(
     idp: InvariantDeviceProfile,
+    iconShapeKey: String?,
     modifier: Modifier,
 ) {
     Box(modifier = modifier) {
@@ -108,6 +111,7 @@ private fun DummyLauncherBox(
         WallpaperPreview(modifier = Modifier.fillMaxSize())
         DummyLauncherLayout(
             idp = idp,
+            iconShapeKey = iconShapeKey,
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -116,15 +120,17 @@ private fun DummyLauncherBox(
 @Composable
 private fun DummyLauncherLayout(
     idp: InvariantDeviceProfile,
+    iconShapeKey: String?,
     modifier: Modifier,
 ) {
     val context = LocalContext.current
     val previewManager = remember { LauncherPreviewManager(context) }
-    val previewView = remember(idp) { previewManager.createPreviewView(idp) }
+    val previewView = remember(idp) { previewManager.createPreviewView(idp, iconShapeKey) }
 
     key(previewView) {
         AndroidView(
             factory = { previewView },
+            update = { it.updateIconShape(iconShapeKey) },
             modifier = modifier,
         )
     }
