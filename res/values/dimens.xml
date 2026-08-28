@@ -112,8 +112,8 @@
 
     <!-- All Apps -->
     <dimen name="all_apps_search_bar_field_height">48dp</dimen>
-    <!-- all_apps_search_bar_field_height / 2 -->
-    <dimen name="all_apps_search_bar_content_overlap">24dp</dimen>
+    <!-- Vertical overlap between the all-apps search bar and its header. -->
+    <dimen name="all_apps_search_bar_content_overlap">8dp</dimen>
     <dimen name="all_apps_search_bar_bottom_padding">30dp</dimen>
     <dimen name="all_apps_empty_search_message_top_offset">40dp</dimen>
     <dimen name="all_apps_search_top_row_extra_height">4dp</dimen>

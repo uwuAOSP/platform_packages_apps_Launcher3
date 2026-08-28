@@ -19,15 +19,20 @@ import static android.view.View.MeasureSpec.EXACTLY;
 import static android.view.View.MeasureSpec.getSize;
 import static android.view.View.MeasureSpec.makeMeasureSpec;
 
-import static com.android.launcher3.Utilities.prefixTextWithIcon;
 import static com.android.launcher3.icons.IconNormalizer.ICON_VISIBLE_AREA_FACTOR;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.InsetDrawable;
 import android.text.Selection;
 import android.text.SpannableStringBuilder;
 import android.text.method.TextKeyListener;
 import android.util.AttributeSet;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup.MarginLayoutParams;
@@ -35,13 +40,16 @@ import android.view.ViewGroup.MarginLayoutParams;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.ExtendedEditText;
 import com.android.launcher3.Insettable;
+import com.android.launcher3.LauncherPrefs;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.allapps.ActivityAllAppsContainerView;
 import com.android.launcher3.allapps.AllAppsStore;
 import com.android.launcher3.allapps.BaseAllAppsAdapter.AdapterItem;
 import com.android.launcher3.allapps.SearchUiManager;
+import com.android.launcher3.qsb.LawnQsbUiKt;
 import com.android.launcher3.search.SearchCallback;
+import com.android.launcher3.util.Themes;
 import com.android.launcher3.views.ActivityContext;
 
 import java.util.ArrayList;
@@ -78,10 +86,53 @@ public class AppsSearchContainerLayout extends ExtendedEditText
 
         mSearchQueryBuilder = new SpannableStringBuilder();
         Selection.setSelection(mSearchQueryBuilder, 0);
-        setHint(prefixTextWithIcon(getContext(), R.drawable.ic_allapps_search, getHint()));
+        applyQsbStyle();
+        applySearchFieldContent();
 
         mContentOverlap =
                 getResources().getDimensionPixelSize(R.dimen.all_apps_search_bar_content_overlap);
+    }
+
+    private void applyQsbStyle() {
+        LauncherPrefs prefs = LauncherPrefs.get(getContext());
+        boolean themed = prefs.get(LauncherPrefs.HOTSEAT_QSB_THEMED);
+        int backgroundColor = themed
+                ? Themes.getColorBackgroundFloating(getContext()) : Color.WHITE;
+        int backgroundAlpha = Math.round(prefs.get(LauncherPrefs.HOTSEAT_QSB_ALPHA) * 2.55f);
+        int strokeColor = prefs.get(LauncherPrefs.HOTSEAT_QSB_STROKE_COLOR);
+        if (strokeColor == 0) strokeColor = Themes.getColorAccent(getContext());
+
+        GradientDrawable shape = new GradientDrawable();
+        shape.setColor(Color.argb(
+                backgroundAlpha,
+                Color.red(backgroundColor),
+                Color.green(backgroundColor),
+                Color.blue(backgroundColor)));
+        shape.setCornerRadius(LawnQsbUiKt.getHotseatQsbCornerRadius(
+                getContext(), prefs.get(LauncherPrefs.HOTSEAT_QSB_CORNER_RADIUS)));
+        float strokeWidth = prefs.get(LauncherPrefs.HOTSEAT_QSB_STROKE_WIDTH);
+        if (strokeWidth > 0) {
+            shape.setStroke(Math.round(strokeWidth), strokeColor);
+        }
+
+        int verticalPadding = getResources().getDimensionPixelSize(
+                R.dimen.uwu_qsb_widget_vertical_padding);
+        setBackground(new InsetDrawable(shape, 0, verticalPadding, 0, verticalPadding));
+    }
+
+    private void applySearchFieldContent() {
+        Drawable searchIcon = getContext().getDrawable(R.drawable.ic_allapps_search).mutate();
+        searchIcon.setTint(getCurrentTextColor());
+        int iconSize = Math.round(TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 24, getResources().getDisplayMetrics()));
+        searchIcon.setBounds(0, 0, iconSize, iconSize);
+        int contentPadding = (getResources().getDimensionPixelSize(R.dimen.uwu_qsb_icon_width)
+                - iconSize) / 2;
+        setCompoundDrawablesRelative(searchIcon, null, null, null);
+        setCompoundDrawablePadding(contentPadding);
+        setPadding(contentPadding / 2, 0, contentPadding / 2, 0);
+        setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        setHint(getHint());
     }
 
     @Override
