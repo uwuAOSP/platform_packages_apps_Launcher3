@@ -278,10 +278,10 @@ object InputConsumerUtils {
             }
 
             val navHandle = tac?.navHandle ?: SystemUiProxy.INSTANCE[context]
+            val momentTapReceiver = SystemUiProxy.INSTANCE[context]
             if (
                 canStartSystemGesture &&
                     !previousGestureState.isRecentsAnimationRunning &&
-                    navHandle.canNavHandleBeLongPressed() &&
                     !ignoreThreeFingerTrackpadForNavHandleLongPress(gestureState)
             ) {
                 reasonString.append(
@@ -290,7 +290,7 @@ object InputConsumerUtils {
                     reasonPrefix,
                     SUBSTRING_PREFIX,
                 )
-                if (tac != null && tac.navHandle.canNavHandleBeLongPressed()) {
+                if (navHandle.canNavHandleBeLongPressed()) {
                     reasonString.append("stashed handle is long-pressable, ")
                 }
                 reasonString.append("using NavHandleLongPressInputConsumer")
@@ -301,6 +301,7 @@ object InputConsumerUtils {
                         inputMonitorCompat,
                         deviceState,
                         navHandle,
+                        momentTapReceiver,
                         gestureState,
                     )
                 tac?.addInputConsumerToCleanUp(base)

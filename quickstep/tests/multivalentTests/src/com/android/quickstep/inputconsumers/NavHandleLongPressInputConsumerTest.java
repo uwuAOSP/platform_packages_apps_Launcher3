@@ -116,6 +116,7 @@ public class NavHandleLongPressInputConsumerTest {
         when(mTopTaskTracker.getCachedTopTask(anyBoolean(), anyInt())).thenReturn(mTaskInfo);
         when(mDeviceState.getSquaredTouchSlop()).thenReturn(SQUARED_TOUCH_SLOP);
         when(mDelegate.allowInterceptByParent()).thenReturn(true);
+        when(mNavHandle.canNavHandleBeLongPressed()).thenReturn(true);
         mLongPressTriggered.set(false);
         when(mNavHandleLongPressHandler.getLongPressRunnable(any(), anyInt())).thenReturn(
                 mLongPressRunnable);

@@ -42,6 +42,7 @@ import android.view.MotionEvent
 import android.view.RemoteAnimationTarget
 import android.view.SurfaceControl
 import android.view.SurfaceControl.Transaction
+import android.view.ViewConfiguration
 import android.window.IOnBackInvokedCallback
 import android.window.RemoteTransition
 import android.window.TaskSnapshot
@@ -128,6 +129,9 @@ constructor(
 ) : NavHandle {
 
     private var systemUiProxy: ISystemUiProxy? = null
+    private var lastNavHandleTapTime = 0L
+    private var lastNavHandleTapDisplayId = -1
+    private var lastNavHandleTapTaskId = INVALID_TASK_ID
     private var pip: IPip? = null
     private var bubbles: IBubbles? = null
     private var sysuiUnlockAnimationController: ISysuiUnlockAnimationController? = null
@@ -453,6 +457,35 @@ constructor(
         executeWithErrorLog({ "Failed call animateNavBarLongPress" }) {
             systemUiProxy?.animateNavBarLongPress(isTouchDown, shrink, durationMs)
         }
+
+    override fun onNavHandleTap(eventTime: Long, displayId: Int, taskId: Int) {
+        if (
+            displayId == lastNavHandleTapDisplayId &&
+                taskId == lastNavHandleTapTaskId &&
+                eventTime - lastNavHandleTapTime <= ViewConfiguration.getDoubleTapTimeout()
+        ) {
+            clearPendingNavHandleTap()
+            executeWithErrorLog({ "Failed call onNavHandleDoubleTap" }) {
+                systemUiProxy?.onNavHandleDoubleTap(displayId, taskId)
+            }
+        } else {
+            lastNavHandleTapTime = eventTime
+            lastNavHandleTapDisplayId = displayId
+            lastNavHandleTapTaskId = taskId
+        }
+    }
+
+    override fun onNavHandleTapCancelled(displayId: Int) {
+        if (displayId == lastNavHandleTapDisplayId) {
+            clearPendingNavHandleTap()
+        }
+    }
+
+    private fun clearPendingNavHandleTap() {
+        lastNavHandleTapTime = 0L
+        lastNavHandleTapDisplayId = -1
+        lastNavHandleTapTaskId = INVALID_TASK_ID
+    }
 
     fun setOverrideHomeButtonLongPress(duration: Long, slopMultiplier: Float, haptic: Boolean) =
         executeWithErrorLog({ "Failed call setOverrideHomeButtonLongPress" }) {

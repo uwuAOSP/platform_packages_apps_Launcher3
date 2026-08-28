@@ -39,6 +39,12 @@ public interface NavHandle {
      */
     void animateNavBarLongPress(boolean isTouchDown, boolean shrink, long durationMs);
 
+    /** Notifies the handle owner that a complete short tap occurred on the navigation handle. */
+    default void onNavHandleTap(long eventTime, int displayId, int taskId) {}
+
+    /** Clears any pending tap when the current handle gesture is not a complete short tap. */
+    default void onNavHandleTapCancelled(int displayId) {}
+
     /** @return {@code true} if this nav handle is actually the stashed taskbar */
     default boolean isNavHandleStashedTaskbar() {
         return false;
