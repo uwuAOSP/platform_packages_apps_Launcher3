@@ -24,10 +24,13 @@ class SettingsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { SettingsTheme { LauncherSettingsScreen() } }
+        val startRoute = intent.getStringExtra(EXTRA_START_ROUTE)
+        setContent { SettingsTheme { LauncherSettingsScreen(startRoute) } }
     }
 
     companion object {
+        const val EXTRA_START_ROUTE = "com.android.launcher3.settings.extra.START_ROUTE"
+        const val SEARCH_ROUTE = "search"
         const val FIXED_LANDSCAPE_MODE = "pref_fixed_landscape_mode"
         const val SMARTSPACER_PREFERENCE_KEY = "pref_enable_smartspacer"
     }

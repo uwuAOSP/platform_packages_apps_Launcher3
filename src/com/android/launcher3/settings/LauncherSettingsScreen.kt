@@ -80,7 +80,7 @@ private const val FOLDER_ROUTE = "folder"
 private const val ICON_PACK_ROUTE = "icon_pack"
 
 @Composable
-fun LauncherSettingsScreen() {
+fun LauncherSettingsScreen(startRoute: String? = null) {
     val context = LocalContext.current
     val navController = rememberNavController()
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -91,7 +91,7 @@ fun LauncherSettingsScreen() {
     androidx.compose.runtime.CompositionLocalProvider(navController.localNavController()) {
         NavHost(
             navController = navController,
-            startDestination = MAIN_ROUTE,
+            startDestination = startRoute ?: MAIN_ROUTE,
             enterTransition = {
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Start,

@@ -23,6 +23,7 @@ import com.android.launcher3.Launcher
 import com.android.launcher3.LauncherPrefs
 import com.android.launcher3.R
 import com.android.launcher3.logging.StatsLogManager
+import com.android.launcher3.settings.SettingsActivity
 import com.android.launcher3.views.ActivityContext
 import com.android.launcher3.views.OptionsPopupView
 
@@ -130,7 +131,12 @@ class LawnQsbLayout @JvmOverloads constructor(
                     R.drawable.ic_setting,
                     StatsLogManager.LauncherEvent.IGNORE,
                 ) {
-                    launcher.startActivity(Intent("android.intent.action.APPLICATION_PREFERENCES"))
+                    launcher.startActivity(
+                        Intent(launcher, SettingsActivity::class.java).putExtra(
+                            SettingsActivity.EXTRA_START_ROUTE,
+                            SettingsActivity.SEARCH_ROUTE,
+                        )
+                    )
                     true
                 },
             ),

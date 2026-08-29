@@ -14,6 +14,7 @@
     <string name="dock_icons_unfolded">展开时的 Dock 图标数</string>
     <string name="action_apply">应用</string>
     <string name="action_reset">恢复默认设置</string>
+    <string name="action_customize">自定义</string>
     <string name="search_bar_settings">搜索栏设置</string>
     <string name="search_provider">搜索提供商</string>
     <string name="apply_accent_color_label">使用强调色</string>
