@@ -357,9 +357,6 @@ constructor(@ApplicationContext private val encryptedContext: Context) {
         val HOTSEAT_MODE = backedUpItem("hotseat_mode", "lawnchair")
 
         @JvmField
-        val HOTSEAT_LABELS = backedUpItem("enable_label_dock", false)
-
-        @JvmField
         val HOTSEAT_BOTTOM_FACTOR = backedUpItem("hotseat_bottom_factor", 1.0f)
 
         @JvmField

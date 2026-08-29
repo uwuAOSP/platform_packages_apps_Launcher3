@@ -12,7 +12,7 @@
         launcher:numFolderRows="3"
         launcher:numFolderColumns="3"
         launcher:numHotseatIcons="4"
-        launcher:hotseatQsbSpace="24"
+        launcher:hotseatQsbSpace="10"
         launcher:numExtendedHotseatIcons="6"
         launcher:inlineNavButtonsEndSpacing="@dimen/taskbar_button_margin_split"
         launcher:devicePaddingId="@xml/paddings_split_4x5"

@@ -55,7 +55,6 @@
     <string name="qsb_hotseat_stroke_width">Outline width</string>
     <string name="force_website_search">Always use website</string>
     <string name="show_dock">Show dock</string>
-    <string name="show_dock_labels">Show icon labels</string>
     <string name="dock_background">Dock background</string>
     <string name="dock_background_opacity">Dock background opacity</string>
     <string name="dock_background_corner_radius">Dock background corner radius</string>

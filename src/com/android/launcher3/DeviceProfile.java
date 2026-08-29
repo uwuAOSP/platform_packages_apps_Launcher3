@@ -301,8 +301,7 @@ public class DeviceProfile {
                         /*responsiveWorkspaceCellSpec*/ mResponsiveWorkspaceCellSpec,
                         qsbHeight,
                         numHotseatRows,
-                        launcherPrefs.get(LauncherPrefs.HOTSEAT_BOTTOM_FACTOR),
-                        launcherPrefs.get(LauncherPrefs.HOTSEAT_LABELS)
+                        launcherPrefs.get(LauncherPrefs.HOTSEAT_BOTTOM_FACTOR)
                 );
         if (!isDockEnabled) {
             int qsbOnlyBarSize = isQsbEnabled
@@ -487,8 +486,7 @@ public class DeviceProfile {
                 /*deviceProperties*/ mDeviceProperties,
                 /*panelCount*/ getPanelCount(),
                 /*mIsScalableGrid*/ mIsScalableGrid,
-                /*numHotseatRows*/ numHotseatRows,
-                /*showHotseatLabels*/ launcherPrefs.get(LauncherPrefs.HOTSEAT_LABELS)
+                /*numHotseatRows*/ numHotseatRows
         );
 
         mDropTargetProfile = DropTargetProfile

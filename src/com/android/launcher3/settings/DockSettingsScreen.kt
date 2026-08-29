@@ -36,7 +36,6 @@ import com.android.settingslib.spa.widget.ui.Category
 
 private class DockSettingsState(prefs: LauncherPrefs) {
     val enabled = mutableStateOf(prefs.get(LauncherPrefs.HOTSEAT_ENABLED))
-    val labels = mutableStateOf(prefs.get(LauncherPrefs.HOTSEAT_LABELS))
     val rows = mutableIntStateOf(prefs.get(LauncherPrefs.HOTSEAT_ROWS).coerceIn(1, 2))
     val pages = mutableIntStateOf(prefs.get(LauncherPrefs.DOCK_PAGES).coerceIn(1, 5))
     val bottomFactor = mutableIntStateOf(
@@ -200,10 +199,6 @@ private fun DockLayoutPreferences(
             onValueChange = { state.indicatorFactor.intValue = it },
             onValueChangeFinished = { saveDockSettings(context, prefs, state) },
         )
-        DockSwitch(R.string.show_dock_labels, state.labels.value) {
-            state.labels.value = it
-            saveDockSettings(context, prefs, state)
-        }
     }
 }
 
@@ -342,7 +337,6 @@ private fun saveDockSettings(
     applyLauncherSetting(
         context,
         LauncherPrefs.HOTSEAT_ENABLED.to(state.enabled.value),
-        LauncherPrefs.HOTSEAT_LABELS.to(state.labels.value),
         LauncherPrefs.HOTSEAT_ROWS.to(state.rows.intValue),
         LauncherPrefs.DOCK_PAGES.to(state.pages.intValue),
         LauncherPrefs.HOTSEAT_BOTTOM_FACTOR.to(state.bottomFactor.intValue / 100f),

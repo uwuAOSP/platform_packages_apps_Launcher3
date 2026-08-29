@@ -378,7 +378,6 @@ data class HotseatProfile(
             panelCount: Int,
             mIsScalableGrid: Boolean,
             numHotseatRows: Int,
-            showHotseatLabels: Boolean,
         ): HotseatProfile {
 
             val hotseatWithBorderAndSpace =
@@ -393,14 +392,9 @@ data class HotseatProfile(
                     numShownHotseatIconsParam = displayOptionSpec.numShownHotseatIcons,
                 )
 
-            val labelHeight = if (showHotseatLabels) {
-                Utilities.calculateTextHeight(workspaceProfile.iconTextSizePx.toFloat())
-            } else {
-                0
-            }
             val cellHeight =
                 ceil(workspaceProfile.iconSizePx * 2 * ICON_OVERLAP_FACTOR).toInt() -
-                    workspaceProfile.iconSizePx / 2 + labelHeight
+                    workspaceProfile.iconSizePx / 2
             val iconBandSpace = abs(cellHeight / 2) - 16
             val qsbSpace = hotseatProfileInitialValues.qsbSpace
             val extraRowsHeight = if (isVerticalBarLayout) {

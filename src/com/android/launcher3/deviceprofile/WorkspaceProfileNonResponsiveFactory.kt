@@ -61,6 +61,7 @@ object WorkspaceProfileNonResponsiveFactory {
         edgeMarginPx: Int,
         workspacePageIndicatorHeight: Int,
         workspacePageIndicatorOverlapWorkspace: Int,
+        workspacePageIndicatorExtraBottomPadding: Int,
         workspaceTopPadding: Int,
         workspaceBottomPadding: Int,
         hotseatProfile: HotseatProfileInitialValues,
@@ -99,7 +100,8 @@ object WorkspaceProfileNonResponsiveFactory {
                     /*Bottom */
                     (hotseatBarSizePx - insets.bottom) +
                         workspaceBottomPadding +
-                        (workspacePageIndicatorHeight - workspacePageIndicatorOverlapWorkspace),
+                    (workspacePageIndicatorHeight - workspacePageIndicatorOverlapWorkspace) +
+                        workspacePageIndicatorExtraBottomPadding,
                 )
 
             // In fixed Landscape we don't need padding on the side next to the cutout because
@@ -209,6 +211,8 @@ object WorkspaceProfileNonResponsiveFactory {
             res.getDimensionPixelSize(R.dimen.workspace_page_indicator_height)
         val workspacePageIndicatorOverlapWorkspace =
             res.getDimensionPixelSize(R.dimen.workspace_page_indicator_overlap_workspace)
+        val workspacePageIndicatorExtraBottomPadding =
+            res.getDimensionPixelSize(R.dimen.workspace_page_indicator_extra_bottom_padding)
         val noInsetWorkspacePadding =
             createWorkspacePadding(
                 isVerticalLayout = isVerticalLayout,
@@ -221,6 +225,7 @@ object WorkspaceProfileNonResponsiveFactory {
                 edgeMarginPx = edgeMarginPx,
                 workspacePageIndicatorHeight = workspacePageIndicatorHeight,
                 workspacePageIndicatorOverlapWorkspace = workspacePageIndicatorOverlapWorkspace,
+                workspacePageIndicatorExtraBottomPadding = workspacePageIndicatorExtraBottomPadding,
                 workspaceTopPadding = 0,
                 workspaceBottomPadding = 0,
                 iconSize = iconSizePx,
@@ -406,6 +411,8 @@ object WorkspaceProfileNonResponsiveFactory {
             res.getDimensionPixelSize(R.dimen.workspace_page_indicator_height)
         val workspacePageIndicatorOverlapWorkspace =
             res.getDimensionPixelSize(R.dimen.workspace_page_indicator_overlap_workspace)
+        val workspacePageIndicatorExtraBottomPadding =
+            res.getDimensionPixelSize(R.dimen.workspace_page_indicator_extra_bottom_padding)
         val noInsetWorkspacePadding =
             createWorkspacePadding(
                 isVerticalLayout = isVerticalLayout,
@@ -418,6 +425,7 @@ object WorkspaceProfileNonResponsiveFactory {
                 edgeMarginPx = edgeMarginPx,
                 workspacePageIndicatorHeight = workspacePageIndicatorHeight,
                 workspacePageIndicatorOverlapWorkspace = workspacePageIndicatorOverlapWorkspace,
+                workspacePageIndicatorExtraBottomPadding = workspacePageIndicatorExtraBottomPadding,
                 workspaceTopPadding = 0,
                 workspaceBottomPadding = 0,
                 iconSize = iconSizePx,

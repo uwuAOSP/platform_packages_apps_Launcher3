@@ -18,7 +18,6 @@ internal fun resetDockSettings(context: Context) {
     applyLauncherSetting(
         context,
         LauncherPrefs.HOTSEAT_ENABLED.to(true),
-        LauncherPrefs.HOTSEAT_LABELS.to(false),
         LauncherPrefs.HOTSEAT_ROWS.to(1),
         LauncherPrefs.DOCK_PAGES.to(1),
         LauncherPrefs.HOTSEAT_BOTTOM_FACTOR.to(1.0f),

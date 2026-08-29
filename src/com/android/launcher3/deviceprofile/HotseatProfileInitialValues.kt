@@ -98,7 +98,6 @@ data class HotseatProfileInitialValues(
             qsbHeight: Int,
             numHotseatRows: Int,
             hotseatBottomFactor: Float,
-            showHotseatLabels: Boolean,
         ): HotseatProfileInitialValues {
             return when {
                 responsiveHotseatSpec != null && responsiveWorkspaceCellSpec != null ->
@@ -114,7 +113,6 @@ data class HotseatProfileInitialValues(
                         qsbHeight = qsbHeight,
                         numHotseatRows = numHotseatRows,
                         hotseatBottomFactor = hotseatBottomFactor,
-                        showHotseatLabels = showHotseatLabels,
                     )
                 else ->
                     createNonResponsiveHotseatProfileInitialValues(
@@ -129,7 +127,6 @@ data class HotseatProfileInitialValues(
                         qsbHeight = qsbHeight,
                         numHotseatRows = numHotseatRows,
                         hotseatBottomFactor = hotseatBottomFactor,
-                        showHotseatLabels = showHotseatLabels,
                     )
             }
         }
@@ -146,7 +143,6 @@ data class HotseatProfileInitialValues(
             typeIndex: Int,
             numHotseatRows: Int,
             hotseatBottomFactor: Float,
-            showHotseatLabels: Boolean,
         ): HotseatProfileInitialValues {
 
             // For foldable (two panel), we inline the qsb if we have the screen open and we are in
@@ -217,17 +213,9 @@ data class HotseatProfileInitialValues(
             // and bottom for shadows, similar to the icon shadows.
             // This (2 * hotseatQsbShadowHeight) is to account for the top space and the bottom.
             val qsbVisualHeight = hotseatQsbHeight - (2 * hotseatQsbShadowHeight)
-            val labelHeight = if (showHotseatLabels) {
-                Utilities.calculateTextHeight(
-                    Utilities.pxFromSp(inv.iconTextSize[typeIndex], res.displayMetrics).toFloat()
-                )
-            } else {
-                0
-            }
-            if (showHotseatLabels && hotseatQsbHeight > 0) hotseatQsbSpace += labelHeight / 2
             val hotseatCellHeight =
                 ceil(responsiveWorkspaceCellSpec.iconSize * 2 * ICON_OVERLAP_FACTOR).toInt() -
-                    responsiveWorkspaceCellSpec.iconSize / 2 + labelHeight
+                    responsiveWorkspaceCellSpec.iconSize / 2
             val extraBarSpace = if (
                 isVerticalBarLayout ||
                     (!isQsbInline && !deviceProperties.taskbarConfiguration.isTaskbarPresent)
@@ -284,7 +272,6 @@ data class HotseatProfileInitialValues(
             qsbHeight: Int,
             numHotseatRows: Int,
             hotseatBottomFactor: Float,
-            showHotseatLabels: Boolean,
         ): HotseatProfileInitialValues {
             // For foldable (two panel), we inline the qsb if we have the screen open and we are in
             // either Landscape or Portrait. This cal also be disabled in the device_profile.xml
@@ -366,18 +353,10 @@ data class HotseatProfileInitialValues(
             val barEdgePaddingPx = hotseatBarEdgePaddingPx
             val barWorkspaceSpacePx = hotseatBarWorkspaceSpacePx
             val qsbVisualHeight = hotseatQsbHeight - 2 * hotseatQsbShadowHeight
-            val labelHeight = if (showHotseatLabels) {
-                Utilities.calculateTextHeight(
-                    Utilities.pxFromSp(inv.iconTextSize[typeIndex], metrics).toFloat()
-                )
-            } else {
-                0
-            }
-            if (showHotseatLabels && hotseatQsbHeight > 0) hotseatQsbSpace += labelHeight / 2
             val hotseatIconSize = pxFromDp(inv.iconSize[typeIndex], metrics)
             val hotseatCellHeight =
                 ceil(hotseatIconSize * 2 * ICON_OVERLAP_FACTOR).toInt() -
-                    hotseatIconSize / 2 + labelHeight
+                    hotseatIconSize / 2
             val extraBarSpace = if (
                 isVerticalBarLayout ||
                     (!isQsbInline && !deviceProperties.taskbarConfiguration.isTaskbarPresent)

@@ -161,6 +161,9 @@ data class WorkspaceProfile(
                 edgeMarginPx = edgeMarginPx,
                 workspacePageIndicatorHeight = workspacePageIndicatorHeight,
                 workspacePageIndicatorOverlapWorkspace = workspacePageIndicatorOverlapWorkspace,
+                workspacePageIndicatorExtraBottomPadding = res.getDimensionPixelSize(
+                    R.dimen.workspace_page_indicator_extra_bottom_padding
+                ),
                 workspaceTopPadding = workspaceTopPadding,
                 workspaceBottomPadding = workspaceBottomPadding,
                 hotseatBarBottomSpacePx = hotseatProfile.barBottomSpacePx,
@@ -306,6 +309,7 @@ data class WorkspaceProfile(
             hotseatBarBottomSpacePx: Int,
             hotseatQsbSpace: Int,
             iconSize: Int,
+            workspacePageIndicatorExtraBottomPadding: Int,
         ): Rect {
             // TODO : This is to update updateHotseatSizes, we need a better way to do
             // this
@@ -344,7 +348,8 @@ data class WorkspaceProfile(
                             /* top */ (workspaceTopPadding +
                                 (if (isScalableGrid) 0 else edgeMarginPx)),
                             /* right */ desiredWorkspaceHorizontalMarginPx,
-                            /* bottom */ (hotseatBarSizePx + workspaceBottomPadding - insets.bottom),
+                            /* bottom */ (hotseatBarSizePx + workspaceBottomPadding - insets.bottom) +
+                                workspacePageIndicatorExtraBottomPadding,
                         )
 
                     // In fixed Landscape we don't need padding on the side next to the cutout
@@ -470,6 +475,9 @@ data class WorkspaceProfile(
                     iconSize = iconSizePx,
                     hotseatBarBottomSpacePx = hotseatProfile.barBottomSpacePx,
                     hotseatQsbSpace = hotseatProfile.qsbSpace,
+                    workspacePageIndicatorExtraBottomPadding = res.getDimensionPixelSize(
+                        R.dimen.workspace_page_indicator_extra_bottom_padding
+                    ),
                     isQsbInline = isQsbInline,
                 )
 

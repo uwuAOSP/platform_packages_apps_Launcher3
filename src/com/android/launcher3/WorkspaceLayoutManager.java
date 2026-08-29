@@ -120,10 +120,9 @@ public interface WorkspaceLayoutManager {
                 return;
             }
 
-            // Lawnchair optionally shows labels for dock folders.
+            // Dock labels are intentionally disabled.
             if (child instanceof FolderIcon) {
-                ((FolderIcon) child).setTextVisible(
-                        LauncherPrefs.get(child.getContext()).get(LauncherPrefs.HOTSEAT_LABELS));
+                ((FolderIcon) child).setTextVisible(false);
             }
         } else {
             // Show folder title if not in the hotseat
