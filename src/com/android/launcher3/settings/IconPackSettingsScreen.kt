@@ -281,9 +281,10 @@ private fun AppLabelsPreference(context: android.content.Context, prefs: Launche
             override val checked = { enabled }
             override val onCheckedChange: ((Boolean) -> Unit)? = { value: Boolean ->
                 enabled = value
-                prefs.put(LauncherPrefs.WORKSPACE_ITEMS_LABEL_HIDDEN, !value)
-                LauncherAppState.getInstance(context).model
-                    .reloadIfActive("workspace-label-visibility-changed")
+                applyLauncherSetting(
+                    context,
+                    LauncherPrefs.WORKSPACE_ITEMS_LABEL_HIDDEN.to(!value),
+                )
             }
         }
     )

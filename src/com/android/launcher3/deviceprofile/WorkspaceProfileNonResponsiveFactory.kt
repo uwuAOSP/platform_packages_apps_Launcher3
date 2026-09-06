@@ -674,7 +674,7 @@ object WorkspaceProfileNonResponsiveFactory {
 
         // We also need to update WorkspacePadding and CellLayoutPadding, keeping it in a
         // different method to make it easier to keep track
-        return workspaceProfile.recalculateWorkspacePadding(
+        workspaceProfile = workspaceProfile.recalculateWorkspacePadding(
             isVerticalLayout,
             isSeascape,
             inv.isFixedLandscape,
@@ -684,5 +684,16 @@ object WorkspaceProfileNonResponsiveFactory {
             res,
             inv,
         )
+
+        return if (deviceProperties.deviceConfiguration.isWorkspaceItemsLabelHidden) {
+            workspaceProfile.copy(
+                iconTextSizePx = 0,
+                iconDrawablePaddingPx = 0,
+                maxIconTextLineCount = 0,
+                isItemsLabelHidden = true,
+            )
+        } else {
+            workspaceProfile
+        }
     }
 }
