@@ -19,6 +19,7 @@
 package com.android.launcher3.grid
 
 import android.content.Context
+import android.os.UserManager
 import com.android.launcher3.InvariantDeviceProfile
 import com.android.launcher3.LauncherPrefs
 import com.android.launcher3.deviceprofile.parser.DeviceTypedMap.INDEX_DEFAULT
@@ -28,7 +29,10 @@ import com.android.launcher3.deviceprofile.parser.DeviceTypedMap.INDEX_TWO_PANEL
 import com.android.launcher3.deviceprofile.parser.GridOption
 
 // A grid preference value of -1 means "unset": fall back to the selected device profile.
-class GridSizeOverrides private constructor(private val prefs: LauncherPrefs) {
+class GridSizeOverrides private constructor(
+    private val prefs: LauncherPrefs,
+    private val canReadPreferences: Boolean,
+) {
 
     data class GridSize(
         val numRows: Int,
@@ -40,6 +44,15 @@ class GridSizeOverrides private constructor(private val prefs: LauncherPrefs) {
     }
 
     fun getGridSize(defaultGrid: GridOption): GridSize {
+        if (!canReadPreferences) {
+            return GridSize(
+                numRows = defaultGrid.numRows,
+                numColumns = defaultGrid.numColumns,
+                numHotseatColumns = defaultGrid.numHotseatIcons,
+                numHotseatColumnsUnfolded =
+                    maxOf(defaultGrid.numHotseatIcons, defaultGrid.numDatabaseHotseatIcons),
+            )
+        }
         val hotseatColumns =
             resolve(prefs.get(LauncherPrefs.HOTSEAT_COLUMNS), defaultGrid.numHotseatIcons)
         return GridSize(
@@ -56,6 +69,8 @@ class GridSizeOverrides private constructor(private val prefs: LauncherPrefs) {
     }
 
     fun applyOverrides(idp: InvariantDeviceProfile, defaultGrid: GridOption) {
+        if (!canReadPreferences) return
+
         val drawerColumns =
             resolve(prefs.get(LauncherPrefs.DRAWER_COLUMNS), defaultGrid.numAllAppsColumns)
         idp.numAllAppsColumns = drawerColumns
@@ -104,6 +119,10 @@ class GridSizeOverrides private constructor(private val prefs: LauncherPrefs) {
 
     companion object {
         @JvmStatic
-        fun get(context: Context): GridSizeOverrides = GridSizeOverrides(LauncherPrefs.get(context))
+        fun get(context: Context): GridSizeOverrides =
+            GridSizeOverrides(
+                LauncherPrefs.get(context),
+                context.getSystemService(UserManager::class.java)?.isUserUnlocked != false,
+            )
     }
 }
