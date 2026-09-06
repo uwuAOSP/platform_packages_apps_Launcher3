@@ -37,6 +37,7 @@ import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.dragndrop.DragOptions;
 import com.android.launcher3.dragndrop.DragView;
 import com.android.launcher3.model.data.ItemInfo;
+import com.android.launcher3.model.data.WorkspaceData;
 import com.android.launcher3.popup.PopupContainer;
 import com.android.launcher3.popup.PopupContainerWithArrow;
 import com.android.launcher3.popup.PopupDataProvider;
@@ -239,6 +240,10 @@ public class SecondaryDragLayer extends BaseDragLayer<SecondaryDisplayLauncher> 
 
     public PinnedAppsAdapter getPinnedAppsAdapter() {
         return mPinnedAppsAdapter;
+    }
+
+    public void setWorkspaceItems(WorkspaceData workspaceData) {
+        mPinnedAppsAdapter.setWorkspaceItems(workspaceData);
     }
 
     boolean onIconLongClicked(View v) {

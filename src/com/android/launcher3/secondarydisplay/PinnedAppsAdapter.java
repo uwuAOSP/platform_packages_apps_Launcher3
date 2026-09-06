@@ -16,6 +16,7 @@
 package com.android.launcher3.secondarydisplay;
 
 import static android.content.Context.MODE_PRIVATE;
+import static com.android.launcher3.LauncherSettings.Favorites.CONTAINER_DESKTOP;
 
 import android.content.ComponentName;
 import android.content.SharedPreferences;
@@ -35,7 +36,10 @@ import com.android.launcher3.R;
 import com.android.launcher3.allapps.AllAppsStore;
 import com.android.launcher3.allapps.AppInfoComparator;
 import com.android.launcher3.model.data.AppInfo;
+import com.android.launcher3.model.data.FolderInfo;
 import com.android.launcher3.model.data.ItemInfo;
+import com.android.launcher3.model.data.WorkspaceData;
+import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.pm.UserCache;
 import com.android.launcher3.popup.SystemShortcut;
 import com.android.launcher3.util.ComponentKey;
@@ -43,7 +47,9 @@ import com.android.launcher3.util.Executors;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -64,6 +70,7 @@ public class PinnedAppsAdapter extends BaseAdapter implements OnSharedPreference
     private final AppInfoComparator mAppNameComparator;
 
     private final Set<ComponentKey> mPinnedApps = new HashSet<>();
+    private final ArrayList<ComponentKey> mWorkspaceApps = new ArrayList<>();
     private final ArrayList<AppInfo> mItems = new ArrayList<>();
 
     public PinnedAppsAdapter(
@@ -149,10 +156,49 @@ public class PinnedAppsAdapter extends BaseAdapter implements OnSharedPreference
 
     private void createFilteredAppsList() {
         mItems.clear();
-        mPinnedApps.stream().map(mAllAppsList::getApp)
+        LinkedHashSet<ComponentKey> visibleApps = new LinkedHashSet<>(mWorkspaceApps);
+        ArrayList<AppInfo> extraPinnedApps = new ArrayList<>();
+        mPinnedApps.stream()
+                .filter(key -> !visibleApps.contains(key))
+                .map(mAllAppsList::getApp)
+                .filter(Objects::nonNull)
+                .forEach(extraPinnedApps::add);
+        extraPinnedApps.sort(mAppNameComparator);
+        visibleApps.stream().map(mAllAppsList::getApp)
                 .filter(Objects::nonNull).forEach(mItems::add);
-        mItems.sort(mAppNameComparator);
+        mItems.addAll(extraPinnedApps);
         notifyDataSetChanged();
+    }
+
+    public void setWorkspaceItems(WorkspaceData workspaceData) {
+        ArrayList<ItemInfo> topLevelItems = new ArrayList<>();
+        workspaceData.forEach(item -> {
+            if (item.container == CONTAINER_DESKTOP) {
+                topLevelItems.add(item);
+            }
+        });
+        topLevelItems.sort(Comparator
+                .comparingInt((ItemInfo item) -> item.screenId)
+                .thenComparingInt(item -> item.cellY)
+                .thenComparingInt(item -> item.cellX));
+
+        LinkedHashSet<ComponentKey> workspaceApps = new LinkedHashSet<>();
+        for (ItemInfo item : topLevelItems) {
+            addWorkspaceItem(workspaceApps, item);
+            if (item instanceof FolderInfo folder) {
+                folder.getContents().forEach(child -> addWorkspaceItem(workspaceApps, child));
+            }
+        }
+        mWorkspaceApps.clear();
+        mWorkspaceApps.addAll(workspaceApps);
+        createFilteredAppsList();
+    }
+
+    private static void addWorkspaceItem(Set<ComponentKey> output, ItemInfo item) {
+        if (!(item instanceof WorkspaceItemInfo) || item.getTargetComponent() == null) {
+            return;
+        }
+        output.add(new ComponentKey(item.getTargetComponent(), item.user));
     }
 
     /**

@@ -131,6 +131,7 @@ public class SecondaryDisplayLauncher extends BaseActivity implements BgDataMode
                     .getHomeScreenRepository()
                     .getWorkspaceState()
                     .forEach(MAIN_EXECUTOR, state -> {
+                        mDragLayer.setWorkspaceItems(state);
                         var predictionInfo = state.get(CONTAINER_ALL_APPS_PREDICTION);
                         if (predictionInfo instanceof PredictedContainerInfo pci) {
                             mSecondaryDisplayDelegate.setPredictedApps(pci);
@@ -309,6 +310,7 @@ public class SecondaryDisplayLauncher extends BaseActivity implements BgDataMode
             @NonNull WorkspaceData itemIdMap, boolean isBindingSync) {
         if (LauncherModel.useModelRepositoryBinding()) return;
 
+        mDragLayer.setWorkspaceItems(itemIdMap);
         if (itemIdMap.get(CONTAINER_ALL_APPS_PREDICTION) instanceof PredictedContainerInfo pci) {
             mSecondaryDisplayDelegate.setPredictedApps(pci);
         }
