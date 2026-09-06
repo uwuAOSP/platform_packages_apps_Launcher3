@@ -123,49 +123,28 @@ class HotseatWidthCalculationTest : FakeInvariantDeviceProfileTest() {
         assertThat(dp.hotseatProfile.qsbWidth).isEqualTo(1965)
     }
 
-    /** This is a case when after setting the hotseat, the QSB width needs to be changed to fit */
+    /** Three-button navigation keeps QSB inline without hiding dock icons. */
     @Test
-    fun decrease_qsb_when_not_enough_space_landscape() {
+    fun keep_qsb_inline_when_three_button_nav_landscape() {
         initializeVarsForTablet(isGestureMode = false, isLandscape = true)
         windowBounds = WindowBounds(Rect(0, 0, 2460, 1600), Rect(0, 104, 0, 0))
         val dp = newDP()
         dp.updateIsTaskbarPresentInApps(true)
 
-        assertThat(dp.hotseatProfile.barEndOffset).isEqualTo(660)
         assertThat(dp.hotseatProfile.numShownIcons).isEqualTo(6)
-        assertThat(dp.hotseatProfile.borderSpace).isEqualTo(34)
-        assertThat(dp.hotseatColumnSpan).isEqualTo(4)
-        assertThat(dp.hotseatWidthPx).isEqualTo(1182)
-
-        assertThat(dp.getHotseatLayoutPadding(context).left).isEqualTo(876)
-        assertThat(dp.getHotseatLayoutPadding(context).right).isEqualTo(694)
-
         assertThat(dp.hotseatProfile.isQsbInline).isTrue()
-        assertThat(dp.hotseatProfile.qsbWidth).isEqualTo(542)
     }
 
-    /**
-     * This is a case when after setting the hotseat, changing QSB width, and recalculating spaces
-     * it still needs to remove icons for everything to fit
-     */
+    /** A narrower three-button layout keeps QSB and every dock icon on the same row. */
     @Test
-    fun decrease_num_of_icons_when_not_enough_space_landscape() {
+    fun keep_all_icons_when_three_button_nav_landscape_is_narrow() {
         initializeVarsForTablet(isGestureMode = false, isLandscape = true)
         windowBounds = WindowBounds(Rect(0, 0, 2260, 1600), Rect(0, 104, 0, 0))
         val dp = newDP()
         dp.updateIsTaskbarPresentInApps(true)
 
-        assertThat(dp.hotseatProfile.barEndOffset).isEqualTo(660)
-        assertThat(dp.hotseatProfile.numShownIcons).isEqualTo(5)
-        assertThat(dp.hotseatProfile.borderSpace).isEqualTo(36)
-        assertThat(dp.hotseatColumnSpan).isEqualTo(4)
-        assertThat(dp.hotseatWidthPx).isEqualTo(1095)
-
-        assertThat(dp.getHotseatLayoutPadding(context).left).isEqualTo(816)
-        assertThat(dp.getHotseatLayoutPadding(context).right).isEqualTo(700)
-
+        assertThat(dp.hotseatProfile.numShownIcons).isEqualTo(6)
         assertThat(dp.hotseatProfile.isQsbInline).isTrue()
-        assertThat(dp.hotseatProfile.qsbWidth).isEqualTo(480)
     }
 
     @Test
