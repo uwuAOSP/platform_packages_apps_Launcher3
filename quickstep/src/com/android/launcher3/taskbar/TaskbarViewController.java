@@ -351,7 +351,9 @@ public class TaskbarViewController implements TaskbarControllers.LoggableTaskbar
 
         // This gets modified in NavbarButtonsViewController, but the initial value it reads
         // may be incorrect since it's state gets destroyed on taskbar recreate, so reset here
-        mTaskbarIconAlpha.get(ALPHA_INDEX_SMALL_SCREEN).setValue(mActivity.isPhoneMode() ? 0 : 1);
+        mTaskbarIconAlpha.get(ALPHA_INDEX_SMALL_SCREEN).setValue(
+                mActivity.isPhoneMode()
+                        || (mActivity.isPrimaryDisplay() && mActivity.isThreeButtonNav()) ? 0 : 1);
 
         mTaskbarView.addOnLayoutChangeListener(mTaskbarViewLayoutChangeListener);
     }

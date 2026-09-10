@@ -412,7 +412,9 @@ public class NavbarButtonsViewController implements TaskbarControllers.LoggableT
             initButtons(mNavButtonContainer, mEndContextualContainer,
                     mControllers.navButtonController);
             updateButtonLayoutSpacing();
-            updateStateForFlag(FLAG_SMALL_SCREEN, isPhoneMode);
+            updateStateForFlag(
+                    FLAG_SMALL_SCREEN,
+                    isPhoneMode || (mContext.isPrimaryDisplay() && isThreeButtonNav));
 
             if (!isPhoneMode) {
                 mPropertyHolders.add(new StatePropertyHolder(

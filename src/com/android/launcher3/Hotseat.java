@@ -135,8 +135,7 @@ public class Hotseat extends FrameLayout implements Insettable {
         mPagedView.setPageIndicator(mPageIndicator);
 
         mQsb = LauncherComponentProvider.get(context).getQsbWidgetFactory().createView(this);
-        mQsb.setVisibility(mPrefs.get(LauncherPrefs.HOTSEAT_ENABLED)
-                && !"disabled".equals(mPrefs.get(LauncherPrefs.HOTSEAT_MODE))
+        mQsb.setVisibility(!"disabled".equals(mPrefs.get(LauncherPrefs.HOTSEAT_MODE))
                 ? VISIBLE : GONE);
         addView(mQsb);
 
@@ -325,8 +324,7 @@ public class Hotseat extends FrameLayout implements Insettable {
             lp.width = dp.getHotseatProfile().getBarSizePx()
                     + (dp.isSeascape() ? insets.left : insets.right);
         } else {
-            mQsb.setVisibility(mPrefs.get(LauncherPrefs.HOTSEAT_ENABLED)
-                    && !"disabled".equals(mPrefs.get(LauncherPrefs.HOTSEAT_MODE))
+            mQsb.setVisibility(!"disabled".equals(mPrefs.get(LauncherPrefs.HOTSEAT_MODE))
                     ? VISIBLE : GONE);
             lp.gravity = Gravity.BOTTOM;
             lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
@@ -338,10 +336,10 @@ public class Hotseat extends FrameLayout implements Insettable {
         }
         Rect padding = dp.getHotseatLayoutPadding(getContext());
         setPadding(padding.left, padding.top + topOverlap, padding.right, padding.bottom);
-        mIconsContainer.setVisibility(mPrefs.get(LauncherPrefs.HOTSEAT_ENABLED)
-                ? VISIBLE : GONE);
-        mPageIndicator.setVisibility(mPrefs.get(LauncherPrefs.HOTSEAT_ENABLED)
-                ? mPageIndicator.getVisibility() : GONE);
+        boolean showDock = mPrefs.get(LauncherPrefs.HOTSEAT_ENABLED)
+                && dp.getDeviceProperties().getDeviceConfiguration().isGestureMode();
+        mIconsContainer.setVisibility(showDock ? VISIBLE : GONE);
+        mPageIndicator.setVisibility(showDock ? mPageIndicator.getVisibility() : GONE);
         setUpBackground(topOverlap);
         setLayoutParams(lp);
         setVisibility(mPrefs.get(LauncherPrefs.HOTSEAT_ENABLED)
