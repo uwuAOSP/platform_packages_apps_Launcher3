@@ -33,6 +33,7 @@ import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.os.UserManager;
 import android.util.DisplayMetrics;
 import android.view.Surface;
 
@@ -233,11 +234,17 @@ public class DeviceProfile {
                 mDeviceProperties.createWindowBounds());
 
         final Resources res = context.getResources();
-        LauncherPrefs launcherPrefs = LauncherPrefs.get(context);
-        numHotseatRows = Math.max(1, Math.min(2,
-                launcherPrefs.get(LauncherPrefs.HOTSEAT_ROWS)));
-        numHotseatPages = Math.max(1, Math.min(5,
-                launcherPrefs.get(LauncherPrefs.DOCK_PAGES)));
+        final UserManager userManager = context.getSystemService(UserManager.class);
+        if (userManager == null || userManager.isUserUnlocked()) {
+            LauncherPrefs launcherPrefs = LauncherPrefs.get(context);
+            numHotseatRows = Math.max(1, Math.min(2,
+                    launcherPrefs.get(LauncherPrefs.HOTSEAT_ROWS)));
+            numHotseatPages = Math.max(1, Math.min(5,
+                    launcherPrefs.get(LauncherPrefs.DOCK_PAGES)));
+        } else {
+            numHotseatRows = 1;
+            numHotseatPages = 1;
+        }
 
         overviewProfile = OverviewProfile.Factory.createOverviewProfile(res);
 
