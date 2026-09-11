@@ -42,6 +42,7 @@ import androidx.annotation.Nullable;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.R;
 import com.android.launcher3.logging.StatsLogManager.LauncherEvent;
+import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.popup.SystemShortcut;
 import com.android.launcher3.popup.SystemShortcut.AppInfo;
 import com.android.launcher3.util.InstantAppResolver;
@@ -116,6 +117,36 @@ public interface TaskShortcutFactory {
                     );
             return Collections.singletonList(new AppInfo(container, taskContainer.getItemInfo(),
                     taskView, accessibilityInfo));
+        }
+
+        @Override
+        public boolean showForGroupedTask() {
+            return true;
+        }
+    };
+
+    /**
+     * A menu item, "Force stop", that stops the app associated with the task.
+     *
+     * Requires the {@code android.permission.FORCE_STOP_PACKAGES} permission, which is only
+     * granted to privileged builds of the launcher.
+     */
+    TaskShortcutFactory FORCE_STOP = new TaskShortcutFactory() {
+        @Override
+        public List<SystemShortcut> getShortcuts(RecentsViewContainer container,
+                TaskContainer taskContainer) {
+            final ItemInfo itemInfo = taskContainer.getItemInfo();
+            final String packageName = itemInfo.getTargetPackage();
+            if (itemInfo.getTargetComponent() == null
+                    || itemInfo.user == null
+                    || packageName == null
+                    // Don't offer to force stop the launcher itself.
+                    || packageName.equals(container.asContext().getPackageName())) {
+                return null;
+            }
+            return Collections.singletonList(
+                    new SystemShortcut.ForceStop<>(container, itemInfo,
+                            taskContainer.getTaskView()));
         }
 
         @Override

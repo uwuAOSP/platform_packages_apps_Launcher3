@@ -77,4 +77,8 @@
     <string name="settings_search_results">Search results</string>
     <string name="settings_search_no_results">No matching settings</string>
     <string name="clear_search">Clear search</string>
+
+    <string name="force_stop">Force stop</string>
+    <string name="force_stop_dialog_title">Force stop?</string>
+    <string name="force_stop_dialog_message">If you force stop an app, it may misbehave.</string>
 </resources>

@@ -11,6 +11,8 @@ import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCH
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_SYSTEM_SHORTCUT_WIDGETS_TAP;
 import static com.android.launcher3.testing.shared.ResourceUtils.INVALID_RESOURCE_HANDLE;
 
+import android.app.ActivityManager;
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -286,6 +288,62 @@ public abstract class SystemShortcut<T extends ActivityContext> extends ItemInfo
                 this.taskTitle = taskTitle;
                 this.nodeId = nodeId;
             }
+        }
+    }
+
+    /**
+     * Force stops the app associated with the item. Requires the
+     * {@code android.permission.FORCE_STOP_PACKAGES} permission, which is only granted to
+     * privileged builds of the launcher.
+     */
+    public static final Factory<ActivityContext> FORCE_STOP =
+            (context, itemInfo, originalView) -> {
+                if (originalView == null) {
+                    return null;
+                }
+                final String packageName = itemInfo.getTargetPackage();
+                if (itemInfo.getTargetComponent() == null
+                        || itemInfo.user == null
+                        || packageName == null
+                        // Don't offer to force stop the launcher itself, as that would kill the
+                        // process showing the menu.
+                        || packageName.equals(context.asContext().getPackageName())) {
+                    return null;
+                }
+                return new ForceStop<>(context, itemInfo, originalView);
+            };
+
+    public static class ForceStop<T extends ActivityContext> extends SystemShortcut<T> {
+
+        public ForceStop(T target, ItemInfo itemInfo, @NonNull View originalView) {
+            super(R.drawable.ic_force_stop, R.string.force_stop, target, itemInfo, originalView);
+        }
+
+        @Override
+        public void onClick(View view) {
+            final String packageName = mItemInfo.getTargetPackage();
+            final UserHandle user = mItemInfo.user;
+            if (packageName == null || user == null) {
+                return;
+            }
+            dismissTaskMenuView();
+            new AlertDialog.Builder(mTarget.asContext())
+                    .setTitle(R.string.force_stop_dialog_title)
+                    .setMessage(R.string.force_stop_dialog_message)
+                    .setPositiveButton(
+                            R.string.force_stop,
+                            (dialog, which) -> forceStop(view.getContext(), packageName, user))
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
+        }
+
+        private static void forceStop(Context context, String packageName, UserHandle user) {
+            final ActivityManager activityManager =
+                    context.getSystemService(ActivityManager.class);
+            if (activityManager == null) {
+                return;
+            }
+            activityManager.forceStopPackageAsUser(packageName, user.getIdentifier());
         }
     }
 

@@ -336,6 +336,7 @@ object TaskOverlayModule {
     ): List<TaskShortcutFactory> =
         listOf(
             TaskShortcutFactory.APP_INFO,
+            TaskShortcutFactory.FORCE_STOP,
             TaskShortcutFactory.SPLIT_SELECT,
             TaskShortcutFactory.PIN,
             TaskShortcutFactory.INSTALL,
