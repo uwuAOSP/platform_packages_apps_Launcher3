@@ -235,13 +235,15 @@ public class DeviceProfile {
 
         final Resources res = context.getResources();
         final UserManager userManager = context.getSystemService(UserManager.class);
+        final LauncherPrefs launcherPrefs;
         if (userManager == null || userManager.isUserUnlocked()) {
-            LauncherPrefs launcherPrefs = LauncherPrefs.get(context);
+            launcherPrefs = LauncherPrefs.get(context);
             numHotseatRows = Math.max(1, Math.min(2,
                     launcherPrefs.get(LauncherPrefs.HOTSEAT_ROWS)));
             numHotseatPages = Math.max(1, Math.min(5,
                     launcherPrefs.get(LauncherPrefs.DOCK_PAGES)));
         } else {
+            launcherPrefs = null;
             numHotseatRows = 1;
             numHotseatPages = 1;
         }
@@ -287,8 +289,15 @@ public class DeviceProfile {
                     responsiveAspectRatio, mDeviceProperties.getHeightPx());
         }
 
-        boolean isDockEnabled = launcherPrefs.get(LauncherPrefs.HOTSEAT_ENABLED);
-        boolean isQsbEnabled = !"disabled".equals(launcherPrefs.get(LauncherPrefs.HOTSEAT_MODE));
+        boolean isDockEnabled = launcherPrefs == null
+                ? LauncherPrefs.HOTSEAT_ENABLED.getDefaultValue()
+                : launcherPrefs.get(LauncherPrefs.HOTSEAT_ENABLED);
+        boolean isQsbEnabled = launcherPrefs == null
+                ? !"disabled".equals(LauncherPrefs.HOTSEAT_MODE.getDefaultValue())
+                : !"disabled".equals(launcherPrefs.get(LauncherPrefs.HOTSEAT_MODE));
+        float hotseatBottomFactor = launcherPrefs == null
+                ? LauncherPrefs.HOTSEAT_BOTTOM_FACTOR.getDefaultValue()
+                : launcherPrefs.get(LauncherPrefs.HOTSEAT_BOTTOM_FACTOR);
         int qsbHeight = isQsbEnabled
                 ? res.getDimensionPixelSize(R.dimen.uwu_qsb_widget_height) : 0;
 
@@ -308,7 +317,7 @@ public class DeviceProfile {
                         /*responsiveWorkspaceCellSpec*/ mResponsiveWorkspaceCellSpec,
                         qsbHeight,
                         numHotseatRows,
-                        launcherPrefs.get(LauncherPrefs.HOTSEAT_BOTTOM_FACTOR)
+                        hotseatBottomFactor
                 );
         if (!isDockEnabled) {
             int qsbOnlyBarSize = isQsbEnabled
