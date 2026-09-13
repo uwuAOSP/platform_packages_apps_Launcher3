@@ -14,7 +14,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-<com.android.launcher3.smartspacer.LauncherSmartspacerContainer
+<com.android.launcher3.views.AtAGlanceWidget
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@id/search_container_workspace"
     android:layout_width="match_parent"
@@ -22,9 +22,9 @@
     android:clipChildren="false"
     android:clipToPadding="false">
 
-    <View
-        android:id="@+id/launcher_smartspacer_fallback"
+    <com.android.launcher3.views.FirstPageStatusView
+        android:id="@+id/at_a_glance_fallback"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-</com.android.launcher3.smartspacer.LauncherSmartspacerContainer>
+</com.android.launcher3.views.AtAGlanceWidget>

@@ -731,20 +731,20 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     public void bindAndInitFirstWorkspaceScreen() {
         // Add the first page
         CellLayout firstPage = insertNewWorkspaceScreen(Workspace.FIRST_SCREEN_ID, getChildCount());
-        if (!LauncherSmartspacer.isEnabled(getContext())) {
+        if (!LauncherSmartspacer.isFirstPageStatusEnabled(getContext())) {
             mFirstPagePinnedItem = null;
             return;
         }
         if (mFirstPagePinnedItem == null) {
             mFirstPagePinnedItem = LayoutInflater.from(getContext())
-                    .inflate(R.layout.search_container_smartspacer, firstPage, false);
+                    .inflate(R.layout.search_container_at_a_glance, firstPage, false);
         }
         int cellHSpan = mLauncher.getDeviceProfile().inv.numColumns;
         CellLayoutLayoutParams lp = new CellLayoutLayoutParams(0, 0, cellHSpan, 1);
         lp.canReorder = false;
         if (!firstPage.addViewToCellLayout(
                 mFirstPagePinnedItem, 0, R.id.search_container_workspace, lp, true)) {
-            Log.e(TAG, "Failed to add Smartspacer to the first workspace row");
+            Log.e(TAG, "Failed to add At a Glance to the first workspace row");
             mFirstPagePinnedItem = null;
         }
     }

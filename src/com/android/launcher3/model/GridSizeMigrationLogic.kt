@@ -511,7 +511,8 @@ constructor(
                 occupied.markCells(entry, true)
             }
         }
-        if (screenId == FIRST_SCREEN_ID && LauncherSmartspacer.isEnabled(context)) {
+        if (screenId == FIRST_SCREEN_ID &&
+            LauncherSmartspacer.isFirstPageStatusEnabled(context)) {
             occupied.markCells(0, 0, trgX, 1, true)
         }
         extraItemsProvider.get().forEach {

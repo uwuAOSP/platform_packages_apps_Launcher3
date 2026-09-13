@@ -325,6 +325,10 @@ constructor(@ApplicationContext private val encryptedContext: Context) {
             backedUpItem(SettingsActivity.SMARTSPACER_PREFERENCE_KEY, false)
 
         @JvmField
+        val SHOW_AT_A_GLANCE =
+            backedUpItem(SettingsActivity.SHOW_AT_A_GLANCE_PREFERENCE_KEY, true)
+
+        @JvmField
         val ICON_PACK_PACKAGE = backedUpItem("pref_icon_pack_package", "")
 
         @JvmField

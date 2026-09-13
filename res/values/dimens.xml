@@ -41,6 +41,32 @@
     <dimen name="dynamic_grid_hotseat_side_padding">0dp</dimen>
 
     <!-- Scalable Grid -->
+    <dimen name="first_page_pinned_item_horizontal_margin">8dp</dimen>
+    <dimen name="first_page_pinned_item_vertical_margin">6dp</dimen>
+    <dimen name="first_page_pinned_item_content_padding_horizontal">20dp</dimen>
+    <dimen name="first_page_status_start_padding">24dp</dimen>
+    <dimen name="first_page_status_primary_text_size">18sp</dimen>
+    <dimen name="first_page_status_secondary_text_size">16sp</dimen>
+    <dimen name="first_page_status_icon_size">16dp</dimen>
+    <dimen name="first_page_status_icon_spacing">6dp</dimen>
+    <dimen name="first_page_status_item_spacing">12dp</dimen>
+    <dimen name="first_page_status_forecast_spacing">32dp</dimen>
+    <dimen name="first_page_status_line_spacing">6dp</dimen>
+    <dimen name="first_page_status_secondary_row_placeholder_height">18dp</dimen>
+    <dimen name="first_page_status_horizontal_padding">0dp</dimen>
+    <dimen name="first_page_status_top_padding">10.24dp</dimen>
+    <dimen name="first_page_status_timer_end_margin">28dp</dimen>
+    <dimen name="first_page_status_indicator_margin_top">4dp</dimen>
+    <dimen name="first_page_status_indicator_end_margin">16dp</dimen>
+    <dimen name="first_page_status_media_artwork_width">88dp</dimen>
+    <dimen name="first_page_status_media_artwork_height">50dp</dimen>
+    <dimen name="first_page_status_media_icon_spacing">14dp</dimen>
+    <dimen name="first_page_status_media_icon_inner_padding">10dp</dimen>
+    <dimen name="first_page_status_media_icon_radius">12dp</dimen>
+    <dimen name="first_page_status_media_title_text_size">20sp</dimen>
+    <dimen name="first_page_status_media_subtitle_text_size">15sp</dimen>
+    <dimen name="first_page_status_media_subtitle_spacing">2dp</dimen>
+    <dimen name="first_page_status_media_bottom_padding">2dp</dimen>
     <dimen name="min_qsb_margin">8dp</dimen>
 
     <!-- Workspace page indicator -->

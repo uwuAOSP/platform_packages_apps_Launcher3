@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.launcher3.smartspacer
+package com.android.launcher3.views
 
 import android.content.Context
 import android.content.pm.PackageManager.NameNotFoundException
@@ -23,6 +23,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.FrameLayout
 import com.android.launcher3.R
+import com.android.launcher3.smartspacer.LauncherSmartspacer
 import com.kieronquinn.app.smartspacer.sdk.SmartspacerConstants.SMARTSPACER_PACKAGE_NAME
 import com.kieronquinn.app.smartspacer.sdk.client.SmartspacerClient
 import kotlinx.coroutines.CoroutineScope
@@ -32,7 +33,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-class LauncherSmartspacerContainer @JvmOverloads constructor(
+class AtAGlanceWidget @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
 ) : FrameLayout(context, attrs) {
@@ -45,7 +46,7 @@ class LauncherSmartspacerContainer @JvmOverloads constructor(
 
     override fun onFinishInflate() {
         super.onFinishInflate()
-        fallbackView = findViewById(R.id.launcher_smartspacer_fallback)
+        fallbackView = findViewById(R.id.at_a_glance_fallback)
     }
 
     override fun onAttachedToWindow() {
@@ -71,14 +72,14 @@ class LauncherSmartspacerContainer @JvmOverloads constructor(
     private fun refresh() {
         val localScope = scope ?: return
         refreshJob?.cancel()
-        if (!isSmartspacerInstalled()) {
+        if (!LauncherSmartspacer.isEnabled(context) || !isSmartspacerInstalled()) {
             showFallback()
             return
         }
         refreshJob = localScope.launch {
             val permissionState = client.checkCallingPermission()
             if (!isActive) return@launch
-            if (permissionState == null) showFallback() else showSmartspacer()
+            if (permissionState == true) showSmartspacer() else showFallback()
         }
     }
 

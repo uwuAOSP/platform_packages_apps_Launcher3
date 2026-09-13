@@ -20,6 +20,7 @@ import static com.android.launcher3.LauncherConstants.ActivityCodes.REQUEST_HOME
 
 import android.app.ActivityOptions;
 import android.app.Person;
+import android.app.PendingIntent;
 import android.app.role.RoleManager;
 import android.content.Context;
 import android.content.Intent;
@@ -27,6 +28,7 @@ import android.content.pm.LauncherActivityInfo;
 import android.content.pm.ShortcutInfo;
 import android.graphics.Bitmap;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Process;
 import android.os.UserHandle;
@@ -188,6 +190,203 @@ public class ApiWrapper {
     public @Nullable DragAndDropPermissions requestDragAndDropPermissions(DragEvent event) {
         return null;
     }
+
+    @Nullable
+    public WeatherDataProvider createWeatherDataProvider() {
+        return null;
+    }
+
+    @Nullable
+    public MediaDataProvider createMediaDataProvider() {
+        return null;
+    }
+
+    public interface WeatherDataProvider {
+
+        void setCallback(@Nullable WeatherInfoListener callback);
+
+        void start();
+
+        void stop();
+    }
+
+    public interface WeatherInfoListener {
+
+        void onWeatherInfoUpdated(@Nullable WeatherInfo weatherInfo);
+    }
+
+    public interface MediaDataProvider {
+
+        void setCallback(@Nullable MediaInfoListener callback);
+
+        void start();
+
+        void stop();
+    }
+
+    public interface MediaInfoListener {
+
+        void onMediaInfoUpdated(@Nullable MediaInfo mediaInfo);
+    }
+
+    public static final class WeatherInfo {
+        @Nullable
+        private final CharSequence mText;
+        @Nullable
+        private final Drawable mIcon;
+        private final boolean mShouldTintIcon;
+        @Nullable
+        private final CharSequence mForecastText;
+        @Nullable
+        private final CharSequence mTimerText;
+        @Nullable
+        private final Drawable mTimerIcon;
+        private final boolean mShouldTintTimerIcon;
+        private final long mTimerBaseElapsedRealtime;
+        private final boolean mShouldCountDownTimer;
+        @Nullable
+        private final PendingIntent mAction;
+
+        public WeatherInfo(
+                @Nullable CharSequence text,
+                @Nullable Drawable icon,
+                boolean shouldTintIcon) {
+            this(text, icon, shouldTintIcon, null, null, null, true, -1L, false, null);
+        }
+
+        public WeatherInfo(
+                @Nullable CharSequence text,
+                @Nullable Drawable icon,
+                boolean shouldTintIcon,
+                @Nullable CharSequence forecastText,
+                @Nullable CharSequence timerText,
+                @Nullable Drawable timerIcon,
+                boolean shouldTintTimerIcon,
+                long timerBaseElapsedRealtime,
+                boolean shouldCountDownTimer) {
+            this(text, icon, shouldTintIcon, forecastText, timerText, timerIcon,
+                    shouldTintTimerIcon, timerBaseElapsedRealtime, shouldCountDownTimer, null);
+        }
+
+        public WeatherInfo(
+                @Nullable CharSequence text,
+                @Nullable Drawable icon,
+                boolean shouldTintIcon,
+                @Nullable CharSequence forecastText,
+                @Nullable CharSequence timerText,
+                @Nullable Drawable timerIcon,
+                boolean shouldTintTimerIcon,
+                long timerBaseElapsedRealtime,
+                boolean shouldCountDownTimer,
+                @Nullable PendingIntent action) {
+            mText = text;
+            mIcon = icon;
+            mShouldTintIcon = shouldTintIcon;
+            mForecastText = forecastText;
+            mTimerText = timerText;
+            mTimerIcon = timerIcon;
+            mShouldTintTimerIcon = shouldTintTimerIcon;
+            mTimerBaseElapsedRealtime = timerBaseElapsedRealtime;
+            mShouldCountDownTimer = shouldCountDownTimer;
+            mAction = action;
+        }
+
+        @Nullable
+        public CharSequence getText() {
+            return mText;
+        }
+
+        @Nullable
+        public Drawable getIcon() {
+            return mIcon;
+        }
+
+        public boolean shouldTintIcon() {
+            return mShouldTintIcon;
+        }
+
+        @Nullable
+        public CharSequence getForecastText() {
+            return mForecastText;
+        }
+
+        @Nullable
+        public CharSequence getTimerText() {
+            return mTimerText;
+        }
+
+        @Nullable
+        public Drawable getTimerIcon() {
+            return mTimerIcon;
+        }
+
+        public boolean shouldTintTimerIcon() {
+            return mShouldTintTimerIcon;
+        }
+
+        public long getTimerBaseElapsedRealtime() {
+            return mTimerBaseElapsedRealtime;
+        }
+
+        public boolean shouldCountDownTimer() {
+            return mShouldCountDownTimer;
+        }
+
+        @Nullable
+        public PendingIntent getAction() {
+            return mAction;
+        }
+    }
+
+    public static final class MediaInfo {
+        @NonNull
+        private final CharSequence mTitle;
+        @Nullable
+        private final CharSequence mSubtitle;
+        @Nullable
+        private final Drawable mIcon;
+        @Nullable
+        private final String mPackageName;
+        private final boolean mShouldTintIcon;
+
+        public MediaInfo(
+                @NonNull CharSequence title,
+                @Nullable CharSequence subtitle,
+                @Nullable Drawable icon,
+                @Nullable String packageName,
+                boolean shouldTintIcon) {
+            mTitle = title;
+            mSubtitle = subtitle;
+            mIcon = icon;
+            mPackageName = packageName;
+            mShouldTintIcon = shouldTintIcon;
+        }
+
+        @NonNull
+        public CharSequence getTitle() {
+            return mTitle;
+        }
+
+        @Nullable
+        public CharSequence getSubtitle() {
+            return mSubtitle;
+        }
+
+        @Nullable
+        public Drawable getIcon() {
+            return mIcon;
+        }
+
+        @Nullable
+        public String getPackageName() {
+            return mPackageName;
+        }
+
+        public boolean shouldTintIcon() {
+            return mShouldTintIcon;
+        }
+    }
+
 
     private static class NoopDrawable extends ColorDrawable {
         @Override

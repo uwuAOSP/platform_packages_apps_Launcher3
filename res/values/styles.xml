@@ -105,6 +105,10 @@
 
     <style name="LauncherTheme.DarkMainColor" parent="@style/LauncherTheme" />
 
+    <style name="FirstPageStatusIndicatorTheme">
+        <item name="pageIndicatorDotColor">?attr/workspaceTextColor</item>
+    </style>
+
     <style name="LauncherTheme.DarkText" parent="@style/LauncherTheme">
         <item name="workspaceTextColor">@color/workspace_text_color_dark</item>
         <item name="workspaceShadowColor">@android:color/transparent</item>

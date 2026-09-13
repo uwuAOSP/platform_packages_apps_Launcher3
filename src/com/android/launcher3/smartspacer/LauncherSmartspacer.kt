@@ -24,4 +24,8 @@ object LauncherSmartspacer {
     @JvmStatic
     fun isEnabled(context: Context): Boolean =
         LauncherPrefs.get(context).get(LauncherPrefs.SMARTSPACER_ENABLED)
+
+    @JvmStatic
+    fun isFirstPageStatusEnabled(context: Context): Boolean =
+        LauncherPrefs.get(context).get(LauncherPrefs.SHOW_AT_A_GLANCE)
 }

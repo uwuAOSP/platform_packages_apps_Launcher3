@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="smartspacer_title">Show Smartspacer on home screen</string>
-    <string name="smartspacer_summary">Replace the first home screen row with Smartspacer</string>
+    <string name="smartspacer_title">Use Smartspacer for At a Glance</string>
+    <string name="smartspacer_summary">Use Smartspacer cards when the service is available</string>
+    <string name="at_a_glance_title">Show At a Glance</string>
+    <string name="at_a_glance_summary">Show the status information at the top of the first home screen</string>
     <string name="label_search">Search</string>
     <string name="label_voice_search">Voice search</string>
     <string name="google_folder_title" translatable="false">Google</string>

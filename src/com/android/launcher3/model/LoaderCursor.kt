@@ -471,7 +471,8 @@ constructor(
 
         if (!occupied.containsKey(item.screenId)) {
             occupied.put(item.screenId, GridOccupancy(countX + 1, countY + 1))
-            if (item.screenId == FIRST_SCREEN_ID && LauncherSmartspacer.isEnabled(context)) {
+            if (item.screenId == FIRST_SCREEN_ID &&
+                LauncherSmartspacer.isFirstPageStatusEnabled(context)) {
                 occupied[item.screenId].markCells(0, 0, countX, 1, true)
             }
         }

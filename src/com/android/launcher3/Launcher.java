@@ -426,7 +426,9 @@ public class Launcher extends StatefulActivity<LauncherState>
         idp.addOnChangeListener(this);
         mSharedPrefs = LauncherPrefs.getPrefs(this);
         LauncherPrefs.get(this).addListener(
-                mSmartspacerChangedListener, LauncherPrefs.SMARTSPACER_ENABLED);
+                mSmartspacerChangedListener,
+                LauncherPrefs.SMARTSPACER_ENABLED,
+                LauncherPrefs.SHOW_AT_A_GLANCE);
         mAccessibilityDelegate = createAccessibilityDelegate();
 
         initDragController();
@@ -1593,7 +1595,9 @@ public class Launcher extends StatefulActivity<LauncherState>
         mModel.removeCallbacks(modelCallbacks);
         mRotationHelper.destroy();
         LauncherPrefs.get(this).removeListener(
-                mSmartspacerChangedListener, LauncherPrefs.SMARTSPACER_ENABLED);
+                mSmartspacerChangedListener,
+                LauncherPrefs.SMARTSPACER_ENABLED,
+                LauncherPrefs.SHOW_AT_A_GLANCE);
 
         mAppWidgetHolder.stopListening();
         mAppWidgetHolder.destroy();

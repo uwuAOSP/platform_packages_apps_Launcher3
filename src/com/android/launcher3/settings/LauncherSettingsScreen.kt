@@ -305,6 +305,7 @@ private val SETTINGS_SEARCH_RESULTS = listOf(
     SettingsSearchResult(R.string.force_website_search, SEARCH_ROUTE, "website search"),
     SettingsSearchResult(R.string.match_drawer_search, SEARCH_ROUTE, "drawer search"),
     SettingsSearchResult(R.string.smartspacer_title, MAIN_ROUTE, "smartspace smartspacer"),
+    SettingsSearchResult(R.string.at_a_glance_title, MAIN_ROUTE, "at a glance smartspace status"),
     SettingsSearchResult(R.string.icon_pack_title, ICON_PACK_ROUTE, "icons icon pack theme"),
 )
 
@@ -367,6 +368,8 @@ private fun MainSettingsContent(
                  NotificationDotsPreference(context)
 
                  AddIconsToHomePreference(context)
+
+                 AtAGlancePreference(context)
 
                  SmartspacerPreference(context)
              }
@@ -494,6 +497,24 @@ private fun SmartspacerPreference(context: Context) {
             override val onCheckedChange = { newChecked: Boolean ->
                 enabled = newChecked
                 prefs.put(LauncherPrefs.SMARTSPACER_ENABLED.to(newChecked))
+            }
+        }
+    )
+}
+
+@Composable
+private fun AtAGlancePreference(context: Context) {
+    val prefs = remember { LauncherPrefs.get(context) }
+    var enabled by remember { mutableStateOf(prefs.get(LauncherPrefs.SHOW_AT_A_GLANCE)) }
+
+    SwitchPreference(
+        model = object : SwitchPreferenceModel {
+            override val title = context.getString(R.string.at_a_glance_title)
+            override val summary = { context.getString(R.string.at_a_glance_summary) }
+            override val checked = { enabled }
+            override val onCheckedChange = { newChecked: Boolean ->
+                enabled = newChecked
+                prefs.put(LauncherPrefs.SHOW_AT_A_GLANCE.to(newChecked))
             }
         }
     )
