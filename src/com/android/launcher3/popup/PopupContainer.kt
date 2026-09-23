@@ -53,6 +53,7 @@ import com.android.launcher3.shortcuts.DeepShortcutView
 import com.android.launcher3.util.ShortcutUtil
 import com.android.launcher3.views.ActivityContext
 import com.android.launcher3.views.BaseDragLayer
+import com.android.launcher3.wallpaper.WallpaperRecentsRepository
 
 /**
  * Base popup container for shortcuts associated with the item {@code originalView}
@@ -122,7 +123,7 @@ open class PopupContainer<T : ActivityContext>(
         activityContext: ActivityContext,
         itemView: View,
     ) {
-        if (Flags.expandableLongPressMenu()) {
+        if (Flags.expandableLongPressMenu() && this !is WallpaperPopupContainer) {
             showComposePopup(
                 systemShortcuts =
                     systemShortcuts.map { popupData ->
@@ -137,6 +138,7 @@ open class PopupContainer<T : ActivityContext>(
                     }
             )
         } else {
+            addSystemShortcutHeader(activityContext)
             systemShortcutContainer = inflateAndAdd(R.layout.system_shortcut_rows_container, this)
             systemShortcuts.forEach { systemShortcut ->
                 val view: DeepShortcutView =
@@ -159,6 +161,8 @@ open class PopupContainer<T : ActivityContext>(
             show()
         }
     }
+
+    protected open fun addSystemShortcutHeader(activityContext: ActivityContext) {}
 
     open fun showComposePopup(systemShortcuts: List<PopupItem>, deepShortcutCount: Int = 0) {
         mElevation = 0f
@@ -440,11 +444,18 @@ open class PopupContainer<T : ActivityContext>(
             popupPos: Rect? = null,
         ): PopupContainer<ActivityContext>? {
             if (items.isEmpty()) return null
-            return create<ActivityContext>(
-                    activity.asContext(),
-                    view,
-                    view.tag as? ItemInfo ?: ItemInfo().apply { itemType = ITEM_TYPE_CUSTOM_VIEW },
-                )
+            val itemInfo = view.tag as? ItemInfo
+                ?: ItemInfo().apply { itemType = ITEM_TYPE_CUSTOM_VIEW }
+            val container = if (
+                activity is Launcher &&
+                    items.any { it.labelResId == R.string.styles_wallpaper_button_text } &&
+                    WallpaperRecentsRepository.isAvailable(activity)
+            ) {
+                WallpaperPopupContainer.create(activity.asContext(), view, itemInfo)
+            } else {
+                create<ActivityContext>(activity.asContext(), view, itemInfo)
+            }
+            return container
                 .apply {
                     fixedDragLayerPos = popupPos
                     showForSystemShortcuts(items, activity, view)
