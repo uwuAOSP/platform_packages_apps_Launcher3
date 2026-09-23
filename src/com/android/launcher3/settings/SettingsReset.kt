@@ -37,13 +37,21 @@ internal fun resetSearchSettings(context: Context) {
         context,
         LauncherPrefs.HOTSEAT_MODE.to("lawnchair"),
         LauncherPrefs.HOTSEAT_QSB_PROVIDER.to("google"),
-        LauncherPrefs.SMARTSPACER_ENABLED.to(false),
         LauncherPrefs.HOTSEAT_QSB_THEMED.to(true),
         LauncherPrefs.HOTSEAT_QSB_FORCE_WEBSITE.to(false),
         LauncherPrefs.HOTSEAT_QSB_MATCH_DRAWER.to(false),
         LauncherPrefs.HOTSEAT_QSB_CORNER_RADIUS.to(1.0f),
         LauncherPrefs.HOTSEAT_QSB_ALPHA.to(100),
         LauncherPrefs.HOTSEAT_QSB_STROKE_WIDTH.to(0.0f),
+    )
+}
+
+internal fun resetAtAGlanceSettings(context: Context) {
+    applyLauncherSetting(
+        context,
+        LauncherPrefs.SHOW_AT_A_GLANCE.to(true),
+        LauncherPrefs.SMARTSPACER_ENABLED.to(false),
+        LauncherPrefs.SMARTSPACER_INSTALL_PROMPT_DISMISSED.to(false),
     )
 }
 

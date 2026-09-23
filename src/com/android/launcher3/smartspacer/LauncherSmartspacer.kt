@@ -17,10 +17,19 @@
 package com.android.launcher3.smartspacer
 
 import android.content.Context
+import android.content.pm.PackageManager.NameNotFoundException
 import com.android.launcher3.LauncherPrefs
 import com.android.launcher3.util.LockedUserState
+import com.kieronquinn.app.smartspacer.sdk.SmartspacerConstants.SMARTSPACER_PACKAGE_NAME
 
 object LauncherSmartspacer {
+
+    @JvmStatic
+    fun isInstalled(context: Context): Boolean = try {
+        context.packageManager.getApplicationInfo(SMARTSPACER_PACKAGE_NAME, 0).enabled
+    } catch (_: NameNotFoundException) {
+        false
+    }
 
     @JvmStatic
     fun isEnabled(context: Context): Boolean =

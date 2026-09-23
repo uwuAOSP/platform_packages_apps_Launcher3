@@ -34,5 +34,7 @@ class SettingsActivity : ComponentActivity() {
         const val FIXED_LANDSCAPE_MODE = "pref_fixed_landscape_mode"
         const val SMARTSPACER_PREFERENCE_KEY = "pref_enable_smartspacer"
         const val SHOW_AT_A_GLANCE_PREFERENCE_KEY = "pref_show_at_a_glance"
+        const val SMARTSPACER_INSTALL_PROMPT_DISMISSED_PREFERENCE_KEY =
+            "pref_smartspacer_install_prompt_dismissed"
     }
 }

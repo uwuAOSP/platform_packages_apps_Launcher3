@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="smartspacer_title">使用 Smartspacer 提供资讯一览</string>
-    <string name="smartspacer_summary">服务可用时优先显示 Smartspacer 卡片</string>
-    <string name="at_a_glance_title">显示资讯一览</string>
-    <string name="at_a_glance_summary">在首页顶部显示状态信息</string>
+    <string name="smartspacer_title">使用 Smartspacer 提供一览</string>
+    <string name="smartspacer_install_title">安装 Smartspacer</string>
+    <string name="smartspacer_install_summary">获取天气、媒体和其他实时资讯卡片。</string>
+    <string name="smartspacer_install_action">下载</string>
+    <string name="at_a_glance_title">资讯一览</string>
+    <string name="at_a_glance_switch_title">使用资讯一览</string>
     <string name="home_screen_grid">主屏幕布局</string>
     <string name="dock_settings">Dock</string>
     <string name="drawer_settings">应用抽屉</string>

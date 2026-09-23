@@ -17,7 +17,6 @@
 package com.android.launcher3.views
 
 import android.content.Context
-import android.content.pm.PackageManager.NameNotFoundException
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -25,7 +24,6 @@ import android.widget.FrameLayout
 import com.android.launcher3.R
 import com.android.launcher3.smartspacer.LauncherSmartspacer
 import com.android.launcher3.util.LockedUserState
-import com.kieronquinn.app.smartspacer.sdk.SmartspacerConstants.SMARTSPACER_PACKAGE_NAME
 import com.kieronquinn.app.smartspacer.sdk.client.SmartspacerClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -58,7 +56,7 @@ class AtAGlanceWidget @JvmOverloads constructor(
         if (scope == null) scope = MainScope()
         val lockedUserState = LockedUserState.get(context)
         if (!lockedUserState.isUserUnlocked) {
-            lockedUserState.runOnUserUnlocked(userUnlockedRunnable)
+            lockedUserState.runOnUserUnlocked(action = userUnlockedRunnable)
         }
         refresh()
     }
@@ -81,7 +79,7 @@ class AtAGlanceWidget @JvmOverloads constructor(
     private fun refresh() {
         val localScope = scope ?: return
         refreshJob?.cancel()
-        if (!LauncherSmartspacer.isEnabled(context) || !isSmartspacerInstalled()) {
+        if (!LauncherSmartspacer.isEnabled(context) || !LauncherSmartspacer.isInstalled(context)) {
             showFallback()
             return
         }
@@ -121,9 +119,4 @@ class AtAGlanceWidget @JvmOverloads constructor(
         }
     }
 
-    private fun isSmartspacerInstalled(): Boolean = try {
-        context.packageManager.getApplicationInfo(SMARTSPACER_PACKAGE_NAME, 0).enabled
-    } catch (_: NameNotFoundException) {
-        false
-    }
 }

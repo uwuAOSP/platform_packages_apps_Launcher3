@@ -78,6 +78,7 @@ private const val SEARCH_ROUTE = "search"
 private const val DRAWER_ROUTE = "drawer"
 private const val FOLDER_ROUTE = "folder"
 private const val ICON_PACK_ROUTE = "icon_pack"
+private const val AT_A_GLANCE_ROUTE = "at_a_glance"
 
 @Composable
 fun LauncherSettingsScreen(startRoute: String? = null) {
@@ -215,6 +216,19 @@ fun LauncherSettingsScreen(startRoute: String? = null) {
                     )
                 }
             }
+            composable(AT_A_GLANCE_ROUTE) {
+                SettingsScaffold(
+                    title = context.getString(R.string.at_a_glance_title),
+                    actions = {
+                        ResetAction {
+                            resetAtAGlanceSettings(context)
+                            recreateSettings(context)
+                        }
+                    },
+                ) { padding ->
+                    AtAGlanceSettingsContent(padding)
+                }
+            }
         }
     }
 }
@@ -304,8 +318,16 @@ private val SETTINGS_SEARCH_RESULTS = listOf(
     SettingsSearchResult(R.string.show_dock_search, SEARCH_ROUTE, "search bar"),
     SettingsSearchResult(R.string.force_website_search, SEARCH_ROUTE, "website search"),
     SettingsSearchResult(R.string.match_drawer_search, SEARCH_ROUTE, "drawer search"),
-    SettingsSearchResult(R.string.smartspacer_title, MAIN_ROUTE, "smartspace smartspacer"),
-    SettingsSearchResult(R.string.at_a_glance_title, MAIN_ROUTE, "at a glance smartspace status"),
+    SettingsSearchResult(
+        R.string.smartspacer_title,
+        AT_A_GLANCE_ROUTE,
+        "smartspace smartspacer download",
+    ),
+    SettingsSearchResult(
+        R.string.at_a_glance_title,
+        AT_A_GLANCE_ROUTE,
+        "at a glance smartspace status",
+    ),
     SettingsSearchResult(R.string.icon_pack_title, ICON_PACK_ROUTE, "icons icon pack theme"),
 )
 
@@ -369,14 +391,17 @@ private fun MainSettingsContent(
 
                  AddIconsToHomePreference(context)
 
-                 AtAGlancePreference(context)
-
-                 SmartspacerPreference(context)
              }
              Category(title = context.getString(R.string.settings_layout_section)) {
 
              Preference(
-                 model =
+                 model = object : PreferenceModel {
+                     override val title = context.getString(R.string.at_a_glance_title)
+                     override val onClick = { onOpenRoute(AT_A_GLANCE_ROUTE) }
+                 }
+             )
+              Preference(
+                  model =
                      object : PreferenceModel {
                          override val title = context.getString(R.string.home_screen_grid)
                          override val onClick = onOpenGrid
@@ -481,41 +506,5 @@ private fun AddIconsToHomePreference(context: Context) {
                         .apply()
                 }
             }
-    )
-}
-
-@Composable
-private fun SmartspacerPreference(context: Context) {
-    val prefs = remember { LauncherPrefs.get(context) }
-    var enabled by remember { mutableStateOf(prefs.get(LauncherPrefs.SMARTSPACER_ENABLED)) }
-
-    SwitchPreference(
-        model = object : SwitchPreferenceModel {
-            override val title = context.getString(R.string.smartspacer_title)
-            override val summary = { context.getString(R.string.smartspacer_summary) }
-            override val checked = { enabled }
-            override val onCheckedChange = { newChecked: Boolean ->
-                enabled = newChecked
-                prefs.put(LauncherPrefs.SMARTSPACER_ENABLED.to(newChecked))
-            }
-        }
-    )
-}
-
-@Composable
-private fun AtAGlancePreference(context: Context) {
-    val prefs = remember { LauncherPrefs.get(context) }
-    var enabled by remember { mutableStateOf(prefs.get(LauncherPrefs.SHOW_AT_A_GLANCE)) }
-
-    SwitchPreference(
-        model = object : SwitchPreferenceModel {
-            override val title = context.getString(R.string.at_a_glance_title)
-            override val summary = { context.getString(R.string.at_a_glance_summary) }
-            override val checked = { enabled }
-            override val onCheckedChange = { newChecked: Boolean ->
-                enabled = newChecked
-                prefs.put(LauncherPrefs.SHOW_AT_A_GLANCE.to(newChecked))
-            }
-        }
     )
 }
