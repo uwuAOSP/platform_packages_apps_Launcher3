@@ -23,7 +23,7 @@ import android.view.ViewGroup
 import com.android.launcher3.R
 import javax.inject.Inject
 
-/** Provides the Lawnchair-compatible Compose implementation for the Hotseat QSB. */
+/** Provides the Hotseat QSB with the selected search provider. */
 class UwUQsbWidgetFactory @Inject constructor() : QsbWidgetFactory() {
 
     override fun createView(container: ViewGroup): View {

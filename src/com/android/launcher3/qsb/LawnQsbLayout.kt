@@ -10,22 +10,30 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.RectF
-import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import android.util.AttributeSet
+import android.view.Gravity
+import android.view.View
 import android.widget.FrameLayout
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.core.view.children
+import android.widget.ImageView
+import android.widget.LinearLayout
+import androidx.core.content.res.ResourcesCompat
 import com.android.launcher3.DeviceProfile
+import com.android.launcher3.Item
 import com.android.launcher3.Launcher
+import com.android.launcher3.LauncherPrefChangeListener
 import com.android.launcher3.LauncherPrefs
 import com.android.launcher3.R
 import com.android.launcher3.logging.StatsLogManager
 import com.android.launcher3.settings.SettingsActivity
+import com.android.launcher3.util.Themes
 import com.android.launcher3.views.ActivityContext
 import com.android.launcher3.views.OptionsPopupView
+import kotlin.math.roundToInt
 
 class LawnQsbLayout @JvmOverloads constructor(
     context: Context,
@@ -33,113 +41,187 @@ class LawnQsbLayout @JvmOverloads constructor(
 ) : FrameLayout(context, attrs) {
 
     private val launcher = ActivityContext.lookupContextNoThrow(context) as? Launcher
-    private val composeView = ComposeView(context)
+    private val prefs = LauncherPrefs.get(context)
+    private val bar = LinearLayout(context).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        isClickable = true
+        isLongClickable = true
+    }
+    private val prefListener = LauncherPrefChangeListener { key ->
+        if (QSB_PREFS.any { it.sharedPrefKey == key }) updateContent()
+    }
 
     override fun onFinishInflate() {
         super.onFinishInflate()
-        composeView.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
-        composeView.setContent {
-            val prefs = LauncherPrefs.get(context)
-            val provider = QsbSearchProvider.fromId(prefs.get(LauncherPrefs.HOTSEAT_QSB_PROVIDER))
-                .takeIf { it.isAvailable(context) }
-                ?: QsbSearchProvider.resolveDefault(context)
-            val voiceIntent = provider.createVoiceIntent().takeIf {
-                provider.supportsVoice && context.canResolve(it)
-            }
-            val lensIntent = getLensIntent(context).takeIf {
-                provider.supportsLens && context.canResolve(it)
-            }
-            LawnQsbUi(
-                state = rememberHotseatQsbState(
-                    provider,
-                    prefs.get(LauncherPrefs.HOTSEAT_QSB_THEMED),
-                    voiceIntent != null,
-                    lensIntent != null,
-                ),
-                style = buildQsbStyle(
-                    context,
-                    prefs.get(LauncherPrefs.HOTSEAT_QSB_THEMED),
-                    prefs.get(LauncherPrefs.HOTSEAT_QSB_ALPHA),
-                    ThemesCompat.getQsbFillColor(context),
-                    prefs.get(LauncherPrefs.HOTSEAT_QSB_CORNER_RADIUS),
-                    prefs.get(LauncherPrefs.HOTSEAT_QSB_STROKE_COLOR),
-                    prefs.get(LauncherPrefs.HOTSEAT_QSB_STROKE_WIDTH),
-                ),
-                actions = QsbActions(
-                    onQsbClick = {
-                        launcher?.let {
-                            if (prefs.get(LauncherPrefs.HOTSEAT_QSB_MATCH_DRAWER)) {
-                                it.toggleAllApps(true)
-                            } else {
-                                provider.launch(it, prefs.get(LauncherPrefs.HOTSEAT_QSB_FORCE_WEBSITE))
-                            }
-                        }
-                    },
-                    onQsbLongClick = ::openOptions,
-                    onEndIconClick = { id ->
-                        runCatching {
-                            when (id) {
-                                QsbIconId.MIC -> voiceIntent?.let(context::startActivity)
-                                QsbIconId.LENS -> lensIntent?.let(context::startActivity)
-                                QsbIconId.SEARCH -> Unit
-                            }
-                        }
-                    },
-                ),
-            )
-        }
-        addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+        addView(bar, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+        updateContent()
     }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        prefs.addListener(prefListener, *QSB_PREFS)
+        updateContent()
+    }
+
+    override fun onDetachedFromWindow() {
+        prefs.removeListener(prefListener, *QSB_PREFS)
+        super.onDetachedFromWindow()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        updateContent()
+    }
+
+    private fun updateContent() {
+        val provider = QsbSearchProvider.fromId(prefs.get(LauncherPrefs.HOTSEAT_QSB_PROVIDER))
+            .takeIf { it.isAvailable(context) }
+            ?: QsbSearchProvider.resolveDefault(context)
+        val voiceIntent = provider.createVoiceIntent().takeIf {
+            provider.supportsVoice && context.canResolve(it)
+        }
+        val lensIntent = getLensIntent(context).takeIf {
+            provider.supportsLens && context.canResolve(it)
+        }
+        val themed = prefs.get(LauncherPrefs.HOTSEAT_QSB_THEMED)
+        val style = buildQsbStyle(
+            context, themed, prefs.get(LauncherPrefs.HOTSEAT_QSB_ALPHA),
+            if (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK ==
+                Configuration.UI_MODE_NIGHT_YES
+            ) 0xFF202124.toInt() else Color.WHITE,
+            prefs.get(LauncherPrefs.HOTSEAT_QSB_CORNER_RADIUS),
+            prefs.get(LauncherPrefs.HOTSEAT_QSB_STROKE_COLOR),
+            prefs.get(LauncherPrefs.HOTSEAT_QSB_STROKE_WIDTH),
+        )
+        bar.background = GradientDrawable().apply {
+            cornerRadius = style.cornerRadiusPx
+            val color = style.backgroundColor
+            setColor(Color.argb((style.backgroundAlpha * 255).roundToInt(),
+                Color.red(color), Color.green(color), Color.blue(color)))
+            if (style.strokeWidthPx > 0f) {
+                setStroke(style.strokeWidthPx.roundToInt(), style.strokeColor)
+            }
+        }
+        bar.contentDescription = context.getString(R.string.label_search)
+        bar.setOnClickListener {
+            launcher?.let {
+                if (prefs.get(LauncherPrefs.HOTSEAT_QSB_MATCH_DRAWER)) it.toggleAllApps(true)
+                else provider.launch(it, prefs.get(LauncherPrefs.HOTSEAT_QSB_FORCE_WEBSITE))
+            }
+        }
+        bar.setOnLongClickListener { openOptions(); true }
+        bar.removeAllViews()
+
+        val searchIcon = if (themed) provider.themedIcon else provider.icon
+        bar.addView(iconView(QsbIconState(
+            QsbIconId.SEARCH, searchIcon,
+            themed || searchIcon == R.drawable.ic_qsb_search,
+            context.getString(R.string.label_search), provider.themingMethod,
+        ), false))
+        bar.addView(View(context), LinearLayout.LayoutParams(0, 1, 1f))
+
+        val isGoogle = provider == QsbSearchProvider.GOOGLE ||
+            provider == QsbSearchProvider.GOOGLE_GO ||
+            provider == QsbSearchProvider.PIXEL_SEARCH
+        if (voiceIntent != null) {
+            bar.addView(iconView(QsbIconState(
+                QsbIconId.MIC,
+                if (isGoogle) R.drawable.ic_mic_color else R.drawable.ic_mic_flat,
+                (isGoogle && themed) || !isGoogle,
+                context.getString(R.string.label_voice_search),
+                if (isGoogle) ThemingMethod.THEME_BY_LAYER_ID else ThemingMethod.TINT,
+            ), true) { runCatching { context.startActivity(voiceIntent) } })
+        }
+        if (lensIntent != null) {
+            bar.addView(iconView(QsbIconState(
+                QsbIconId.LENS, R.drawable.ic_lens_color, themed,
+                context.getString(R.string.label_lens),
+            ), true) { runCatching { context.startActivity(lensIntent) } })
+        }
+    }
+
+    private fun iconView(icon: QsbIconState, clickable: Boolean, onClick: (() -> Unit)? = null): View {
+        val width = resources.getDimensionPixelSize(R.dimen.uwu_qsb_icon_width)
+        val iconSize = if (clickable) width -
+            2 * resources.getDimensionPixelSize(R.dimen.uwu_qsb_icon_padding)
+        else (24 * resources.displayMetrics.density).roundToInt()
+        val image = ImageView(context).apply {
+            setImageDrawable(themedDrawable(icon))
+            contentDescription = icon.contentDescription
+            scaleType = ImageView.ScaleType.FIT_CENTER
+        }
+        return FrameLayout(context).apply {
+            addView(image, LayoutParams(iconSize, iconSize, Gravity.CENTER))
+            if (clickable) {
+                isClickable = true
+                isFocusable = true
+                contentDescription = icon.contentDescription
+                setOnClickListener { onClick?.invoke() }
+            }
+            layoutParams = LinearLayout.LayoutParams(width, LayoutParams.MATCH_PARENT)
+        }
+    }
+
+    private fun themedDrawable(icon: QsbIconState) =
+        requireNotNull(ResourcesCompat.getDrawable(resources, icon.resId, context.theme)).mutate().also {
+            if (!icon.themed) return@also
+            if (icon.method == ThemingMethod.THEME_BY_LAYER_ID && it is LayerDrawable) {
+                val night = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK ==
+                    Configuration.UI_MODE_NIGHT_YES
+                val colors = if (night) intArrayOf(
+                    context.getColor(android.R.color.system_accent3_100),
+                    context.getColor(android.R.color.system_accent1_400),
+                    context.getColor(android.R.color.system_accent2_10),
+                    context.getColor(android.R.color.system_accent1_200),
+                ) else intArrayOf(
+                    context.getColor(android.R.color.system_accent3_400),
+                    context.getColor(android.R.color.system_accent1_500),
+                    context.getColor(android.R.color.system_accent2_300),
+                    context.getColor(android.R.color.system_accent1_600),
+                )
+                val ids = intArrayOf(R.id.qsbIconTintPrimary, R.id.qsbIconTintSecondary,
+                    R.id.qsbIconTintTertiary, R.id.qsbIconTintQuaternary)
+                for (index in 0 until it.numberOfLayers) {
+                    val tintIndex = ids.indexOf(it.getId(index))
+                    if (tintIndex >= 0) it.getDrawable(index).setTint(colors[tintIndex])
+                }
+            } else {
+                it.setTint(Themes.getColorAccent(context))
+            }
+        }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val dp = launcher?.deviceProfile
-        if (dp == null || !composeView.isAttachedToWindow) {
-            setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec))
-            return
-        }
-        if (!dp.deviceProperties.isPhone) {
+        if (dp == null || !dp.deviceProperties.isPhone) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec)
             return
         }
-
         val requestedWidth = MeasureSpec.getSize(widthMeasureSpec)
-        val height = MeasureSpec.getSize(heightMeasureSpec)
         val cellWidth = DeviceProfile.calculateCellWidth(
-            requestedWidth,
-            dp.workspaceProfile.cellLayoutBorderSpacePx.x,
+            requestedWidth, dp.workspaceProfile.cellLayoutBorderSpacePx.x,
             dp.hotseatProfile.numShownIcons,
         )
         val iconSize = (dp.workspaceProfile.iconSizePx * 0.92f).toInt()
-        val widthReduction = cellWidth - iconSize
-        setMeasuredDimension(requestedWidth - widthReduction, height)
-        children.forEach { child ->
-            measureChildWithMargins(child, widthMeasureSpec, widthReduction, heightMeasureSpec, 0)
-        }
+        val width = (requestedWidth - cellWidth + iconSize).coerceAtLeast(0)
+        super.onMeasure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), heightMeasureSpec)
     }
 
     private fun openOptions() {
         val launcher = launcher ?: return
         val position = Rect()
-        launcher.dragLayer.getDescendantRectRelativeToSelf(composeView, position)
+        launcher.dragLayer.getDescendantRectRelativeToSelf(bar, position)
         OptionsPopupView.show<Launcher>(
-            launcher,
-            RectF(position),
-            listOf(
-                OptionsPopupView.OptionItem(
-                    context,
-                    R.string.action_customize,
-                    R.drawable.ic_setting,
-                    StatsLogManager.LauncherEvent.IGNORE,
-                ) {
-                    launcher.startActivity(
-                        Intent(launcher, SettingsActivity::class.java).putExtra(
-                            SettingsActivity.EXTRA_START_ROUTE,
-                            SettingsActivity.SEARCH_ROUTE,
-                        )
-                    )
-                    true
-                },
-            ),
+            launcher, RectF(position),
+            listOf(OptionsPopupView.OptionItem(
+                context, R.string.action_customize, R.drawable.ic_setting,
+                StatsLogManager.LauncherEvent.IGNORE,
+            ) {
+                launcher.startActivity(Intent(launcher, SettingsActivity::class.java).putExtra(
+                    SettingsActivity.EXTRA_START_ROUTE, SettingsActivity.SEARCH_ROUTE,
+                ))
+                true
+            }),
             true,
         )
     }
@@ -148,6 +230,12 @@ class LawnQsbLayout @JvmOverloads constructor(
         private const val LENS_PACKAGE = "com.google.ar.lens"
         private const val LENS_ACTIVITY =
             "com.google.vr.apps.ornament.app.lens.LensLauncherActivity"
+        private val QSB_PREFS = arrayOf<Item>(
+            LauncherPrefs.HOTSEAT_QSB_PROVIDER, LauncherPrefs.HOTSEAT_QSB_THEMED,
+            LauncherPrefs.HOTSEAT_QSB_ALPHA, LauncherPrefs.HOTSEAT_QSB_CORNER_RADIUS,
+            LauncherPrefs.HOTSEAT_QSB_STROKE_COLOR, LauncherPrefs.HOTSEAT_QSB_STROKE_WIDTH,
+            LauncherPrefs.HOTSEAT_QSB_MATCH_DRAWER, LauncherPrefs.HOTSEAT_QSB_FORCE_WEBSITE,
+        )
 
         fun getLensIntent(context: Context): Intent =
             Intent.makeMainActivity(ComponentName(LENS_PACKAGE, LENS_ACTIVITY))
@@ -156,14 +244,3 @@ class LawnQsbLayout @JvmOverloads constructor(
 }
 
 private fun Context.canResolve(intent: Intent): Boolean = packageManager.resolveActivity(intent, 0) != null
-
-private object ThemesCompat {
-    fun getQsbFillColor(context: Context): Int =
-        if (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK ==
-            Configuration.UI_MODE_NIGHT_YES
-        ) {
-            0xFF202124.toInt()
-        } else {
-            Color.WHITE
-        }
-}
