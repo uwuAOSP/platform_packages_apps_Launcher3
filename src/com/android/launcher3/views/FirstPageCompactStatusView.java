@@ -75,6 +75,7 @@ public class FirstPageCompactStatusView extends FrameLayout {
     private PendingIntent mWeatherPendingIntent;
 
     private boolean mReceiverRegistered;
+    private boolean mDataSourcesEnabled = true;
     private boolean mForceTwoLineLayout;
 
     private final BroadcastReceiver mTimeReceiver = new BroadcastReceiver() {
@@ -108,6 +109,35 @@ public class FirstPageCompactStatusView extends FrameLayout {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+        if (!mDataSourcesEnabled) {
+            return;
+        }
+        startDataSources();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        stopDataSources();
+        super.onDetachedFromWindow();
+    }
+
+    public void setDataSourcesEnabled(boolean enabled) {
+        if (mDataSourcesEnabled == enabled) {
+            return;
+        }
+        mDataSourcesEnabled = enabled;
+        if (!isAttachedToWindow()) {
+            return;
+        }
+        if (enabled) {
+            startDataSources();
+        } else {
+            stopDataSources();
+        }
+    }
+
+    private void startDataSources() {
+        refreshDateAndAlarm();
         registerTimeReceiver();
         if (mWeatherDataProvider != null) {
             mWeatherDataProvider.setCallback(this::updateStatusInfo);
@@ -115,13 +145,13 @@ public class FirstPageCompactStatusView extends FrameLayout {
         }
     }
 
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
+    private void stopDataSources() {
+        mTimerTextView.stop();
         if (mWeatherDataProvider != null) {
             mWeatherDataProvider.setCallback(null);
             mWeatherDataProvider.stop();
         }
+        updateStatusInfo(null);
         unregisterTimeReceiver();
     }
 

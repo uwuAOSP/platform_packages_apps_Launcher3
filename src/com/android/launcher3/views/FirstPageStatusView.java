@@ -53,6 +53,7 @@ public class FirstPageStatusView extends FrameLayout {
     private PageIndicatorDots mPageIndicator;
     private PagerSnapHelper mSnapHelper;
     private int mCurrentPage;
+    private boolean mDataSourcesEnabled = true;
 
     public FirstPageStatusView(Context context) {
         this(context, null);
@@ -97,15 +98,44 @@ public class FirstPageStatusView extends FrameLayout {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+        if (!mDataSourcesEnabled) {
+            return;
+        }
+        startDataSources();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        stopDataSources();
+        super.onDetachedFromWindow();
+    }
+
+    public void setDataSourcesEnabled(boolean enabled) {
+        if (mDataSourcesEnabled == enabled) {
+            return;
+        }
+        mDataSourcesEnabled = enabled;
+        mCompactStatusView.setDataSourcesEnabled(enabled);
+        if (!isAttachedToWindow()) {
+            return;
+        }
+        if (enabled) {
+            startDataSources();
+        } else {
+            stopDataSources();
+        }
+    }
+
+    private void startDataSources() {
+        mCompactStatusView.setDataSourcesEnabled(true);
         if (mMediaDataProvider != null) {
             mMediaDataProvider.setCallback(this::onMediaInfoUpdated);
             mMediaDataProvider.start();
         }
     }
 
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
+    private void stopDataSources() {
+        mCompactStatusView.setDataSourcesEnabled(false);
         if (mMediaDataProvider != null) {
             mMediaDataProvider.setCallback(null);
             mMediaDataProvider.stop();

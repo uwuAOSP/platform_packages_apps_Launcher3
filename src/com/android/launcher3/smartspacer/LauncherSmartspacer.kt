@@ -18,14 +18,20 @@ package com.android.launcher3.smartspacer
 
 import android.content.Context
 import com.android.launcher3.LauncherPrefs
+import com.android.launcher3.util.LockedUserState
 
 object LauncherSmartspacer {
 
     @JvmStatic
     fun isEnabled(context: Context): Boolean =
-        LauncherPrefs.get(context).get(LauncherPrefs.SMARTSPACER_ENABLED)
+        LockedUserState.get(context).isUserUnlocked &&
+            LauncherPrefs.get(context).get(LauncherPrefs.SMARTSPACER_ENABLED)
 
     @JvmStatic
     fun isFirstPageStatusEnabled(context: Context): Boolean =
-        LauncherPrefs.get(context).get(LauncherPrefs.SHOW_AT_A_GLANCE)
+        if (LockedUserState.get(context).isUserUnlocked) {
+            LauncherPrefs.get(context).get(LauncherPrefs.SHOW_AT_A_GLANCE)
+        } else {
+            LauncherPrefs.SHOW_AT_A_GLANCE.defaultValue
+        }
 }

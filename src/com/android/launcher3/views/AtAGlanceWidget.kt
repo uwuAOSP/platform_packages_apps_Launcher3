@@ -24,6 +24,7 @@ import android.view.View
 import android.widget.FrameLayout
 import com.android.launcher3.R
 import com.android.launcher3.smartspacer.LauncherSmartspacer
+import com.android.launcher3.util.LockedUserState
 import com.kieronquinn.app.smartspacer.sdk.SmartspacerConstants.SMARTSPACER_PACKAGE_NAME
 import com.kieronquinn.app.smartspacer.sdk.client.SmartspacerClient
 import kotlinx.coroutines.CoroutineScope
@@ -43,6 +44,9 @@ class AtAGlanceWidget @JvmOverloads constructor(
     private var smartspacerView: View? = null
     private var scope: CoroutineScope? = null
     private var refreshJob: Job? = null
+    private val userUnlockedRunnable = Runnable {
+        if (isAttachedToWindow) refresh()
+    }
 
     override fun onFinishInflate() {
         super.onFinishInflate()
@@ -52,10 +56,15 @@ class AtAGlanceWidget @JvmOverloads constructor(
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         if (scope == null) scope = MainScope()
+        val lockedUserState = LockedUserState.get(context)
+        if (!lockedUserState.isUserUnlocked) {
+            lockedUserState.runOnUserUnlocked(userUnlockedRunnable)
+        }
         refresh()
     }
 
     override fun onDetachedFromWindow() {
+        LockedUserState.get(context).removeOnUserUnlockedRunnable(userUnlockedRunnable)
         refreshJob?.cancel()
         refreshJob = null
         scope?.cancel()
@@ -84,12 +93,16 @@ class AtAGlanceWidget @JvmOverloads constructor(
     }
 
     private fun showSmartspacer() {
+        (fallbackView as? FirstPageStatusView)?.setDataSourcesEnabled(false)
         ensureSmartspacerView().visibility = View.VISIBLE
         fallbackView.visibility = View.GONE
     }
 
     private fun showFallback() {
         clearSmartspacerView()
+        (fallbackView as? FirstPageStatusView)?.setDataSourcesEnabled(
+            LockedUserState.get(context).isUserUnlocked
+        )
         fallbackView.visibility = View.VISIBLE
     }
 

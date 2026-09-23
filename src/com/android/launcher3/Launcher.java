@@ -217,6 +217,7 @@ import com.android.launcher3.util.IntSet;
 import com.android.launcher3.util.ItemInflater;
 import com.android.launcher3.util.KeyboardShortcutsDelegate;
 import com.android.launcher3.util.LauncherBindableItemsContainer;
+import com.android.launcher3.util.LockedUserState;
 import com.android.launcher3.util.PackageUserKey;
 import com.android.launcher3.util.PendingRequestArgs;
 import com.android.launcher3.util.RunnableList;
@@ -396,6 +397,8 @@ public class Launcher extends StatefulActivity<LauncherState>
 
     private @Nullable SafeCloseable mNaturalScrollingChangedSafeCloseable;
     private final LauncherPrefChangeListener mSmartspacerChangedListener = key -> recreate();
+    private final Runnable mUserUnlockedRunnable =
+            () -> LauncherAppState.getIDP(this).refreshAfterPreferencesChanged();
 
     private StartupLatencyLogger mStartupLatencyLogger;
 
@@ -491,6 +494,10 @@ public class Launcher extends StatefulActivity<LauncherState>
 
         setContentView(getRootView());
         getRootView().dispatchInsets();
+
+        if (!LockedUserState.get(this).isUserUnlockedAtLauncherStartup()) {
+            LockedUserState.get(this).runOnUserUnlocked(mUserUnlockedRunnable);
+        }
 
         final SettingsCache settingsCache = SettingsCache.INSTANCE.get(this);
         mNaturalScrollingChangedSafeCloseable = settingsCache.getListenableRef(
@@ -1585,6 +1592,8 @@ public class Launcher extends StatefulActivity<LauncherState>
     public void onDestroy() {
         super.onDestroy();
         ACTIVITY_TRACKER.onContextDestroyed(this);
+
+        LockedUserState.get(this).removeOnUserUnlockedRunnable(mUserUnlockedRunnable);
 
         if (mNaturalScrollingChangedSafeCloseable != null) {
             mNaturalScrollingChangedSafeCloseable.close();

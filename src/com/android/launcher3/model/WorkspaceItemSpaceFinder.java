@@ -178,7 +178,7 @@ public class WorkspaceItemSpaceFinder {
             int startingFromCellY, int spanX, int spanY, int[] cellXY) {
         GridOccupancy occupied = new GridOccupancy(mIDP.numColumns, mIDP.numRows);
         if (screenId == FIRST_SCREEN_ID && mContext != null
-                && LauncherSmartspacer.isEnabled(mContext)) {
+                && LauncherSmartspacer.isFirstPageStatusEnabled(mContext)) {
             occupied.markCells(0, 0, mIDP.numColumns, 1, true);
         }
 
