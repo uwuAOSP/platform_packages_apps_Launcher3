@@ -263,7 +263,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         mAH.set(AdapterHolder.WORK, new AdapterHolder(AdapterHolder.WORK,
                 new AlphabeticalAppsList(mActivityContext, mAllAppsStore, mWorkManager, null)));
         mAH.set(SEARCH, new AdapterHolder(SEARCH,
-                new AlphabeticalAppsList(mActivityContext, null, null, null)));
+                new AlphabeticalAppsList(mActivityContext, null, null, mPrivateProfileManager)));
 
         getLayoutInflater().inflate(R.layout.all_apps_content, this);
         mHeader = findViewById(R.id.all_apps_header);

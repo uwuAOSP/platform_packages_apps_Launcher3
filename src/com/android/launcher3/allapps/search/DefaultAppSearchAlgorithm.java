@@ -15,7 +15,9 @@
  */
 package com.android.launcher3.allapps.search;
 
+import static com.android.launcher3.allapps.AlphabeticalAppsList.PRIVATE_SPACE_PACKAGE;
 import static com.android.launcher3.allapps.BaseAllAppsAdapter.VIEW_TYPE_EMPTY_SEARCH;
+import static com.android.launcher3.allapps.BaseAllAppsAdapter.VIEW_TYPE_PRIVATE_SPACE_HEADER;
 
 import android.content.Context;
 import android.os.Handler;
@@ -23,6 +25,7 @@ import android.os.Handler;
 import androidx.annotation.AnyThread;
 
 import com.android.launcher3.LauncherAppState;
+import com.android.launcher3.R;
 import com.android.launcher3.allapps.BaseAllAppsAdapter.AdapterItem;
 import com.android.launcher3.model.data.AppInfo;
 import com.android.launcher3.search.SearchAlgorithm;
@@ -43,6 +46,7 @@ public class DefaultAppSearchAlgorithm implements SearchAlgorithm<AdapterItem> {
     private final LauncherAppState mAppState;
     private final Handler mResultHandler;
     private final boolean mAddNoResultsMessage;
+    private final String mPrivateSpaceLabel;
 
     public DefaultAppSearchAlgorithm(Context context, LooperExecutor uiExecutor) {
         this(context, uiExecutor, false);
@@ -53,6 +57,7 @@ public class DefaultAppSearchAlgorithm implements SearchAlgorithm<AdapterItem> {
         mAppState = LauncherAppState.getInstance(context);
         mResultHandler = new Handler(uiExecutor.getLooper());
         mAddNoResultsMessage = addNoResultsMessage;
+        mPrivateSpaceLabel = context.getString(R.string.private_space_label);
     }
 
     @Override
@@ -65,7 +70,8 @@ public class DefaultAppSearchAlgorithm implements SearchAlgorithm<AdapterItem> {
     @Override
     public void doSearch(String query, SearchCallback<AdapterItem> callback) {
         mAppState.getModel().enqueueModelUpdateTask((taskController, dataModel, apps) ->  {
-            ArrayList<AdapterItem> result = getTitleMatchResult(apps.data, query);
+            ArrayList<AdapterItem> result = getTitleMatchResult(
+                    apps.data, query, mPrivateSpaceLabel);
             if (mAddNoResultsMessage && result.isEmpty()) {
                 result.add(getEmptyMessageAdapterItem(query));
             }
@@ -86,7 +92,8 @@ public class DefaultAppSearchAlgorithm implements SearchAlgorithm<AdapterItem> {
      * Filters {@link AppInfo}s matching specified query
      */
     @AnyThread
-    public static ArrayList<AdapterItem> getTitleMatchResult(List<AppInfo> apps, String query) {
+    public static ArrayList<AdapterItem> getTitleMatchResult(
+            List<AppInfo> apps, String query, String privateSpaceLabel) {
         // Do an intersection of the words in the query and each title, and filter out all the
         // apps that don't match all of the words in the query.
         final String queryTextLower = query.toLowerCase();
@@ -96,12 +103,22 @@ public class DefaultAppSearchAlgorithm implements SearchAlgorithm<AdapterItem> {
 
         int resultCount = 0;
         int total = apps.size();
-        for (int i = 0; i < total && resultCount < MAX_RESULTS_COUNT; i++) {
+        boolean hasPrivateSpaceApp = false;
+        for (int i = 0; i < total; i++) {
             AppInfo info = apps.get(i);
-            if (StringMatcherUtility.matches(queryTextLower, info.title.toString(), matcher)) {
+            if (PRIVATE_SPACE_PACKAGE.equals(info.getTargetPackage())) {
+                hasPrivateSpaceApp = true;
+            }
+            if (resultCount < MAX_RESULTS_COUNT
+                    && StringMatcherUtility.matches(
+                            queryTextLower, info.title.toString(), matcher)) {
                 result.add(AdapterItem.asApp(info));
                 resultCount++;
             }
+        }
+        if (hasPrivateSpaceApp && resultCount < MAX_RESULTS_COUNT
+                && StringMatcherUtility.matches(queryTextLower, privateSpaceLabel, matcher)) {
+            result.add(new AdapterItem(VIEW_TYPE_PRIVATE_SPACE_HEADER));
         }
         return result;
     }
