@@ -220,6 +220,11 @@ public class PrivateProfileManager extends UserProfileManager {
                 .get(mAllApps.getContext()).getValue(PRIVATE_SPACE_HIDE_WHEN_LOCKED_URI);
     }
 
+    /** Whether the drawer can offer Private Space setup before a profile exists. */
+    public boolean isPrivateSpaceSetupAvailable() {
+        return getProfileUser() == null && mPrivateSpaceSettingsAvailable;
+    }
+
     BitmapInfo preparePSBitmapInfo() {
         Context context = mAllApps.getContext();
         Intent.ShortcutIconResource shortcut = Intent.ShortcutIconResource.fromContext(
@@ -281,7 +286,16 @@ public class PrivateProfileManager extends UserProfileManager {
             mAppInstallerIntent = apiWrapper
                     .getAppMarketActivityIntent(BuildConfig.APPLICATION_ID, profileUser);
         }
-        setPrivateSpaceSettingsAvailable(apiWrapper.getPrivateSpaceSettingsIntent() != null);
+        boolean settingsAvailable = apiWrapper.getPrivateSpaceSettingsIntent() != null;
+        mUiExecutor.execute(() -> {
+            setPrivateSpaceSettingsAvailable(settingsAvailable);
+            if (getProfileUser() == null) {
+                mAllApps.getPersonalAppList().updateAdapterItems();
+                if (mAllApps.mAH.get(MAIN).mRecyclerView != null) {
+                    addPrivateSpaceDecorator();
+                }
+            }
+        });
     }
 
     /** Adds a private space decorator to the main (personal) app recyclerview. */
@@ -387,6 +401,25 @@ public class PrivateProfileManager extends UserProfileManager {
         //Add image for private space transitioning view
         ImageView transitionView = mPSHeader.findViewById(R.id.ps_transition_image);
         assert transitionView != null;
+        ViewGroup settingsAndLockGroup = mPSHeader.findViewById(R.id.settingsAndLockGroup);
+        if (isPrivateSpaceSetupAvailable()) {
+            settingsAndLockGroup.setVisibility(VISIBLE);
+            mPrivateSpaceSettingsButton.setVisibility(GONE);
+            mPrivateSpaceSettingsButton.setClickable(false);
+            lockPill.setVisibility(VISIBLE);
+            lockPill.setOnClickListener(mPrivateSpaceSettingsButton::onClick);
+            mLockText.setVisibility(GONE);
+            transitionView.setVisibility(GONE);
+            mPSHeader.setOnClickListener(mPrivateSpaceSettingsButton::onClick);
+            mPSHeader.setClickable(true);
+            mPSHeader.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+            mPSHeader.setContentDescription(mAllApps.getContext().getString(
+                    R.string.private_space_label) + ". " + mAllApps.getContext().getString(
+                    R.string.private_space_secondary_label));
+            Trace.endSection();
+            return;
+        }
+        settingsAndLockGroup.setVisibility(VISIBLE);
         switch(getCurrentState()) {
             case STATE_ENABLED -> {
                 mPSHeader.setOnClickListener(null);

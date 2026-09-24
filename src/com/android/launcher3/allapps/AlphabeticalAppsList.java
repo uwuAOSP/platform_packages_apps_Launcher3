@@ -366,6 +366,13 @@ public class AlphabeticalAppsList implements AllAppsStore.OnUpdateListener {
 
     int addPrivateSpaceItems(int position) {
         if (mPrivateProviderManager != null
+                && mPrivateProviderManager.isPrivateSpaceSetupAvailable()) {
+            position = mPrivateProviderManager.addPrivateSpaceHeader(mAdapterItems);
+            mFastScrollerSections.add(new FastScrollSectionInfo(
+                    mPrivateProfileAppScrollerBadge, position));
+            return position;
+        }
+        if (mPrivateProviderManager != null
                 && !mPrivateProviderManager.isPrivateSpaceHidden()
                 && !mPrivateApps.isEmpty()) {
             // Always add PS Header if Space is present and visible.
