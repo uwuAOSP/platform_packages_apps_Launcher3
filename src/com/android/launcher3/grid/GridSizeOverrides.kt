@@ -30,7 +30,7 @@ import com.android.launcher3.deviceprofile.parser.GridOption
 
 // A grid preference value of -1 means "unset": fall back to the selected device profile.
 class GridSizeOverrides private constructor(
-    private val prefs: LauncherPrefs,
+    private val prefs: LauncherPrefs?,
     private val canReadPreferences: Boolean,
 ) {
 
@@ -53,16 +53,23 @@ class GridSizeOverrides private constructor(
                     maxOf(defaultGrid.numHotseatIcons, defaultGrid.numDatabaseHotseatIcons),
             )
         }
+        val preferences = prefs ?: return GridSize(
+            numRows = defaultGrid.numRows,
+            numColumns = defaultGrid.numColumns,
+            numHotseatColumns = defaultGrid.numHotseatIcons,
+            numHotseatColumnsUnfolded =
+                maxOf(defaultGrid.numHotseatIcons, defaultGrid.numDatabaseHotseatIcons),
+        )
         val hotseatColumns =
-            resolve(prefs.get(LauncherPrefs.HOTSEAT_COLUMNS), defaultGrid.numHotseatIcons)
+            resolve(preferences.get(LauncherPrefs.HOTSEAT_COLUMNS), defaultGrid.numHotseatIcons)
         return GridSize(
-            numRows = resolve(prefs.get(LauncherPrefs.WORKSPACE_ROWS), defaultGrid.numRows),
+            numRows = resolve(preferences.get(LauncherPrefs.WORKSPACE_ROWS), defaultGrid.numRows),
             numColumns =
-                resolve(prefs.get(LauncherPrefs.WORKSPACE_COLUMNS), defaultGrid.numColumns),
+                resolve(preferences.get(LauncherPrefs.WORKSPACE_COLUMNS), defaultGrid.numColumns),
             numHotseatColumns = hotseatColumns,
             numHotseatColumnsUnfolded =
                 resolve(
-                    prefs.get(LauncherPrefs.HOTSEAT_COLUMNS_UNFOLDED),
+                    preferences.get(LauncherPrefs.HOTSEAT_COLUMNS_UNFOLDED),
                     maxOf(hotseatColumns, defaultGrid.numDatabaseHotseatIcons),
                 ).coerceAtLeast(hotseatColumns),
         )
@@ -70,14 +77,15 @@ class GridSizeOverrides private constructor(
 
     fun applyOverrides(idp: InvariantDeviceProfile, defaultGrid: GridOption) {
         if (!canReadPreferences) return
+        val preferences = prefs ?: return
 
         val drawerColumns =
-            resolve(prefs.get(LauncherPrefs.DRAWER_COLUMNS), defaultGrid.numAllAppsColumns)
+            resolve(preferences.get(LauncherPrefs.DRAWER_COLUMNS), defaultGrid.numAllAppsColumns)
         idp.numAllAppsColumns = drawerColumns
         idp.numDatabaseAllAppsColumns = drawerColumns
 
-        val folderRows = prefs.get(LauncherPrefs.FOLDER_ROWS)
-        val folderColumns = prefs.get(LauncherPrefs.FOLDER_COLUMNS)
+        val folderRows = preferences.get(LauncherPrefs.FOLDER_ROWS)
+        val folderColumns = preferences.get(LauncherPrefs.FOLDER_COLUMNS)
         val folderIndices =
             intArrayOf(
                 INDEX_DEFAULT,
@@ -91,9 +99,9 @@ class GridSizeOverrides private constructor(
                 resolve(folderColumns, defaultGrid.numFolderColumns[index])
         }
 
-        val homeIconSizeFactor = prefs.get(LauncherPrefs.HOME_ICON_SIZE_FACTOR)
-        val drawerIconSizeFactor = prefs.get(LauncherPrefs.DRAWER_ICON_SIZE_FACTOR)
-        val drawerIconTextSizeFactor = prefs.get(LauncherPrefs.DRAWER_ICON_TEXT_SIZE_FACTOR)
+        val homeIconSizeFactor = preferences.get(LauncherPrefs.HOME_ICON_SIZE_FACTOR)
+        val drawerIconSizeFactor = preferences.get(LauncherPrefs.DRAWER_ICON_SIZE_FACTOR)
+        val drawerIconTextSizeFactor = preferences.get(LauncherPrefs.DRAWER_ICON_TEXT_SIZE_FACTOR)
         val sizeIndices =
             intArrayOf(
                 INDEX_DEFAULT,
@@ -107,8 +115,8 @@ class GridSizeOverrides private constructor(
             idp.allAppsIconTextSize[index] *= drawerIconTextSizeFactor
         }
 
-        val hotseatRows = prefs.get(LauncherPrefs.HOTSEAT_ROWS).coerceIn(1, 2)
-        val dockPages = prefs.get(LauncherPrefs.DOCK_PAGES).coerceIn(1, 5)
+        val hotseatRows = preferences.get(LauncherPrefs.HOTSEAT_ROWS).coerceIn(1, 2)
+        val dockPages = preferences.get(LauncherPrefs.DOCK_PAGES).coerceIn(1, 5)
         val requiredSlots = idp.numShownHotseatIcons * hotseatRows * dockPages
         if (idp.numDatabaseHotseatIcons < requiredSlots) {
             idp.numDatabaseHotseatIcons = requiredSlots
@@ -119,10 +127,13 @@ class GridSizeOverrides private constructor(
 
     companion object {
         @JvmStatic
-        fun get(context: Context): GridSizeOverrides =
-            GridSizeOverrides(
-                LauncherPrefs.get(context),
-                context.getSystemService(UserManager::class.java)?.isUserUnlocked != false,
+        fun get(context: Context): GridSizeOverrides {
+            val canReadPreferences =
+                context.getSystemService(UserManager::class.java)?.isUserUnlocked != false
+            return GridSizeOverrides(
+                if (canReadPreferences) LauncherPrefs.get(context) else null,
+                canReadPreferences,
             )
+        }
     }
 }

@@ -81,7 +81,8 @@ public class PinnedAppsAdapter extends BaseAdapter implements OnSharedPreference
         mOnClickListener = launcher.getItemOnClickListener();
         mOnLongClickListener = onLongClickListener;
         mAllAppsList = allAppsStore;
-        mPrefs = launcher.getSharedPreferences(PINNED_APPS_KEY, MODE_PRIVATE);
+        mPrefs = launcher.createDeviceProtectedStorageContext()
+                .getSharedPreferences(PINNED_APPS_KEY, MODE_PRIVATE);
         mAppNameComparator = new AppInfoComparator(launcher);
 
         mAllAppsList.addUpdateListener(this::createFilteredAppsList);
