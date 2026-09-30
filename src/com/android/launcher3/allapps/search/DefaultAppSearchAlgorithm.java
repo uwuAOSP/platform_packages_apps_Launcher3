@@ -35,6 +35,7 @@ import com.android.launcher3.util.LooperExecutor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * The default search implementation.
@@ -96,7 +97,7 @@ public class DefaultAppSearchAlgorithm implements SearchAlgorithm<AdapterItem> {
             List<AppInfo> apps, String query, String privateSpaceLabel) {
         // Do an intersection of the words in the query and each title, and filter out all the
         // apps that don't match all of the words in the query.
-        final String queryTextLower = query.toLowerCase();
+        final String queryTextLower = query.toLowerCase(Locale.ROOT);
         final ArrayList<AdapterItem> result = new ArrayList<>();
         StringMatcherUtility.StringMatcher matcher =
                 StringMatcherUtility.StringMatcher.getInstance();
@@ -110,8 +111,9 @@ public class DefaultAppSearchAlgorithm implements SearchAlgorithm<AdapterItem> {
                 hasPrivateSpaceApp = true;
             }
             if (resultCount < MAX_RESULTS_COUNT
-                    && StringMatcherUtility.matches(
-                            queryTextLower, info.title.toString(), matcher)) {
+                    && (StringMatcherUtility.matches(
+                            queryTextLower, info.title.toString(), matcher)
+                            || PinyinMatcher.matches(queryTextLower, info.title.toString()))) {
                 result.add(AdapterItem.asApp(info));
                 resultCount++;
             }
