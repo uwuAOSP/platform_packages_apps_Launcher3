@@ -10,10 +10,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.RectF
-import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.util.AttributeSet
 import android.view.Gravity
@@ -85,24 +83,7 @@ class LawnQsbLayout @JvmOverloads constructor(
             provider.supportsLens && context.canResolve(it)
         }
         val themed = prefs.get(LauncherPrefs.HOTSEAT_QSB_THEMED)
-        val style = buildQsbStyle(
-            context, themed, prefs.get(LauncherPrefs.HOTSEAT_QSB_ALPHA),
-            if (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK ==
-                Configuration.UI_MODE_NIGHT_YES
-            ) 0xFF202124.toInt() else Color.WHITE,
-            prefs.get(LauncherPrefs.HOTSEAT_QSB_CORNER_RADIUS),
-            prefs.get(LauncherPrefs.HOTSEAT_QSB_STROKE_COLOR),
-            prefs.get(LauncherPrefs.HOTSEAT_QSB_STROKE_WIDTH),
-        )
-        bar.background = GradientDrawable().apply {
-            cornerRadius = style.cornerRadiusPx
-            val color = style.backgroundColor
-            setColor(Color.argb((style.backgroundAlpha * 255).roundToInt(),
-                Color.red(color), Color.green(color), Color.blue(color)))
-            if (style.strokeWidthPx > 0f) {
-                setStroke(style.strokeWidthPx.roundToInt(), style.strokeColor)
-            }
-        }
+        SearchBarUI.applyBackground(bar)
         bar.contentDescription = context.getString(R.string.label_search)
         bar.setOnClickListener {
             launcher?.let {

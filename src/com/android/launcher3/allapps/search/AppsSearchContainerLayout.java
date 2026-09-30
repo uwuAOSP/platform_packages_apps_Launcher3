@@ -22,11 +22,8 @@ import static android.view.View.MeasureSpec.makeMeasureSpec;
 import static com.android.launcher3.icons.IconNormalizer.ICON_VISIBLE_AREA_FACTOR;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.InsetDrawable;
 import android.text.Selection;
 import android.text.SpannableStringBuilder;
 import android.text.method.TextKeyListener;
@@ -40,16 +37,14 @@ import android.view.ViewGroup.MarginLayoutParams;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.ExtendedEditText;
 import com.android.launcher3.Insettable;
-import com.android.launcher3.LauncherPrefs;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.allapps.ActivityAllAppsContainerView;
 import com.android.launcher3.allapps.AllAppsStore;
 import com.android.launcher3.allapps.BaseAllAppsAdapter.AdapterItem;
 import com.android.launcher3.allapps.SearchUiManager;
-import com.android.launcher3.qsb.LawnQsbUiKt;
+import com.android.launcher3.qsb.SearchBarUI;
 import com.android.launcher3.search.SearchCallback;
-import com.android.launcher3.util.Themes;
 import com.android.launcher3.views.ActivityContext;
 
 import java.util.ArrayList;
@@ -94,30 +89,7 @@ public class AppsSearchContainerLayout extends ExtendedEditText
     }
 
     private void applyQsbStyle() {
-        LauncherPrefs prefs = LauncherPrefs.get(getContext());
-        boolean themed = prefs.get(LauncherPrefs.HOTSEAT_QSB_THEMED);
-        int backgroundColor = themed
-                ? Themes.getColorBackgroundFloating(getContext()) : Color.WHITE;
-        int backgroundAlpha = Math.round(prefs.get(LauncherPrefs.HOTSEAT_QSB_ALPHA) * 2.55f);
-        int strokeColor = prefs.get(LauncherPrefs.HOTSEAT_QSB_STROKE_COLOR);
-        if (strokeColor == 0) strokeColor = Themes.getColorAccent(getContext());
-
-        GradientDrawable shape = new GradientDrawable();
-        shape.setColor(Color.argb(
-                backgroundAlpha,
-                Color.red(backgroundColor),
-                Color.green(backgroundColor),
-                Color.blue(backgroundColor)));
-        shape.setCornerRadius(LawnQsbUiKt.getHotseatQsbCornerRadius(
-                getContext(), prefs.get(LauncherPrefs.HOTSEAT_QSB_CORNER_RADIUS)));
-        float strokeWidth = prefs.get(LauncherPrefs.HOTSEAT_QSB_STROKE_WIDTH);
-        if (strokeWidth > 0) {
-            shape.setStroke(Math.round(strokeWidth), strokeColor);
-        }
-
-        int verticalPadding = getResources().getDimensionPixelSize(
-                R.dimen.uwu_qsb_widget_vertical_padding);
-        setBackground(new InsetDrawable(shape, 0, verticalPadding, 0, verticalPadding));
+        SearchBarUI.applyBackground(this, true);
     }
 
     private void applySearchFieldContent() {
