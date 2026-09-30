@@ -327,8 +327,7 @@ public abstract class BaseAllAppsAdapter
                 mApps.getPrivateProfileManager().bindPrivateSpaceHeaderViewElements(psHeaderLayout);
                 AdapterItem adapterItem = mApps.getAdapterItems().get(position);
                 int roundRegions = ROUND_TOP_LEFT | ROUND_TOP_RIGHT;
-                if (mApps.getPrivateProfileManager().getCurrentState() == STATE_DISABLED
-                        || mApps.getPrivateProfileManager().isPrivateSpaceSetupAvailable()) {
+                if (mApps.getPrivateProfileManager().getCurrentState() == STATE_DISABLED) {
                     roundRegions |= (ROUND_BOTTOM_LEFT | ROUND_BOTTOM_RIGHT);
                 }
                 adapterItem.decorationInfo =

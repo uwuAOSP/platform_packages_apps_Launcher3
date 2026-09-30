@@ -84,6 +84,7 @@ public class AlphabeticalAppsListTest {
 
     @Before
     public void setUp() {
+        when(mPrivateProfileManager.getProfileUser()).thenReturn(PRIVATE_HANDLE);
         when(mPrivateProfileManager.getItemInfoMatcher()).thenReturn(info ->
                 info != null && info.user.equals(PRIVATE_HANDLE));
         mAlphabeticalAppsList = new AlphabeticalAppsList(mContext, mAllAppsStore,
@@ -219,6 +220,7 @@ public class AlphabeticalAppsListTest {
     @Test
     public void privateProfileNotPresent_onlyMainUserViewsArePresent() {
         mSetFlagsRule.enableFlags(Flags.FLAG_ENABLE_PRIVATE_SPACE);
+        when(mPrivateProfileManager.getProfileUser()).thenReturn(null);
         when(mAllAppsStore.getApps()).thenReturn(createAppInfoListForMainUser());
 
         mAlphabeticalAppsList.updateItemFilter(info -> info != null
@@ -227,12 +229,42 @@ public class AlphabeticalAppsListTest {
         assertEquals(MAIN_USER_APP_COUNT + VIEW_AT_END_OF_APP_LIST,
                 mAlphabeticalAppsList.getAdapterItems().size());
         assertEquals(0, mAlphabeticalAppsList.getAdapterItems().stream().filter(item ->
-                        item.itemInfo != null
-                                && item.itemInfo.itemType == VIEW_TYPE_PRIVATE_SPACE_HEADER)
+                        item.viewType == VIEW_TYPE_PRIVATE_SPACE_HEADER)
                 .toList().size());
         assertEquals(0, mAlphabeticalAppsList.getAdapterItems().stream().filter(item ->
                         item.itemInfo != null && item.itemInfo.user.equals(PRIVATE_HANDLE))
                 .toList().size());
+    }
+
+    @Test
+    public void privateProfileNotPresent_settingsAvailableDoesNotShowSetupHeader() {
+        mSetFlagsRule.enableFlags(Flags.FLAG_ENABLE_PRIVATE_SPACE);
+        when(mPrivateProfileManager.getProfileUser()).thenReturn(null);
+        when(mPrivateProfileManager.isPrivateSpaceSettingsAvailable()).thenReturn(true);
+        when(mAllAppsStore.getApps()).thenReturn(createAppInfoListForMainUser());
+
+        mAlphabeticalAppsList.updateItemFilter(info -> info != null
+                && info.user.equals(MAIN_HANDLE));
+
+        assertEquals(0, mAlphabeticalAppsList.getAdapterItems().stream().filter(item ->
+                item.viewType == VIEW_TYPE_PRIVATE_SPACE_HEADER).count());
+        assertEquals(MAIN_USER_APP_COUNT + VIEW_AT_END_OF_APP_LIST,
+                mAlphabeticalAppsList.getAdapterItems().size());
+    }
+
+    @Test
+    public void privateProfileRemoved_staleAppsDoNotShowHeader() {
+        mSetFlagsRule.enableFlags(Flags.FLAG_ENABLE_PRIVATE_SPACE);
+        when(mPrivateProfileManager.getProfileUser()).thenReturn(null);
+        when(mAllAppsStore.getApps()).thenReturn(createAppInfoListForMainAndPrivateUser());
+
+        mAlphabeticalAppsList.updateItemFilter(info -> info != null
+                && info.user.equals(MAIN_HANDLE));
+
+        assertEquals(0, mAlphabeticalAppsList.getAdapterItems().stream().filter(item ->
+                item.viewType == VIEW_TYPE_PRIVATE_SPACE_HEADER).count());
+        assertEquals(MAIN_USER_APP_COUNT + VIEW_AT_END_OF_APP_LIST,
+                mAlphabeticalAppsList.getAdapterItems().size());
     }
 
     @Test
