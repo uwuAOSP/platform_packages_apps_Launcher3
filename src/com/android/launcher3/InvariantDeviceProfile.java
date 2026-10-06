@@ -100,6 +100,7 @@ public class InvariantDeviceProfile {
     public static final String GRID_NAME_PREFS_KEY = "idp_grid_name";
     public static final String NON_FIXED_LANDSCAPE_GRID_NAME_PREFS_KEY =
             "idp_non_fixed_landscape_grid_name";
+    private static final String DEFAULT_PHONE_GRID_NAME = "5_by_4";
 
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({TYPE_PHONE, TYPE_MULTI_DISPLAY, TYPE_TABLET, TYPE_DESKTOP})
@@ -359,7 +360,17 @@ public class InvariantDeviceProfile {
         // we ignore GRID_NAME and select a profile by the requested grid dimensions.
         int customColumns = mPrefs.get(LauncherPrefs.WORKSPACE_COLUMNS);
         int customRows = mPrefs.get(LauncherPrefs.WORKSPACE_ROWS);
-        String effectiveGridName = customColumns >= 0 ? null : gridName;
+        DeviceGridState deviceGridState = new DeviceGridState(mPrefs);
+        // Use a fixed Pixel-style grid only for a clean phone setup. Preserve restored and
+        // user-configured grid state on subsequent launches.
+        boolean useDefaultPhoneGrid = displayInfo.getDeviceType() == TYPE_PHONE
+                && TextUtils.isEmpty(gridName)
+                && customColumns < 0
+                && customRows < 0
+                && deviceGridState.getColumns() < 0
+                && deviceGridState.getRows() < 0;
+        String requestedGridName = useDefaultPhoneGrid ? DEFAULT_PHONE_GRID_NAME : gridName;
+        String effectiveGridName = customColumns >= 0 ? null : requestedGridName;
         List<DisplayOption> allOptions = getPredefinedDeviceProfiles(
                 displayInfo,
                 effectiveGridName,
@@ -377,12 +388,11 @@ public class InvariantDeviceProfile {
 
         // Filter out options that don't have the same number of columns as the grid. A
         // user-configured column count takes precedence over the device grid state.
-        DeviceGridState deviceGridState = new DeviceGridState(mPrefs);
         int filterColumns = customColumns >= 0 ? customColumns : deviceGridState.getColumns();
-        List<DisplayOption> allOptionsFilteredByColCount =
-                filterByColumnCount(allOptions, filterColumns);
+        List<DisplayOption> allOptionsFilteredByColCount = filterColumns >= 0
+                ? filterByColumnCount(allOptions, filterColumns) : allOptions;
 
-        if (allOptionsFilteredByColCount.isEmpty() && !allOptions.isEmpty()) {
+        if (filterColumns >= 0 && allOptionsFilteredByColCount.isEmpty() && !allOptions.isEmpty()) {
             int closestColumnDistance = allOptions.stream()
                     .mapToInt(option -> Math.abs(option.grid.numColumns - filterColumns))
                     .min()
