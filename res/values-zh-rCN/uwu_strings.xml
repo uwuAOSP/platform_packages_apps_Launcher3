@@ -56,4 +56,7 @@
     <string name="settings_search_results">搜索结果</string>
     <string name="settings_search_no_results">没有匹配的设置</string>
     <string name="clear_search">清除搜索</string>
+    <string name="force_stop_app">强行停止</string>
+    <string name="force_stop_app_accessibility">强行停止%1$s</string>
+    <string name="force_stop_app_failed">无法强行停止此应用</string>
 </resources>
