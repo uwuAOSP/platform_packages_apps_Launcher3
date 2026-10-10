@@ -23,6 +23,7 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.annotation.Nullable;
 import android.content.Context;
+import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
@@ -48,6 +49,7 @@ public class StashedHandleView extends View {
 
     private @Nullable ObjectAnimator mColorChangeAnim;
     private Boolean mIsRegionDark;
+    private boolean mHideHandle;
 
     public StashedHandleView(Context context) {
         this(context, null);
@@ -69,6 +71,21 @@ public class StashedHandleView extends View {
                 R.color.taskbar_stashed_handle_light_color);
         mStashedHandleDarkColor = ContextCompat.getColor(context,
                 R.color.taskbar_stashed_handle_dark_color);
+    }
+
+    /** Suppresses painting without removing the gesture target or changing animation state. */
+    public void setHandleHidden(boolean hidden) {
+        if (mHideHandle != hidden) {
+            mHideHandle = hidden;
+            invalidate();
+        }
+    }
+
+    @Override
+    public void draw(Canvas canvas) {
+        if (!mHideHandle) {
+            super.draw(canvas);
+        }
     }
 
     /**

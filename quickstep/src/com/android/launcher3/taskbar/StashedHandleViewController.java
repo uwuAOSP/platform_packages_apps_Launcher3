@@ -21,6 +21,7 @@ import static android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BA
 import static com.android.launcher3.EncryptionType.ENCRYPTED;
 import static com.android.launcher3.LauncherPrefs.nonRestorableItem;
 import static com.android.launcher3.taskbar.Utilities.getShapedTaskbarRadius;
+import static com.android.launcher3.util.Executors.getTaskbarUiThread;
 import static com.android.systemui.shared.system.QuickStepContract.SYSUI_STATE_NAV_BAR_HIDDEN;
 
 import android.animation.Animator;
@@ -47,6 +48,8 @@ import com.android.launcher3.anim.RevealOutlineAnimation;
 import com.android.launcher3.anim.RoundedRectRevealOutlineProvider;
 import com.android.launcher3.util.Executors;
 import com.android.launcher3.util.MultiValueAlpha;
+import com.android.launcher3.util.SafeCloseable;
+import com.android.launcher3.util.SettingsCache;
 import com.android.quickstep.NavHandle;
 import com.android.quickstep.TopTaskTracker;
 import com.android.systemui.shared.system.QuickStepContract.SystemUiStateFlags;
@@ -119,6 +122,7 @@ public class StashedHandleViewController implements TaskbarControllers.LoggableT
     private float mTranslationYForSwipe;
     private float mTranslationYForStash;
     private TaskStackChangeListener mTaskStackChangeListener;
+    private @Nullable SafeCloseable mHideHandleSubscription;
 
     public StashedHandleViewController(TaskbarActivityContext activity,
             StashedHandleView stashedHandleView) {
@@ -139,6 +143,17 @@ public class StashedHandleViewController implements TaskbarControllers.LoggableT
         TaskbarActivityContext activity = Objects.requireNonNull(mActivityRef.get());
         DeviceProfile deviceProfile = activity.getDeviceProfile();
         Resources resources = activity.getResources();
+        if (activity.isGestureNav()) {
+            SettingsCache settingsCache = SettingsCache.INSTANCE.get(activity);
+            mStashedHandleView.setHandleHidden(
+                    settingsCache.getValue(SettingsCache.HIDE_GESTURE_HANDLE_URI));
+            mHideHandleSubscription = settingsCache
+                    .getListenableRef(SettingsCache.HIDE_GESTURE_HANDLE_URI)
+                    .forEach(getTaskbarUiThread(), hidden -> {
+                        mStashedHandleView.setHandleHidden(hidden);
+                        return null;
+                    });
+        }
         if (activity.isPhoneGestureNavMode() || activity.isTinyTaskbar()
                 || activity.isBubbleBarOnPhone()) {
             mTaskbarSize = resources.getDimensionPixelSize(R.dimen.taskbar_phone_size);
@@ -231,6 +246,10 @@ public class StashedHandleViewController implements TaskbarControllers.LoggableT
 
 
     public void onDestroy() {
+        if (mHideHandleSubscription != null) {
+            mHideHandleSubscription.close();
+            mHideHandleSubscription = null;
+        }
         if (mRegionSamplingHelper != null) {
             mRegionSamplingHelper.stopAndDestroy();
         }
