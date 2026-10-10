@@ -402,6 +402,9 @@ constructor(@ApplicationContext private val encryptedContext: Context) {
         val HOTSEAT_QSB_PROVIDER = backedUpItem("dock_search_bar_provider", "google")
 
         @JvmField
+        val APP_SEARCH_INPUT_MODE = backedUpItem("app_search_input_mode", "native")
+
+        @JvmField
         val HOTSEAT_QSB_FORCE_WEBSITE =
             backedUpItem("dock_search_bar_force_website", false)
 

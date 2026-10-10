@@ -57,14 +57,14 @@ public class DefaultAppSearchAlgorithmTest {
     }
 
     @Test
-    public void pinyinSearch_keepsExistingResultLimitAndOrder() {
+    public void pinyinSearch_returnsAllMatchesInOrder() {
         List<AppInfo> apps = new ArrayList<>();
         for (int i = 0; i < 8; i++) {
             apps.add(app("测试" + i));
         }
         List<AdapterItem> results = search(apps, "ceshi");
 
-        assertEquals(5, results.size());
+        assertEquals(apps.size(), results.size());
         for (int i = 0; i < results.size(); i++) {
             assertSame(apps.get(i), results.get(i).itemInfo);
         }

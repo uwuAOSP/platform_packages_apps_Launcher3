@@ -115,6 +115,10 @@ public class AllAppsSearchBarController
         mSearchAlgorithm.doSearch(mQuery, mCallback);
     }
 
+    public void cancelSearch() {
+        mSearchAlgorithm.cancel(true);
+    }
+
     @Override
     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 
@@ -147,6 +151,7 @@ public class AllAppsSearchBarController
      * Resets the search bar state.
      */
     public void reset() {
+        mSearchAlgorithm.cancel(true);
         mCallback.clearSearchResult();
         mInput.reset();
         mInput.clearFocus();

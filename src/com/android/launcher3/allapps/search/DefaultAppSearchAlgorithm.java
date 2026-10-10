@@ -25,6 +25,7 @@ import android.os.Handler;
 import androidx.annotation.AnyThread;
 
 import com.android.launcher3.LauncherAppState;
+import com.android.launcher3.LauncherPrefs;
 import com.android.launcher3.R;
 import com.android.launcher3.allapps.BaseAllAppsAdapter.AdapterItem;
 import com.android.launcher3.model.data.AppInfo;
@@ -36,18 +37,21 @@ import com.android.launcher3.util.LooperExecutor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.uwuaosp.pinyin.PinyinSearch;
 
 /**
  * The default search implementation.
  */
 public class DefaultAppSearchAlgorithm implements SearchAlgorithm<AdapterItem> {
 
-    private static final int MAX_RESULTS_COUNT = 5;
-
     private final LauncherAppState mAppState;
+    private final LauncherPrefs mPrefs;
     private final Handler mResultHandler;
     private final boolean mAddNoResultsMessage;
     private final String mPrivateSpaceLabel;
+    private final AtomicLong mRequestId = new AtomicLong();
 
     public DefaultAppSearchAlgorithm(Context context, LooperExecutor uiExecutor) {
         this(context, uiExecutor, false);
@@ -56,6 +60,7 @@ public class DefaultAppSearchAlgorithm implements SearchAlgorithm<AdapterItem> {
     public DefaultAppSearchAlgorithm(
             Context context, LooperExecutor uiExecutor, boolean addNoResultsMessage) {
         mAppState = LauncherAppState.getInstance(context);
+        mPrefs = LauncherPrefs.get(context);
         mResultHandler = new Handler(uiExecutor.getLooper());
         mAddNoResultsMessage = addNoResultsMessage;
         mPrivateSpaceLabel = context.getString(R.string.private_space_label);
@@ -64,19 +69,30 @@ public class DefaultAppSearchAlgorithm implements SearchAlgorithm<AdapterItem> {
     @Override
     public void cancel(boolean interruptActiveRequests) {
         if (interruptActiveRequests) {
+            mRequestId.incrementAndGet();
             mResultHandler.removeCallbacksAndMessages(null);
         }
     }
 
     @Override
     public void doSearch(String query, SearchCallback<AdapterItem> callback) {
+        doSearch(query, null, callback);
+    }
+
+    @Override
+    public void doSearch(String query, String[] suggestedQueries, SearchCallback<AdapterItem> callback) {
+        long requestId = mRequestId.incrementAndGet();
+        boolean t9 = "t9".equals(mPrefs.get(LauncherPrefs.APP_SEARCH_INPUT_MODE));
         mAppState.getModel().enqueueModelUpdateTask((taskController, dataModel, apps) ->  {
+            if (requestId != mRequestId.get()) return;
             ArrayList<AdapterItem> result = getTitleMatchResult(
-                    apps.data, query, mPrivateSpaceLabel);
+                    apps.data, query, mPrivateSpaceLabel, t9, suggestedQueries);
             if (mAddNoResultsMessage && result.isEmpty()) {
                 result.add(getEmptyMessageAdapterItem(query));
             }
-            mResultHandler.post(() -> callback.onSearchResult(query, result));
+            mResultHandler.post(() -> {
+                if (requestId == mRequestId.get()) callback.onSearchResult(query, result);
+            });
         });
     }
 
@@ -95,14 +111,27 @@ public class DefaultAppSearchAlgorithm implements SearchAlgorithm<AdapterItem> {
     @AnyThread
     public static ArrayList<AdapterItem> getTitleMatchResult(
             List<AppInfo> apps, String query, String privateSpaceLabel) {
-        // Do an intersection of the words in the query and each title, and filter out all the
-        // apps that don't match all of the words in the query.
-        final String queryTextLower = query.toLowerCase(Locale.ROOT);
+        return getTitleMatchResult(apps, query, privateSpaceLabel, false, null);
+    }
+
+    private static ArrayList<AdapterItem> getTitleMatchResult(List<AppInfo> apps, String query,
+            String privateSpaceLabel, boolean t9, String[] suggestedQueries) {
         final ArrayList<AdapterItem> result = new ArrayList<>();
+        if (query == null || query.trim().isEmpty()) return result;
+        ArrayList<String> queries = new ArrayList<>();
+        queries.add(query.toLowerCase(Locale.ROOT));
+        if (suggestedQueries != null) {
+            for (String suggestion : suggestedQueries) {
+                if (suggestion != null && !suggestion.trim().isEmpty()) {
+                    queries.add(suggestion.toLowerCase(Locale.ROOT));
+                }
+            }
+        }
+        ArrayList<PinyinSearch.Query> pinyinQueries = new ArrayList<>();
+        for (String text : queries) pinyinQueries.add(PinyinSearch.prepare(text, t9));
         StringMatcherUtility.StringMatcher matcher =
                 StringMatcherUtility.StringMatcher.getInstance();
 
-        int resultCount = 0;
         int total = apps.size();
         boolean hasPrivateSpaceApp = false;
         for (int i = 0; i < total; i++) {
@@ -110,18 +139,23 @@ public class DefaultAppSearchAlgorithm implements SearchAlgorithm<AdapterItem> {
             if (PRIVATE_SPACE_PACKAGE.equals(info.getTargetPackage())) {
                 hasPrivateSpaceApp = true;
             }
-            if (resultCount < MAX_RESULTS_COUNT
-                    && (StringMatcherUtility.matches(
-                            queryTextLower, info.title.toString(), matcher)
-                            || PinyinMatcher.matches(queryTextLower, info.title.toString()))) {
+            if (info.title != null && matchesTitle(info.title.toString(), queries,
+                    pinyinQueries, matcher)) {
                 result.add(AdapterItem.asApp(info));
-                resultCount++;
             }
         }
-        if (hasPrivateSpaceApp && resultCount < MAX_RESULTS_COUNT
-                && StringMatcherUtility.matches(queryTextLower, privateSpaceLabel, matcher)) {
+        if (hasPrivateSpaceApp && matchesTitle(privateSpaceLabel, queries, pinyinQueries, matcher)) {
             result.add(new AdapterItem(VIEW_TYPE_PRIVATE_SPACE_HEADER));
         }
         return result;
+    }
+
+    private static boolean matchesTitle(String title, List<String> queries,
+            List<PinyinSearch.Query> pinyinQueries, StringMatcherUtility.StringMatcher matcher) {
+        for (int i = 0; i < queries.size(); i++) {
+            if (StringMatcherUtility.matches(queries.get(i), title, matcher)
+                    || pinyinQueries.get(i).matches(title)) return true;
+        }
+        return false;
     }
 }
