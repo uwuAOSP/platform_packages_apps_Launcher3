@@ -1192,12 +1192,24 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         }
         setLayoutParams(mlp);
 
+        int topPadding = calculateTopPadding(grid.getAllAppsProfile().getPadding().top,
+                insets.top, getResources().getDimensionPixelSize(
+                        R.dimen.all_apps_phone_top_spacing),
+                grid.getDeviceProperties().isPhone());
         if (!grid.isVerticalBarLayout() || FeatureFlags.enableResponsiveWorkspace()) {
-            int topPadding = grid.getAllAppsProfile().getPadding().top;
             setPadding(grid.getAllAppsProfile().getLeftRightMargin(), topPadding,
                     grid.getAllAppsProfile().getLeftRightMargin(), 0);
+        } else if (grid.getDeviceProperties().isPhone()) {
+            setPadding(getPaddingLeft(), topPadding, getPaddingRight(), getPaddingBottom());
         }
         InsettableFrameLayout.dispatchInsets(this, insets);
+    }
+
+    @VisibleForTesting
+    public static int calculateTopPadding(int profilePadding, int insetTop, int phoneSpacing,
+            boolean isPhone) {
+        // The profile may predate the current status bar and display cutout insets.
+        return isPhone ? Math.max(profilePadding, insetTop + phoneSpacing) : profilePadding;
     }
 
     /**

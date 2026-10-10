@@ -88,6 +88,34 @@ public class ActivityAllAppsContainerViewTest {
     }
 
     @Test
+    public void testPhoneTopPadding_usesCurrentSafeInset() {
+        assertThat(ActivityAllAppsContainerView.calculateTopPadding(0, 120, 24, true))
+                .isEqualTo(144);
+    }
+
+    @Test
+    public void testPhoneTopPadding_keepsLargerProfilePadding() {
+        assertThat(ActivityAllAppsContainerView.calculateTopPadding(200, 120, 24, true))
+                .isEqualTo(200);
+    }
+
+    @Test
+    public void testPhoneTopPadding_recalculatesWithoutAccumulatingSpacing() {
+        assertThat(ActivityAllAppsContainerView.calculateTopPadding(0, 120, 24, true))
+                .isEqualTo(144);
+        assertThat(ActivityAllAppsContainerView.calculateTopPadding(0, 60, 24, true))
+                .isEqualTo(84);
+    }
+
+    @Test
+    public void testTabletTopPadding_remainsUnchanged() {
+        assertThat(ActivityAllAppsContainerView.calculateTopPadding(0, 120, 24, false))
+                .isEqualTo(0);
+        assertThat(ActivityAllAppsContainerView.calculateTopPadding(400, 120, 24, false))
+                .isEqualTo(400);
+    }
+
+    @Test
     public void testOnAppsUpdatedWithoutWorkApps_shouldShowTabsIsFalse() {
         mActivityAllAppsContainerView.getAppsStore().setApps(EMPTY_ARRAY, 0, null);
 
