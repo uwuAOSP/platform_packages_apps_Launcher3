@@ -106,6 +106,24 @@ open class SystemApiWrapper @Inject constructor(@ApplicationContext context: Con
     override fun getActivityOverrides(): Map<String, LauncherActivityInfo> =
         mContext.getSystemService(LauncherApps::class.java)!!.activityOverrides
 
+    override fun canForceStopPackage(packageName: String, user: UserHandle): Boolean =
+        try {
+            mContext.getSystemService(LauncherApps::class.java)
+                ?.canForceStopPackage(packageName, user) == true
+        } catch (e: RuntimeException) {
+            Log.w(TAG, "Cannot check force stop availability", e)
+            false
+        }
+
+    override fun forceStopPackage(packageName: String, user: UserHandle): Boolean =
+        try {
+            mContext.getSystemService(LauncherApps::class.java)
+                ?.forceStopPackage(packageName, user) == true
+        } catch (e: RuntimeException) {
+            Log.w(TAG, "Cannot force stop package", e)
+            false
+        }
+
     override fun createFadeOutAnimOptions(): ActivityOptions =
         ActivityOptions.makeBasic().apply {
             remoteTransition = RemoteTransition(FadeOutRemoteTransition(), "FadeOut")

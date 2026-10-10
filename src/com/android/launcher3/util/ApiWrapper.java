@@ -84,6 +84,16 @@ public class ApiWrapper {
         return Collections.emptyMap();
     }
 
+    /** Returns whether the package can be stopped in the specified accessible profile. */
+    public boolean canForceStopPackage(String packageName, UserHandle user) {
+        return false;
+    }
+
+    /** Rechecks policy and stops only the specified profile's package. */
+    public boolean forceStopPackage(String packageName, UserHandle user) {
+        return false;
+    }
+
     /**
      * Creates an ActivityOptions to play fade-out animation on closing targets
      */

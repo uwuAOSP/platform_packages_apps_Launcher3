@@ -124,6 +124,23 @@ public interface TaskShortcutFactory {
         }
     };
 
+    TaskShortcutFactory FORCE_STOP = new TaskShortcutFactory() {
+        @Override
+        public List<SystemShortcut> getShortcuts(RecentsViewContainer container,
+                TaskContainer taskContainer) {
+            int actionId = taskContainer.getStagePosition() == STAGE_POSITION_BOTTOM_OR_RIGHT
+                    ? R.id.action_force_stop_bottom_right
+                    : R.id.action_force_stop_top_left;
+            return createSingletonShortcutList(SystemShortcut.getForceStopShortcut(container,
+                    taskContainer.getItemInfo(), taskContainer.getTaskView(), actionId));
+        }
+
+        @Override
+        public boolean showForGroupedTask() {
+            return true;
+        }
+    };
+
     class SplitSelectSystemShortcut extends SystemShortcut {
         private final TaskContainer mTaskContainer;
         private final SplitPositionOption mSplitPositionOption;

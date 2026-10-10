@@ -18,11 +18,13 @@ import android.content.pm.ShortcutInfo;
 import android.graphics.Rect;
 import android.os.Process;
 import android.os.UserHandle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -50,6 +52,7 @@ import com.android.launcher3.testing.shared.ResourceUtils;
 import com.android.launcher3.util.ActivityOptionsWrapper;
 import com.android.launcher3.util.ApiWrapper;
 import com.android.launcher3.util.ComponentKey;
+import com.android.launcher3.util.Executors;
 import com.android.launcher3.util.InstantAppResolver;
 import com.android.launcher3.util.PackageManagerHelper;
 import com.android.launcher3.util.PackageUserKey;
@@ -193,6 +196,58 @@ public abstract class SystemShortcut<T extends ActivityContext> extends ItemInfo
     }
 
     public static final Factory<ActivityContext> APP_INFO = AppInfo::new;
+
+    public static final Factory<ActivityContext> FORCE_STOP = (context, itemInfo, originalView) ->
+            getForceStopShortcut(context, itemInfo, originalView, R.string.force_stop_app);
+
+    @Nullable
+    public static SystemShortcut getForceStopShortcut(ActivityContext context, ItemInfo itemInfo,
+            View originalView, int actionId) {
+        String packageName = itemInfo.getTargetPackage();
+        if (packageName == null || itemInfo.user == null
+                || !ApiWrapper.INSTANCE.get(context.asContext())
+                        .canForceStopPackage(packageName, itemInfo.user)) {
+            return null;
+        }
+        return new ForceStop<>(context, itemInfo, originalView, actionId);
+    }
+
+    private static final class ForceStop<T extends ActivityContext> extends SystemShortcut<T> {
+        private final String mPackageName;
+        private final UserHandle mUser;
+        private boolean mRequested;
+
+        private ForceStop(T target, ItemInfo itemInfo, @NonNull View originalView, int actionId) {
+            super(R.drawable.ic_block_no_shadow, R.string.force_stop_app, target, itemInfo,
+                    originalView);
+            mPackageName = itemInfo.getTargetPackage();
+            mUser = itemInfo.user;
+            mAccessibilityActionId = actionId;
+        }
+
+        @Override
+        public AccessibilityNodeInfo.AccessibilityAction createAccessibilityAction(Context context) {
+            CharSequence label = TextUtils.isEmpty(mItemInfo.title)
+                    ? context.getText(R.string.force_stop_app)
+                    : context.getString(R.string.force_stop_app_accessibility, mItemInfo.title);
+            return new AccessibilityNodeInfo.AccessibilityAction(mAccessibilityActionId, label);
+        }
+
+        @Override
+        public void onClick(View view) {
+            if (mRequested) return;
+            mRequested = true;
+            dismissTaskMenuView();
+            Context context = mTarget.asContext().getApplicationContext();
+            ApiWrapper api = ApiWrapper.INSTANCE.get(context);
+            Executors.UI_HELPER_EXECUTOR.execute(() -> {
+                if (!api.forceStopPackage(mPackageName, mUser)) {
+                    Executors.MAIN_EXECUTOR.execute(() -> Toast.makeText(context,
+                            R.string.force_stop_app_failed, Toast.LENGTH_SHORT).show());
+                }
+            });
+        }
+    }
 
     public static final Factory<ActivityContext> CUSTOMIZE_ICON = (context, itemInfo, originalView) -> {
         if (!(context instanceof Launcher)
