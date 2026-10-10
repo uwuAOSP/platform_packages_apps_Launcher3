@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_drawer_search">应用抽屉搜索</string>
+    <string name="app_search_input_mode">搜索键盘</string>
+    <string name="app_search_native">系统键盘</string>
+    <string name="app_search_english">英文键盘</string>
+    <string name="app_search_t9">内置 T9</string>
+    <string name="app_search_backspace">删除字符</string>
+    <string name="app_search_hide_keyboard">收起键盘</string>
     <string name="smartspacer_title">使用 Smartspacer 提供一览</string>
     <string name="smartspacer_install_title">安装 Smartspacer</string>
     <string name="smartspacer_install_summary">获取天气、媒体和其他实时资讯卡片。</string>
