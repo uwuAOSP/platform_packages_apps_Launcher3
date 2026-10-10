@@ -52,6 +52,13 @@
     <string name="search_provider_vivaldi" translatable="false">Vivaldi</string>
 
     <string name="search_bar_settings">Search bar settings</string>
+    <string name="app_drawer_search">App drawer search</string>
+    <string name="app_search_input_mode">Search keyboard</string>
+    <string name="app_search_native">System keyboard</string>
+    <string name="app_search_english">English keyboard</string>
+    <string name="app_search_t9">Built-in T9</string>
+    <string name="app_search_backspace">Delete character</string>
+    <string name="app_search_hide_keyboard">Hide keyboard</string>
     <string name="search_provider">Search provider</string>
     <string name="apply_accent_color_label">Apply accent color</string>
     <string name="corner_radius_label">Corner radius</string>

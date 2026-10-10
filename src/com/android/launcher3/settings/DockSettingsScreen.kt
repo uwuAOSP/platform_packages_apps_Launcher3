@@ -73,6 +73,10 @@ private class DockSettingsState(prefs: LauncherPrefs) {
         ).coerceAtLeast(0)
     )
     val qsbThemed = mutableStateOf(prefs.get(LauncherPrefs.HOTSEAT_QSB_THEMED))
+    val appSearchInputMode = mutableIntStateOf(
+        listOf("native", "english", "t9")
+            .indexOf(prefs.get(LauncherPrefs.APP_SEARCH_INPUT_MODE)).coerceAtLeast(0)
+    )
     val qsbForceWebsite = mutableStateOf(prefs.get(LauncherPrefs.HOTSEAT_QSB_FORCE_WEBSITE))
     val qsbMatchDrawer = mutableStateOf(prefs.get(LauncherPrefs.HOTSEAT_QSB_MATCH_DRAWER))
     val qsbRadius = mutableIntStateOf(
@@ -141,6 +145,24 @@ fun SearchSettingsContent(contentPadding: PaddingValues) {
             .fillMaxWidth()
             .verticalScroll(rememberScrollState()),
     ) {
+        Category(title = context.getString(R.string.app_drawer_search)) {
+            ListPreference(
+                object : ListPreferenceModel {
+                    override val title = context.getString(R.string.app_search_input_mode)
+                    override val options = listOf(
+                        ListPreferenceOption(0, context.getString(R.string.app_search_native)),
+                        ListPreferenceOption(1, context.getString(R.string.app_search_english)),
+                        ListPreferenceOption(2, context.getString(R.string.app_search_t9)),
+                    )
+                    override val selectedId = state.appSearchInputMode
+                    override val onIdSelected: (Int) -> Unit = {
+                        state.appSearchInputMode.intValue = it
+                        prefs.put(LauncherPrefs.APP_SEARCH_INPUT_MODE,
+                            listOf("native", "english", "t9")[it])
+                    }
+                }
+            )
+        }
         MainSwitchPreference(
             object : SwitchPreferenceModel {
                 override val title = context.getString(R.string.show_dock_search)

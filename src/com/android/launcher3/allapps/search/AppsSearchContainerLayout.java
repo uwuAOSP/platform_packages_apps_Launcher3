@@ -23,7 +23,10 @@ import static com.android.launcher3.icons.IconNormalizer.ICON_VISIBLE_AREA_FACTO
 
 import android.content.Context;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.os.LocaleList;
+import android.text.InputType;
 import android.text.Selection;
 import android.text.SpannableStringBuilder;
 import android.text.method.TextKeyListener;
@@ -31,12 +34,15 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup.MarginLayoutParams;
 
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.ExtendedEditText;
 import com.android.launcher3.Insettable;
+import com.android.launcher3.LauncherPrefChangeListener;
+import com.android.launcher3.LauncherPrefs;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.allapps.ActivityAllAppsContainerView;
@@ -48,6 +54,7 @@ import com.android.launcher3.search.SearchCallback;
 import com.android.launcher3.views.ActivityContext;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 /**
  * Layout to contain the All-apps search UI.
@@ -61,6 +68,13 @@ public class AppsSearchContainerLayout extends ExtendedEditText
     private final SpannableStringBuilder mSearchQueryBuilder;
 
     private ActivityAllAppsContainerView<?> mAppsView;
+    private final LauncherPrefs mPrefs;
+    private final int mNativeInputType;
+    private final LauncherPrefChangeListener mInputModeListener = key -> {
+        if (LauncherPrefs.APP_SEARCH_INPUT_MODE.getSharedPrefKey().equals(key)) applyInputMode();
+    };
+    private String mInputMode;
+    private T9SearchKeyboard mT9Keyboard;
 
     // The amount of pixels to shift down and overlap with the rest of the content.
     private final int mContentOverlap;
@@ -77,6 +91,8 @@ public class AppsSearchContainerLayout extends ExtendedEditText
         super(context, attrs, defStyleAttr);
 
         mLauncher = ActivityContext.lookupContext(context);
+        mPrefs = LauncherPrefs.get(context);
+        mNativeInputType = getInputType();
         mSearchBarController = new AllAppsSearchBarController();
 
         mSearchQueryBuilder = new SpannableStringBuilder();
@@ -111,10 +127,15 @@ public class AppsSearchContainerLayout extends ExtendedEditText
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         mAppsView.getAppsStore().addUpdateListener(this);
+        mPrefs.addListener(mInputModeListener, LauncherPrefs.APP_SEARCH_INPUT_MODE);
+        applyInputMode();
     }
 
     @Override
     protected void onDetachedFromWindow() {
+        dismissT9Keyboard();
+        mPrefs.removeListener(mInputModeListener, LauncherPrefs.APP_SEARCH_INPUT_MODE);
+        mSearchBarController.cancelSearch();
         super.onDetachedFromWindow();
         mAppsView.getAppsStore().removeUpdateListener(this);
     }
@@ -159,6 +180,83 @@ public class AppsSearchContainerLayout extends ExtendedEditText
         mSearchBarController.initialize(
                 new DefaultAppSearchAlgorithm(getContext(), mLauncher.getUiExecutor(), true),
                 this, mLauncher, this);
+        applyInputMode();
+    }
+
+    private boolean isT9Mode() {
+        return "t9".equals(mInputMode);
+    }
+
+    private void applyInputMode() {
+        String mode = mPrefs.get(LauncherPrefs.APP_SEARCH_INPUT_MODE);
+        if (mode.equals(mInputMode)) return;
+        boolean changed = mInputMode != null;
+        mInputMode = mode;
+        dismissT9Keyboard();
+        setShowSoftInputOnFocus(!"t9".equals(mode));
+        Typeface typeface = getTypeface();
+        setInputType("english".equals(mode)
+                ? InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                : mNativeInputType);
+        setTypeface(typeface);
+        setImeHintLocales("english".equals(mode) ? new LocaleList(Locale.ENGLISH) : null);
+        if (changed && mAppsView != null) mSearchBarController.reset();
+    }
+
+    @Override
+    public boolean showKeyboard() {
+        if (!isT9Mode()) return super.showKeyboard();
+        if (!requestFocusExplicitly()) return false;
+        showT9Keyboard();
+        return mT9Keyboard != null;
+    }
+
+    @Override
+    public void requestShowKeyboardForControlledAnimation() {
+        if (isT9Mode()) showT9Keyboard();
+        else super.requestShowKeyboardForControlledAnimation();
+    }
+
+    @Override
+    public void hideKeyboard(boolean clearFocus) {
+        dismissT9Keyboard();
+        super.hideKeyboard(clearFocus);
+    }
+
+    @Override
+    protected void onFocusChanged(boolean focused, int direction, Rect previouslyFocusedRect) {
+        super.onFocusChanged(focused, direction, previouslyFocusedRect);
+        if (focused && isT9Mode()) post(this::showT9Keyboard);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        boolean handled = super.onTouchEvent(event);
+        if (event.getAction() == MotionEvent.ACTION_UP && isT9Mode() && isFocused()) {
+            showT9Keyboard();
+        }
+        return handled;
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasWindowFocus) {
+        super.onWindowFocusChanged(hasWindowFocus);
+        if (!hasWindowFocus) dismissT9Keyboard();
+    }
+
+    private void showT9Keyboard() {
+        if (!isT9Mode() || !isFocused() || !isAttachedToWindow() || !hasWindowFocus()
+                || mAppsView == null || mT9Keyboard != null) return;
+        mLauncher.hideKeyboard();
+        mT9Keyboard = new T9SearchKeyboard(this, mAppsView, () -> {
+            mT9Keyboard = null;
+            clearFocus();
+        });
+        mT9Keyboard.show();
+    }
+
+    private void dismissT9Keyboard() {
+        if (mT9Keyboard != null) mT9Keyboard.close(false);
     }
 
     @Override
@@ -198,7 +296,7 @@ public class AppsSearchContainerLayout extends ExtendedEditText
 
     @Override
     public void onSearchResult(String query, ArrayList<AdapterItem> items) {
-        if (items != null) {
+        if (items != null && query.equals(getEditableText().toString())) {
             mAppsView.setSearchResults(items);
         }
     }

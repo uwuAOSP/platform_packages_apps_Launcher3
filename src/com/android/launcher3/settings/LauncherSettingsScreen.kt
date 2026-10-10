@@ -315,6 +315,8 @@ private val SETTINGS_SEARCH_RESULTS = listOf(
     SettingsSearchResult(R.string.dock_pages, DOCK_ROUTE, "dock pages"),
     SettingsSearchResult(R.string.dock_background, DOCK_ROUTE, "dock background"),
     SettingsSearchResult(R.string.search_provider, SEARCH_ROUTE, "search provider"),
+    SettingsSearchResult(R.string.app_search_input_mode, SEARCH_ROUTE,
+        "app drawer search pinyin English keyboard T9 拼音 英文键盘"),
     SettingsSearchResult(R.string.show_dock_search, SEARCH_ROUTE, "search bar"),
     SettingsSearchResult(R.string.force_website_search, SEARCH_ROUTE, "website search"),
     SettingsSearchResult(R.string.match_drawer_search, SEARCH_ROUTE, "drawer search"),
