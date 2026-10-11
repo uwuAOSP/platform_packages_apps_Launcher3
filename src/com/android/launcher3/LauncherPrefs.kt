@@ -338,6 +338,15 @@ constructor(@ApplicationContext private val encryptedContext: Context) {
         val ICON_PACK_PACKAGE = backedUpItem("pref_icon_pack_package", "")
 
         @JvmField
+        val THEMED_ICONS_ON_WORKSPACE = backedUpItem("pref_themed_icons_on_workspace", true)
+
+        @JvmField
+        val THEMED_ICONS_IN_DRAWER = backedUpItem("pref_themed_icons_in_drawer", true)
+
+        @JvmField
+        val DEVELOPER_OPTIONS_ENABLED = backedUpItem("pref_developer_options_enabled", false)
+
+        @JvmField
         val WORKSPACE_ITEMS_LABEL_HIDDEN = backedUpItem("pref_workspace_items_label_hidden", false)
 
         // Customizable grid size preferences. A value of -1 means "unset": fall back to the value

@@ -71,6 +71,13 @@ fun IconSettingsContent(
     val idp = remember { InvariantDeviceProfile.INSTANCE.get(context) }
     val initialShapeKey = remember { prefs.get(ThemeManager.PREF_ICON_SHAPE) }
     var appliedShapeKey by rememberSaveable { mutableStateOf(initialShapeKey) }
+    var themedIconsEnabled by remember { mutableStateOf(themeManager.isMonoThemeEnabled) }
+    var themedIconsOnWorkspace by remember {
+        mutableStateOf(prefs.get(LauncherPrefs.THEMED_ICONS_ON_WORKSPACE))
+    }
+    var themedIconsInDrawer by remember {
+        mutableStateOf(prefs.get(LauncherPrefs.THEMED_ICONS_IN_DRAWER))
+    }
 
     Column(
         modifier = Modifier
@@ -78,7 +85,6 @@ fun IconSettingsContent(
             .verticalScroll(rememberScrollState()),
     ) {
         Category {
-            ThemedIconsPreference(context, themeManager)
             if (shapes.size > 1) {
                 IconShapePreference(
                     context = context,
@@ -98,32 +104,76 @@ fun IconSettingsContent(
             }
             IconPackPreference(context, prefs, packs, selectedPackage, onSelectedPackageChange)
         }
+        Category(title = context.getString(R.string.icon_themed_title)) {
+            ThemedIconsPreference(
+                context = context,
+                enabled = themedIconsEnabled,
+                onEnabledChange = { enabled ->
+                    themedIconsEnabled = enabled
+                    themeManager.isMonoThemeEnabled = enabled
+                    LauncherAppState.getInstance(context).model
+                        .reloadIfActive("icon-themed-changed")
+                },
+            )
+            ThemedIconsLocationPreference(
+                context = context,
+                titleRes = R.string.icon_theme_workspace,
+                checked = themedIconsOnWorkspace,
+                enabled = themedIconsEnabled,
+                onValueChange = { checked ->
+                    themedIconsOnWorkspace = checked
+                    prefs.put(LauncherPrefs.THEMED_ICONS_ON_WORKSPACE.to(checked))
+                    LauncherAppState.getInstance(context).model
+                        .reloadIfActive("workspace-themed-icons-changed")
+                },
+            )
+            ThemedIconsLocationPreference(
+                context = context,
+                titleRes = R.string.icon_theme_drawer,
+                checked = themedIconsInDrawer,
+                enabled = themedIconsEnabled,
+                onValueChange = { checked ->
+                    themedIconsInDrawer = checked
+                    prefs.put(LauncherPrefs.THEMED_ICONS_IN_DRAWER.to(checked))
+                    LauncherAppState.getInstance(context).model
+                        .reloadIfActive("drawer-themed-icons-changed")
+                },
+            )
+        }
     }
 }
 
 @Composable
 private fun ThemedIconsPreference(
     context: android.content.Context,
-    themeManager: ThemeManager,
+    enabled: Boolean,
+    onEnabledChange: (Boolean) -> Unit,
 ) {
-    var enabled by remember { mutableStateOf(themeManager.isMonoThemeEnabled) }
-
     SwitchPreference(
         object : SwitchPreferenceModel {
-            override val title = context.getString(R.string.icon_themed_title)
-            override val summary = {
-                context.getString(
-                    if (enabled) R.string.icon_themed_summary_on
-                    else R.string.icon_themed_summary_off
-                )
-            }
+            override val title = context.getString(R.string.icon_theme_enabled)
             override val checked = { enabled }
             override val onCheckedChange: ((Boolean) -> Unit)? = { value: Boolean ->
-                enabled = value
-                themeManager.isMonoThemeEnabled = value
-                LauncherAppState.getInstance(context).model
-                    .reloadIfActive("icon-themed-changed")
+                onEnabledChange(value)
             }
+        }
+    )
+}
+
+@Composable
+private fun ThemedIconsLocationPreference(
+    context: android.content.Context,
+    titleRes: Int,
+    checked: Boolean,
+    enabled: Boolean,
+    onValueChange: (Boolean) -> Unit,
+) {
+    SwitchPreference(
+        object : SwitchPreferenceModel {
+            override val title = context.getString(titleRes)
+            override val checked = { checked }
+            override val changeable = { enabled }
+            override val onCheckedChange = onValueChange
         }
     )
 }

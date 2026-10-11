@@ -16,6 +16,7 @@
     <string name="home_screen_grid">主屏幕布局</string>
     <string name="dock_settings">Dock</string>
     <string name="drawer_settings">应用抽屉</string>
+    <string name="drawer_layout_settings">应用抽屉布局</string>
     <string name="folder_settings">文件夹</string>
     <string name="grid_columns">列数</string>
     <string name="grid_rows">行数</string>
@@ -51,7 +52,12 @@
     <string name="dock_rows_value">Dock 行数：%1$d</string>
     <string name="dock_pages_value">Dock 页数：%1$d</string>
     <string name="settings_general_section">常规</string>
-    <string name="settings_layout_section">布局</string>
+    <string name="settings_home_screen_section">主屏幕</string>
+    <string name="settings_icons_section">图标外观</string>
+    <string name="settings_dock_section">Dock 和搜索</string>
+    <string name="version_info">版本信息</string>
+    <string name="launcher_release_name" translatable="false">uwuLauncher</string>
+    <string name="launcher_release_summary" translatable="false">uwuLauncher %1$s</string>
     <string name="settings_search">搜索设置</string>
     <string name="settings_search_results">搜索结果</string>
     <string name="settings_search_no_results">没有匹配的设置</string>
@@ -59,4 +65,7 @@
     <string name="force_stop_app">强行停止</string>
     <string name="force_stop_app_accessibility">强行停止%1$s</string>
     <string name="force_stop_app_failed">无法强行停止此应用</string>
+    <string name="icon_theme_enabled">使用主题图标</string>
+    <string name="icon_theme_workspace">在桌面使用主题图标</string>
+    <string name="icon_theme_drawer">在应用抽屉使用主题图标</string>
 </resources>

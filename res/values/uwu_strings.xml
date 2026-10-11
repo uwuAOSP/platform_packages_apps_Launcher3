@@ -18,6 +18,7 @@
 
     <string name="dock_settings">Dock</string>
     <string name="drawer_settings">App drawer</string>
+    <string name="drawer_layout_settings">App drawer layout</string>
     <string name="folder_settings">Folders</string>
     <string name="dock_rows">Dock rows</string>
     <string name="dock_pages">Dock pages</string>
@@ -83,7 +84,12 @@
     <string name="dock_rows_value">Dock rows: %1$d</string>
     <string name="dock_pages_value">Dock pages: %1$d</string>
     <string name="settings_general_section">General</string>
-    <string name="settings_layout_section">Layout</string>
+    <string name="settings_home_screen_section">Home screen</string>
+    <string name="settings_icons_section">Icon appearance</string>
+    <string name="settings_dock_section">Dock and search</string>
+    <string name="version_info">Version information</string>
+    <string name="launcher_release_name" translatable="false">uwuLauncher</string>
+    <string name="launcher_release_summary" translatable="false">uwuLauncher %1$s</string>
     <string name="settings_search">Search settings</string>
     <string name="settings_search_results">Search results</string>
     <string name="settings_search_no_results">No matching settings</string>
@@ -91,4 +97,7 @@
     <string name="force_stop_app">Force stop</string>
     <string name="force_stop_app_accessibility">Force stop %1$s</string>
     <string name="force_stop_app_failed">Could not force stop this app</string>
+    <string name="icon_theme_enabled">Use themed icons</string>
+    <string name="icon_theme_workspace">Use themed icons on home screen</string>
+    <string name="icon_theme_drawer">Use themed icons in app drawer</string>
 </resources>

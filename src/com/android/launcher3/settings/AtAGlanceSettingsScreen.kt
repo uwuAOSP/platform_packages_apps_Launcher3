@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -135,15 +136,19 @@ private fun AtAGlancePreview(
     smartspacerInstalled: Boolean,
 ) {
     val context = LocalContext.current
-    val previewContext = remember(context) {
-        ContextThemeWrapper(context, R.style.AppTheme_DarkText)
+    val isDarkTheme = isSystemInDarkTheme()
+    val previewContext = remember(context, isDarkTheme) {
+        ContextThemeWrapper(
+            context,
+            if (isDarkTheme) R.style.AppTheme_Dark_DarkText else R.style.AppTheme_DarkText,
+        )
     }
 
     SettingsBanner {
         SettingsBannerContent(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
         ) {
-            key(useSmartspacer, smartspacerInstalled) {
+            key(useSmartspacer, smartspacerInstalled, isDarkTheme) {
                 AndroidView(
                     factory = {
                         LayoutInflater.from(previewContext).inflate(

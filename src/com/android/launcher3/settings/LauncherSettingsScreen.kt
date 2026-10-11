@@ -17,21 +17,34 @@ package com.android.launcher3.settings
 
 import android.content.Context
 import android.content.Intent
+import android.os.SystemProperties
 import android.provider.Settings
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Apps
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.DeveloperMode
+import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Search
@@ -43,6 +56,7 @@ import androidx.compose.material3.Text
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -50,6 +64,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -88,6 +107,11 @@ fun LauncherSettingsScreen(startRoute: String? = null) {
     var selectedIconPack by remember {
         mutableStateOf(LauncherPrefs.get(context).get(LauncherPrefs.ICON_PACK_PACKAGE))
     }
+    val launcherPrefs = remember { LauncherPrefs.get(context) }
+    var developerOptionsEnabled by remember {
+        mutableStateOf(launcherPrefs.get(LauncherPrefs.DEVELOPER_OPTIONS_ENABLED))
+    }
+    var versionInfoTapCount by rememberSaveable { mutableIntStateOf(0) }
 
     androidx.compose.runtime.CompositionLocalProvider(navController.localNavController()) {
         NavHost(
@@ -132,6 +156,18 @@ fun LauncherSettingsScreen(startRoute: String? = null) {
                         searchQuery = searchQuery,
                         onSearchQueryChange = { searchQuery = it },
                         selectedIconPack = selectedIconPack,
+                        developerOptionsEnabled = developerOptionsEnabled,
+                        onVersionInfoClick = {
+                            if (!developerOptionsEnabled) {
+                                versionInfoTapCount++
+                                if (versionInfoTapCount >= 7) {
+                                    developerOptionsEnabled = true
+                                    launcherPrefs.put(
+                                        LauncherPrefs.DEVELOPER_OPTIONS_ENABLED.to(true)
+                                    )
+                                }
+                            }
+                        },
                         onOpenRoute = { navController.navigate(it) },
                         onOpenGrid = { navController.navigate(GRID_ROUTE) },
                         onOpenDock = { navController.navigate(DOCK_ROUTE) },
@@ -243,6 +279,79 @@ private fun ResetAction(onClick: () -> Unit) {
     }
 }
 
+private enum class SettingsIconTone {
+    Primary,
+    Secondary,
+    Tertiary,
+}
+
+private fun settingsPreferenceIcon(
+    imageVector: ImageVector,
+    tone: SettingsIconTone,
+): @Composable () -> Unit = {
+    SettingsHomepageIcon(tone) {
+        Icon(
+            imageVector = imageVector,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = iconForegroundColor(tone),
+        )
+    }
+}
+
+@Composable
+private fun SettingsHomepageIcon(tone: SettingsIconTone, content: @Composable () -> Unit) {
+    Surface(
+        modifier = Modifier.size(40.dp),
+        shape = CircleShape,
+        color = iconContainerColor(tone),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            content()
+        }
+    }
+}
+
+@Composable
+private fun iconContainerColor(tone: SettingsIconTone) = when (tone) {
+    SettingsIconTone.Primary -> MaterialTheme.colorScheme.primaryContainer
+    SettingsIconTone.Secondary -> MaterialTheme.colorScheme.secondaryContainer
+    SettingsIconTone.Tertiary -> MaterialTheme.colorScheme.tertiaryContainer
+}
+
+@Composable
+private fun iconForegroundColor(tone: SettingsIconTone) = when (tone) {
+    SettingsIconTone.Primary -> MaterialTheme.colorScheme.onPrimaryContainer
+    SettingsIconTone.Secondary -> MaterialTheme.colorScheme.onSecondaryContainer
+    SettingsIconTone.Tertiary -> MaterialTheme.colorScheme.onTertiaryContainer
+}
+
+private fun dockPreferenceIcon(): @Composable () -> Unit = {
+    val starColor = MaterialTheme.colorScheme.onSecondaryContainer
+    SettingsHomepageIcon(SettingsIconTone.Secondary) {
+        Canvas(Modifier.size(20.dp)) {
+            val star = Path().apply {
+                moveTo(size.width * 0.5f, size.height * 0.08f)
+                lineTo(size.width * 0.63f, size.height * 0.38f)
+                lineTo(size.width * 0.96f, size.height * 0.41f)
+                lineTo(size.width * 0.71f, size.height * 0.63f)
+                lineTo(size.width * 0.78f, size.height * 0.94f)
+                lineTo(size.width * 0.5f, size.height * 0.77f)
+                lineTo(size.width * 0.22f, size.height * 0.94f)
+                lineTo(size.width * 0.29f, size.height * 0.63f)
+                lineTo(size.width * 0.04f, size.height * 0.41f)
+                lineTo(size.width * 0.37f, size.height * 0.38f)
+                close()
+            }
+            drawPath(
+                path = star,
+                color = starColor,
+                style = Stroke(width = 1.8.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
+            )
+        }
+    }
+}
+
 @Composable
 private fun SettingsSearchBar(query: String, onQueryChange: (String) -> Unit) {
     Surface(
@@ -333,6 +442,17 @@ private val SETTINGS_SEARCH_RESULTS = listOf(
     SettingsSearchResult(R.string.icon_pack_title, ICON_PACK_ROUTE, "icons icon pack theme"),
 )
 
+private fun settingsRouteIcon(route: String): @Composable () -> Unit = when (route) {
+    GRID_ROUTE -> settingsPreferenceIcon(Icons.Outlined.GridView, SettingsIconTone.Primary)
+    DOCK_ROUTE -> dockPreferenceIcon()
+    SEARCH_ROUTE -> settingsPreferenceIcon(Icons.Outlined.Search, SettingsIconTone.Tertiary)
+    DRAWER_ROUTE -> settingsPreferenceIcon(Icons.Outlined.Apps, SettingsIconTone.Primary)
+    FOLDER_ROUTE -> settingsPreferenceIcon(Icons.Outlined.FolderOpen, SettingsIconTone.Secondary)
+    ICON_PACK_ROUTE -> settingsPreferenceIcon(Icons.Outlined.Palette, SettingsIconTone.Tertiary)
+    AT_A_GLANCE_ROUTE -> settingsPreferenceIcon(Icons.Outlined.AutoAwesome, SettingsIconTone.Primary)
+    else -> settingsPreferenceIcon(Icons.Outlined.DeveloperMode, SettingsIconTone.Secondary)
+}
+
 @Composable
 private fun SettingsSearchResults(query: String, onOpenRoute: (String) -> Unit) {
     val context = LocalContext.current
@@ -354,6 +474,7 @@ private fun SettingsSearchResults(query: String, onOpenRoute: (String) -> Unit) 
                 Preference(
                     model = object : PreferenceModel {
                         override val title = context.getString(result.title)
+                        override val icon = settingsRouteIcon(result.route)
                         override val onClick = { onOpenRoute(result.route) }
                     }
                 )
@@ -368,6 +489,8 @@ private fun MainSettingsContent(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     selectedIconPack: String,
+    developerOptionsEnabled: Boolean,
+    onVersionInfoClick: () -> Unit,
     onOpenRoute: (String) -> Unit,
     onOpenGrid: () -> Unit,
     onOpenDock: () -> Unit,
@@ -388,75 +511,117 @@ private fun MainSettingsContent(
         if (searchQuery.isNotBlank()) {
             SettingsSearchResults(searchQuery, onOpenRoute)
         } else {
-             Category(title = context.getString(R.string.settings_general_section)) {
-                 NotificationDotsPreference(context)
-
-                 AddIconsToHomePreference(context)
-
-             }
-             Category(title = context.getString(R.string.settings_layout_section)) {
-
-             Preference(
-                 model = object : PreferenceModel {
-                     override val title = context.getString(R.string.at_a_glance_title)
-                     override val onClick = { onOpenRoute(AT_A_GLANCE_ROUTE) }
-                 }
-             )
-              Preference(
-                  model =
-                     object : PreferenceModel {
-                         override val title = context.getString(R.string.home_screen_grid)
-                         override val onClick = onOpenGrid
-                     }
-             )
-             Preference(
-                 model = object : PreferenceModel {
-                     override val title = context.getString(R.string.icon_pack_title)
-                     override val onClick = onOpenIconPack
-                 }
-             )
-            Preference(
-                model =
-                    object : PreferenceModel {
-                        override val title = context.getString(R.string.dock_settings)
-                        override val onClick = onOpenDock
-                    }
-            )
-            Preference(
-                model =
-                    object : PreferenceModel {
-                        override val title = context.getString(R.string.search_bar_settings)
-                        override val onClick = onOpenSearch
-                    }
-            )
-            Preference(
-                model =
-                    object : PreferenceModel {
-                        override val title = context.getString(R.string.drawer_settings)
-                        override val onClick = onOpenDrawer
-                    }
-            )
-            Preference(
-                model =
-                    object : PreferenceModel {
-                        override val title = context.getString(R.string.folder_settings)
-                        override val onClick = onOpenFolder
-                    }
-            )
-
-                if (BuildConfig.IS_STUDIO_BUILD) {
-                Preference(
-                    model =
-                        object : PreferenceModel {
+            Category(title = context.getString(R.string.settings_general_section)) {
+                NotificationDotsPreference(context)
+                if (BuildConfig.IS_STUDIO_BUILD || developerOptionsEnabled) {
+                    Preference(
+                        model = object : PreferenceModel {
                             override val title = context.getString(R.string.developer_options_title)
+                            override val icon = settingsPreferenceIcon(
+                                Icons.Outlined.DeveloperMode,
+                                SettingsIconTone.Secondary,
+                            )
                             override val onClick = {
                                 context.startActivity(
                                     Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
                                 )
                             }
                         }
-                )
+                    )
                 }
+            }
+            Category(title = context.getString(R.string.settings_home_screen_section)) {
+                AddIconsToHomePreference(context)
+                Preference(
+                    model = object : PreferenceModel {
+                        override val title = context.getString(R.string.at_a_glance_title)
+                        override val icon = settingsPreferenceIcon(
+                            Icons.Outlined.AutoAwesome,
+                            SettingsIconTone.Primary,
+                        )
+                        override val onClick = { onOpenRoute(AT_A_GLANCE_ROUTE) }
+                    }
+                )
+                Preference(
+                    model = object : PreferenceModel {
+                        override val title = context.getString(R.string.home_screen_grid)
+                        override val icon = settingsPreferenceIcon(
+                            Icons.Outlined.GridView,
+                            SettingsIconTone.Primary,
+                        )
+                        override val onClick = onOpenGrid
+                    }
+                )
+                Preference(
+                    model = object : PreferenceModel {
+                        override val title = context.getString(R.string.folder_settings)
+                        override val icon = settingsPreferenceIcon(
+                            Icons.Outlined.FolderOpen,
+                            SettingsIconTone.Secondary,
+                        )
+                        override val onClick = onOpenFolder
+                    }
+                )
+            }
+            Category(title = context.getString(R.string.settings_icons_section)) {
+                Preference(
+                    model = object : PreferenceModel {
+                        override val title = context.getString(R.string.icon_pack_title)
+                        override val icon = settingsPreferenceIcon(
+                            Icons.Outlined.Palette,
+                            SettingsIconTone.Tertiary,
+                        )
+                        override val onClick = onOpenIconPack
+                    }
+                )
+            }
+            Category(title = context.getString(R.string.settings_dock_section)) {
+                Preference(
+                    model = object : PreferenceModel {
+                        override val title = context.getString(R.string.dock_settings)
+                        override val icon = dockPreferenceIcon()
+                        override val onClick = onOpenDock
+                    }
+                )
+                Preference(
+                    model = object : PreferenceModel {
+                        override val title = context.getString(R.string.search_bar_settings)
+                        override val icon = settingsPreferenceIcon(
+                            Icons.Outlined.Search,
+                            SettingsIconTone.Tertiary,
+                        )
+                        override val onClick = onOpenSearch
+                    }
+                )
+            }
+            Category(title = context.getString(R.string.drawer_settings)) {
+                Preference(
+                    model = object : PreferenceModel {
+                        override val title = context.getString(R.string.drawer_layout_settings)
+                        override val icon = settingsPreferenceIcon(
+                            Icons.Outlined.Apps,
+                            SettingsIconTone.Primary,
+                        )
+                        override val onClick = onOpenDrawer
+                    }
+                )
+            }
+            Category {
+                val release = SystemProperties.get("ro.uwu.release", "")
+                Preference(
+                    model = object : PreferenceModel {
+                        override val title = context.getString(R.string.version_info)
+                        override val icon = settingsPreferenceIcon(
+                            Icons.Outlined.Info,
+                            SettingsIconTone.Tertiary,
+                        )
+                        override val summary = {
+                            if (release.isBlank()) context.getString(R.string.launcher_release_name)
+                            else context.getString(R.string.launcher_release_summary, release)
+                        }
+                        override val onClick = onVersionInfoClick
+                    }
+                )
             }
         }
     }
@@ -471,6 +636,10 @@ private fun NotificationDotsPreference(context: Context) {
         model =
             object : PreferenceModel {
                 override val title = context.getString(R.string.notification_dots_title)
+                override val icon = settingsPreferenceIcon(
+                    Icons.Outlined.Notifications,
+                    SettingsIconTone.Primary,
+                )
                 override val summary = {
                     context.getString(
                         if (enabled.value) R.string.notification_dots_desc_on
@@ -498,6 +667,10 @@ private fun AddIconsToHomePreference(context: Context) {
         model =
             object : SwitchPreferenceModel {
                 override val title = context.getString(R.string.auto_add_shortcuts_label)
+                override val icon = settingsPreferenceIcon(
+                    Icons.Outlined.Add,
+                    SettingsIconTone.Secondary,
+                )
                 override val summary = { context.getString(R.string.auto_add_shortcuts_description) }
                 override val checked = { enabled }
                 override val onCheckedChange = { newChecked: Boolean ->

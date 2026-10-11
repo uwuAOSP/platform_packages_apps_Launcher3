@@ -24,6 +24,8 @@ import static com.android.launcher3.BubbleTextView.RunningAppState.MINIMIZED;
 import static com.android.launcher3.BubbleTextView.RunningAppState.RUNNING;
 import static com.android.launcher3.Flags.enableContrastTiles;
 import static com.android.launcher3.Flags.enableScalabilityForDesktopExperience;
+import static com.android.launcher3.LauncherPrefs.THEMED_ICONS_IN_DRAWER;
+import static com.android.launcher3.LauncherPrefs.THEMED_ICONS_ON_WORKSPACE;
 import static com.android.launcher3.UtilitiesKt.drawWorkspaceItemSelectionHighlight;
 import static com.android.launcher3.graphics.AutomatedIconDelegate.newAutomatedIcon;
 import static com.android.launcher3.graphics.PreloadIconDelegate.extractPreloadDelegate;
@@ -686,8 +688,15 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
     }
 
     protected boolean shouldUseTheme() {
-        return mDisplay == DISPLAY_WORKSPACE || mDisplay == DISPLAY_FOLDER
-                || mDisplay == DISPLAY_TASKBAR;
+        LauncherPrefs prefs = LauncherPrefs.get(getContext());
+        return switch (mDisplay) {
+            case DISPLAY_WORKSPACE, DISPLAY_FOLDER, DISPLAY_TASKBAR ->
+                    prefs.get(THEMED_ICONS_ON_WORKSPACE);
+            case DISPLAY_ALL_APPS, DISPLAY_PREDICTION_ROW, DISPLAY_SEARCH_RESULT,
+                    DISPLAY_SEARCH_RESULT_SMALL, DISPLAY_SEARCH_RESULT_APP_ROW ->
+                    prefs.get(THEMED_ICONS_IN_DRAWER);
+            default -> false;
+        };
     }
 
     /**
