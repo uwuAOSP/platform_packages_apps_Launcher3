@@ -12,14 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -28,7 +24,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asComposePath
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -38,11 +36,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.core.graphics.PathParser
 import com.android.launcher3.LauncherAppState
 import com.android.launcher3.LauncherPrefs
@@ -54,6 +50,7 @@ import com.android.launcher3.shapes.ShapesProvider
 import com.android.settingslib.spa.widget.preference.ListPreference
 import com.android.settingslib.spa.widget.preference.ListPreferenceModel
 import com.android.settingslib.spa.widget.preference.ListPreferenceOption
+import com.android.settingslib.spa.widget.preference.RadioPreferences
 import com.android.settingslib.spa.widget.preference.Preference
 import com.android.settingslib.spa.widget.preference.PreferenceModel
 import com.android.settingslib.spa.widget.preference.SwitchPreference
@@ -184,6 +181,19 @@ private fun IconShapePickerDialog(
     onApply: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val context = LocalContext.current
+    val selectedIndexState = remember(selectedKey, shapes) {
+        mutableIntStateOf(shapes.indexOfFirst { it.key == selectedKey }.coerceAtLeast(0))
+    }
+    val shapeOptions = remember(context, shapes) {
+        shapes.mapIndexed { index, shape ->
+            ListPreferenceOption(
+                id = index,
+                text = context.getString(shape.titleId),
+                icon = { ShapePreviewIcon(shape) },
+            )
+        }
+    }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -191,74 +201,66 @@ private fun IconShapePickerDialog(
         tonalElevation = 0.dp,
         dragHandle = { BottomSheetDefaults.DragHandle() },
     ) {
-        GridOverridesPreview(
-            columns = previewIdp.numColumns,
-            rows = previewIdp.numRows,
-            hotseatColumns = previewIdp.numShownHotseatIcons,
-            iconShapeKey = selectedKey,
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(340.dp)
-                .padding(horizontal = 20.dp),
-        )
-        LazyRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(104.dp),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .verticalScroll(rememberScrollState()),
         ) {
-            items(shapes, key = { it.key }) { shape ->
-                ShapePreviewOption(
-                    shape = shape,
-                    selected = shape.key == selectedKey,
-                    onClick = { onSelectionChange(shape.key) },
-                )
-            }
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 20.dp, end = 20.dp, bottom = 12.dp),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.icon_editor_cancel))
-            }
-            Button(onClick = { onApply(selectedKey) }) {
-                Text(stringResource(R.string.icon_editor_save))
+            GridOverridesPreview(
+                columns = previewIdp.numColumns,
+                rows = previewIdp.numRows,
+                hotseatColumns = previewIdp.numShownHotseatIcons,
+                iconShapeKey = selectedKey,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp)
+                    .padding(horizontal = 20.dp),
+            )
+            RadioPreferences(
+                object : ListPreferenceModel {
+                    override val title = context.getString(R.string.icon_shape_title)
+                    override val options = shapeOptions
+                    override val selectedId = selectedIndexState
+                    override val onIdSelected: (Int) -> Unit = { id ->
+                        shapes.getOrNull(id)?.let { onSelectionChange(it.key) }
+                    }
+                }
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 20.dp, end = 20.dp, bottom = 12.dp),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.icon_editor_cancel))
+                }
+                Button(onClick = { onApply(selectedKey) }) {
+                    Text(stringResource(R.string.icon_editor_save))
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ShapePreviewOption(
-    shape: com.android.launcher3.shapes.IconShapeModel,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
+private fun ShapePreviewIcon(shape: com.android.launcher3.shapes.IconShapeModel) {
     val path = remember(shape.pathString) {
         PathParser.createPathFromPathData(shape.pathString).asComposePath()
     }
     val shapeColor = MaterialTheme.colorScheme.onSurfaceVariant
-    Surface(
-        modifier = Modifier
-            .width(64.dp)
-            .clickable(onClick = onClick)
-            .height(64.dp),
-        shape = RoundedCornerShape(if (selected) 24.dp else 32.dp),
-        color = if (selected) {
-            MaterialTheme.colorScheme.primaryFixedDim
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
-        },
-    ) {
-        Canvas(Modifier.size(64.dp).padding(14.dp)) {
-            val scale = minOf(size.width, size.height) / 100f
-            withTransform({ scale(scale, scale) }) {
-                drawPath(path, color = shapeColor)
-            }
+    val selectedColor = MaterialTheme.colorScheme.primary
+    Canvas(Modifier.size(48.dp)) {
+        val bounds = path.getBounds()
+        val scale = minOf(size.width / bounds.width, size.height / bounds.height) * 0.72f
+        val left = (size.width - bounds.width * scale) / 2f - bounds.left * scale
+        val top = (size.height - bounds.height * scale) / 2f - bounds.top * scale
+        withTransform({
+            translate(left = left, top = top)
+            scale(scale, scale, pivot = Offset.Zero)
+        }) {
+            drawPath(path, color = shapeColor.copy(alpha = 0.12f))
+            drawPath(path, color = selectedColor, style = Stroke(width = 2.dp.toPx()))
         }
     }
 }
