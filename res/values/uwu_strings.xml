@@ -4,6 +4,11 @@
     <string name="smartspacer_install_title">Install Smartspacer</string>
     <string name="smartspacer_install_summary">Get weather, media, and other live information cards.</string>
     <string name="smartspacer_install_action">Download</string>
+    <string name="at_a_glance_provider_title">At a Glance provider</string>
+    <string name="at_a_glance_provider_uwu_launcher" translatable="false">uwuLauncher</string>
+    <string name="at_a_glance_provider_uwu_launcher_summary">Use uwuLauncher’s built-in information.</string>
+    <string name="at_a_glance_provider_smartspacer" translatable="false">Smartspacer</string>
+    <string name="at_a_glance_provider_smartspacer_summary">Use cards and live information from Smartspacer.</string>
     <string name="at_a_glance_title">Show At a Glance</string>
     <string name="at_a_glance_switch_title">Use At a Glance</string>
     <string name="label_search">Search</string>

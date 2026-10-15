@@ -24,24 +24,14 @@ import android.widget.FrameLayout
 import com.android.launcher3.R
 import com.android.launcher3.smartspacer.LauncherSmartspacer
 import com.android.launcher3.util.LockedUserState
-import com.kieronquinn.app.smartspacer.sdk.client.SmartspacerClient
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 
 class AtAGlanceWidget @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
 ) : FrameLayout(context, attrs) {
 
-    private val client = SmartspacerClient.getInstance(context)
     private lateinit var fallbackView: View
     private var smartspacerView: View? = null
-    private var scope: CoroutineScope? = null
-    private var refreshJob: Job? = null
     private val userUnlockedRunnable = Runnable {
         if (isAttachedToWindow) refresh()
     }
@@ -53,7 +43,6 @@ class AtAGlanceWidget @JvmOverloads constructor(
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        if (scope == null) scope = MainScope()
         val lockedUserState = LockedUserState.get(context)
         if (!lockedUserState.isUserUnlocked) {
             lockedUserState.runOnUserUnlocked(action = userUnlockedRunnable)
@@ -63,10 +52,6 @@ class AtAGlanceWidget @JvmOverloads constructor(
 
     override fun onDetachedFromWindow() {
         LockedUserState.get(context).removeOnUserUnlockedRunnable(userUnlockedRunnable)
-        refreshJob?.cancel()
-        refreshJob = null
-        scope?.cancel()
-        scope = null
         clearSmartspacerView()
         super.onDetachedFromWindow()
     }
@@ -77,17 +62,14 @@ class AtAGlanceWidget @JvmOverloads constructor(
     }
 
     private fun refresh() {
-        val localScope = scope ?: return
-        refreshJob?.cancel()
         if (!LauncherSmartspacer.isEnabled(context) || !LauncherSmartspacer.isInstalled(context)) {
             showFallback()
             return
         }
-        refreshJob = localScope.launch {
-            val permissionState = client.checkCallingPermission()
-            if (!isActive) return@launch
-            if (permissionState == true) showSmartspacer() else showFallback()
-        }
+        // Keep the SDK view visible before permission is granted so Smartspacer can show its
+        // permission-request target. The SDK replaces it with regular targets after the user
+        // grants access.
+        showSmartspacer()
     }
 
     private fun showSmartspacer() {

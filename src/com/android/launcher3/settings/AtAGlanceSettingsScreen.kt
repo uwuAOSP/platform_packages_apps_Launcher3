@@ -31,12 +31,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -52,12 +58,19 @@ import com.android.settingslib.spa.widget.banner.BannerModel
 import com.android.settingslib.spa.widget.banner.SettingsBanner
 import com.android.settingslib.spa.widget.banner.SettingsBannerContent
 import com.android.settingslib.spa.widget.preference.MainSwitchPreference
-import com.android.settingslib.spa.widget.preference.SwitchPreference
+import com.android.settingslib.spa.widget.preference.ListPreferenceModel
+import com.android.settingslib.spa.widget.preference.ListPreferenceOption
+import com.android.settingslib.spa.widget.preference.Preference
+import com.android.settingslib.spa.widget.preference.PreferenceModel
+import com.android.settingslib.spa.widget.preference.RadioPreferences
 import com.android.settingslib.spa.widget.preference.SwitchPreferenceModel
 import com.android.settingslib.spa.widget.ui.Category
+import kotlinx.coroutines.launch
 
 private const val SMARTSPACER_RELEASES_URI =
     "https://github.com/KieronQuinn/Smartspacer/releases"
+private const val UWU_LAUNCHER_PROVIDER_ID = 0
+private const val SMARTSPACER_PROVIDER_ID = 1
 
 @Composable
 fun AtAGlanceSettingsContent(contentPadding: PaddingValues) {
@@ -75,6 +88,7 @@ fun AtAGlanceSettingsContent(contentPadding: PaddingValues) {
     var installPromptDismissed by remember {
         mutableStateOf(prefs.get(LauncherPrefs.SMARTSPACER_INSTALL_PROMPT_DISMISSED))
     }
+    var showProviderPicker by remember { mutableStateOf(false) }
 
     LifecycleEffect(
         onStart = {
@@ -115,18 +129,86 @@ fun AtAGlanceSettingsContent(contentPadding: PaddingValues) {
         }
 
         Category {
-            SwitchPreference(
-                object : SwitchPreferenceModel {
-                    override val title = context.getString(R.string.smartspacer_title)
-                    override val checked = { useSmartspacer }
-                    override val changeable = { smartspacerInstalled }
-                    override val onCheckedChange = { checked: Boolean ->
-                        useSmartspacer = checked
-                        prefs.put(LauncherPrefs.SMARTSPACER_ENABLED.to(checked))
+            Preference(
+                object : PreferenceModel {
+                    override val title = context.getString(R.string.at_a_glance_provider_title)
+                    override val summary = {
+                        context.getString(
+                            if (useSmartspacer) {
+                                R.string.at_a_glance_provider_smartspacer
+                            } else {
+                                R.string.at_a_glance_provider_uwu_launcher
+                            }
+                        )
                     }
+                    override val onClick = { showProviderPicker = true }
                 }
             )
         }
+
+        if (showProviderPicker) {
+            AtAGlanceProviderPickerSheet(
+                useSmartspacer = useSmartspacer,
+                onProviderSelected = { selectedSmartspacer ->
+                    useSmartspacer = selectedSmartspacer
+                    prefs.put(LauncherPrefs.SMARTSPACER_ENABLED.to(selectedSmartspacer))
+                    showProviderPicker = false
+                },
+                onDismiss = { showProviderPicker = false },
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AtAGlanceProviderPickerSheet(
+    useSmartspacer: Boolean,
+    onProviderSelected: (Boolean) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val selectedProviderId = remember(useSmartspacer) {
+        mutableIntStateOf(if (useSmartspacer) SMARTSPACER_PROVIDER_ID else UWU_LAUNCHER_PROVIDER_ID)
+    }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val options = remember(context) {
+        listOf(
+            ListPreferenceOption(
+                id = UWU_LAUNCHER_PROVIDER_ID,
+                text = context.getString(R.string.at_a_glance_provider_uwu_launcher),
+                summary = context.getString(R.string.at_a_glance_provider_uwu_launcher_summary),
+            ),
+            ListPreferenceOption(
+                id = SMARTSPACER_PROVIDER_ID,
+                text = context.getString(R.string.at_a_glance_provider_smartspacer),
+                summary = context.getString(R.string.at_a_glance_provider_smartspacer_summary),
+            ),
+        )
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 0.dp,
+        dragHandle = { BottomSheetDefaults.DragHandle() },
+    ) {
+        RadioPreferences(
+            object : ListPreferenceModel {
+                override val title = context.getString(R.string.at_a_glance_provider_title)
+                override val options = options
+                override val selectedId = selectedProviderId
+                override val onIdSelected: (Int) -> Unit = { id ->
+                    selectedProviderId.intValue = id
+                    coroutineScope.launch {
+                        sheetState.hide()
+                        onProviderSelected(id == SMARTSPACER_PROVIDER_ID)
+                    }
+                }
+            }
+        )
     }
 }
 
@@ -140,7 +222,7 @@ private fun AtAGlancePreview(
     val previewContext = remember(context, isDarkTheme) {
         ContextThemeWrapper(
             context,
-            if (isDarkTheme) R.style.AppTheme_Dark_DarkText else R.style.AppTheme_DarkText,
+            if (isDarkTheme) R.style.AppTheme_Dark else R.style.AppTheme_DarkText,
         )
     }
 
