@@ -71,4 +71,17 @@
     <string name="icon_theme_enabled">使用主题图标</string>
     <string name="icon_theme_workspace">在桌面使用主题图标</string>
     <string name="icon_theme_drawer">在应用抽屉使用主题图标</string>
+    <string name="icon_choose_photo">相册</string>
+    <string name="icon_choose_pack">图标包</string>
+    <string name="icon_picker_title">从图标包选择</string>
+    <string name="icon_picker_back">返回</string>
+    <string name="icon_search">搜索图标</string>
+    <string name="icon_picker_no_results">没有匹配的图标</string>
+    <string name="icon_picker_no_icons">此图标包中没有可用图标</string>
+    <string name="icon_picker_loading">正在加载图标…</string>
+    <string name="icon_image_load_failed">无法使用此图片</string>
+    <string name="icon_crop_title">调整图标</string>
+    <string name="icon_crop_cancel">取消裁切</string>
+    <string name="icon_crop_use">使用</string>
+    <string name="icon_crop_instructions">拖动图片调整位置，双指缩放</string>
 </resources>

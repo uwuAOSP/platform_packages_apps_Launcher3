@@ -94,7 +94,7 @@ public class LauncherIconProvider extends IconProvider {
         return icon != null ? icon : super.loadPackageIcon(info, appInfo, density);
     }
 
-    /** Returns a per-component icon-pack override, or the selected pack's mapping. */
+    /** Returns a per-component custom icon, or the selected pack's mapping. */
     protected final Drawable getIconPackDrawable(
             PackageItemInfo info, ApplicationInfo appInfo, int density) {
         ComponentName componentName = info instanceof ComponentInfo
@@ -113,6 +113,10 @@ public class LauncherIconProvider extends IconProvider {
         if (componentName == null) return null;
 
         ComponentKey key = new ComponentKey(componentName, user);
+        Drawable customImage = IconOverrideRepository.INSTANCE
+                .getCustomImageDrawable(mContext, key);
+        if (customImage != null) return customImage;
+
         IconPackEntry entry = IconOverrideRepository.INSTANCE.get(mContext, key);
         if (entry == null) {
             String packageName = LauncherPrefs.get(mContext)

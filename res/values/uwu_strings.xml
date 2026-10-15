@@ -105,4 +105,17 @@
     <string name="icon_theme_enabled">Use themed icons</string>
     <string name="icon_theme_workspace">Use themed icons on home screen</string>
     <string name="icon_theme_drawer">Use themed icons in app drawer</string>
+    <string name="icon_choose_photo">Photos</string>
+    <string name="icon_choose_pack">Icon pack</string>
+    <string name="icon_picker_title">Choose from icon pack</string>
+    <string name="icon_picker_back">Back</string>
+    <string name="icon_search">Search icons</string>
+    <string name="icon_picker_no_results">No matching icons</string>
+    <string name="icon_picker_no_icons">No icons found in this pack</string>
+    <string name="icon_picker_loading">Loading icons…</string>
+    <string name="icon_image_load_failed">Unable to use this image</string>
+    <string name="icon_crop_title">Adjust icon</string>
+    <string name="icon_crop_cancel">Cancel crop</string>
+    <string name="icon_crop_use">Use</string>
+    <string name="icon_crop_instructions">Drag to move and pinch to zoom</string>
 </resources>
