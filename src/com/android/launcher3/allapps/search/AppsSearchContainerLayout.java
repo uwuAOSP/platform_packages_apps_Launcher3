@@ -36,11 +36,9 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup.MarginLayoutParams;
 
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.ExtendedEditText;
-import com.android.launcher3.Insettable;
 import com.android.launcher3.LauncherPrefChangeListener;
 import com.android.launcher3.LauncherPrefs;
 import com.android.launcher3.R;
@@ -61,7 +59,7 @@ import java.util.Locale;
  */
 public class AppsSearchContainerLayout extends ExtendedEditText
         implements SearchUiManager, SearchCallback<AdapterItem>,
-        AllAppsStore.OnUpdateListener, Insettable {
+        AllAppsStore.OnUpdateListener {
 
     private final ActivityContext mLauncher;
     private final AllAppsSearchBarController mSearchBarController;
@@ -76,7 +74,8 @@ public class AppsSearchContainerLayout extends ExtendedEditText
     private String mInputMode;
     private T9SearchKeyboard mT9Keyboard;
 
-    // The amount of pixels to shift down and overlap with the rest of the content.
+    // Legacy visual overlap: RelativeLayout's Header/list anchors use the pre-offset bounds.
+    // Do not replace this with a margin without also migrating those anchors and their clipping.
     private final int mContentOverlap;
 
     public AppsSearchContainerLayout(Context context) {
@@ -308,13 +307,6 @@ public class AppsSearchContainerLayout extends ExtendedEditText
         mSearchQueryBuilder.clearSpans();
         Selection.setSelection(mSearchQueryBuilder, 0);
         mAppsView.onClearSearchResult();
-    }
-
-    @Override
-    public void setInsets(Rect insets) {
-        MarginLayoutParams mlp = (MarginLayoutParams) getLayoutParams();
-        mlp.topMargin = insets.top;
-        requestLayout();
     }
 
     @Override

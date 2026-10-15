@@ -24,14 +24,19 @@ import static org.mockito.Mockito.doReturn;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.platform.test.flag.junit.SetFlagsRule;
+import android.view.ViewGroup.MarginLayoutParams;
+import android.widget.FrameLayout;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
+import com.android.launcher3.R;
 import com.android.launcher3.allapps.ActivityAllAppsContainerView;
+import com.android.launcher3.allapps.AllAppsTopLayoutPolicy;
 import com.android.launcher3.allapps.WorkProfileManager;
 import com.android.launcher3.logging.StatsLogManager;
 import com.android.launcher3.model.data.AppInfo;
@@ -113,6 +118,50 @@ public class ActivityAllAppsContainerViewTest {
                 .isEqualTo(0);
         assertThat(ActivityAllAppsContainerView.calculateTopPadding(400, 120, 24, false))
                 .isEqualTo(400);
+    }
+
+    @Test
+    public void testSearchInsets_containerOwnedInsetDoesNotChangeSearchMarginOrTranslation() {
+        ActivityAllAppsContainerView<?> container = new ActivityAllAppsContainerView(mContext) {
+            @Override
+            protected boolean ownsSearchTopInset() {
+                return true;
+            }
+        };
+        container.setLayoutParams(new FrameLayout.LayoutParams(500, 1000));
+        container.getSearchView().setTranslationY(23);
+        MarginLayoutParams original = (MarginLayoutParams)
+                container.getSearchView().getLayoutParams();
+        original.leftMargin = 17;
+        original.rightMargin = 19;
+        for (int inset : new int[]{120, 60, 120, 0}) {
+            container.setInsets(new Rect(0, inset, 0, 0));
+            MarginLayoutParams lp = (MarginLayoutParams)
+                    container.getSearchView().getLayoutParams();
+            assertThat(lp.topMargin).isEqualTo(AllAppsTopLayoutPolicy.calculatePhoneSearchMargin(
+                    container.getResources().getDimensionPixelSize(R.dimen.bottom_sheet_handle_margin)
+                            + container.getResources().getDimensionPixelSize(
+                                    R.dimen.bottom_sheet_handle_height),
+                    container.getResources().getDimensionPixelSize(R.dimen.all_apps_phone_search_gap),
+                    container.getResources().getDimensionPixelSize(
+                            R.dimen.all_apps_search_bar_content_overlap),
+                    container.getResources().getDimensionPixelSize(
+                            R.dimen.uwu_qsb_widget_vertical_padding)));
+            assertThat(lp.leftMargin).isEqualTo(17);
+            assertThat(lp.rightMargin).isEqualTo(19);
+            assertThat(container.getSearchView().getTranslationY()).isEqualTo(23f);
+        }
+    }
+
+    @Test
+    public void testSearchInsets_baseHostRetainsLegacyMarginWithoutAccumulation() {
+        mActivityAllAppsContainerView.setLayoutParams(new FrameLayout.LayoutParams(500, 1000));
+        for (int inset : new int[]{120, 60, 120, 0}) {
+            mActivityAllAppsContainerView.setInsets(new Rect(0, inset, 0, 0));
+            MarginLayoutParams lp = (MarginLayoutParams)
+                    mActivityAllAppsContainerView.getSearchView().getLayoutParams();
+            assertThat(lp.topMargin).isEqualTo(inset);
+        }
     }
 
     @Test

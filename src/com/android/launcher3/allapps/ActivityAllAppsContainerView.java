@@ -78,6 +78,7 @@ import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.allapps.BaseAllAppsAdapter.AdapterItem;
 import com.android.launcher3.allapps.search.AllAppsSearchUiDelegate;
+import com.android.launcher3.allapps.search.AppsSearchContainerLayout;
 import com.android.launcher3.allapps.search.SearchAdapterProvider;
 import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.keyboard.FocusedItemDecorator;
@@ -910,11 +911,10 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
 
         int topMargin = getContext().getResources().getDimensionPixelSize(
                 R.dimen.all_apps_header_top_margin);
-        if (includeTabsMargin) {
-            topMargin += getContext().getResources().getDimensionPixelSize(
-                    R.dimen.all_apps_header_pill_height);
+        if (usesBalancedPhoneSearchSpacing()) {
+            topMargin = calculatePhoneHeaderMargin();
         }
-        layoutParams.topMargin = topMargin;
+        applyHeaderTopMargin(v, topMargin, includeTabsMargin);
     }
 
     private void alignParentTop(View v, boolean includeTabsMargin) {
@@ -1211,13 +1211,91 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
             setPadding(getPaddingLeft(), topPadding, getPaddingRight(), getPaddingBottom());
         }
         InsettableFrameLayout.dispatchInsets(this, insets);
+        applySearchTopInset(insets.top);
+        if (usesBalancedPhoneSearchSpacing()) {
+            // A profile/font/grid change can alter the icon's internal top padding.
+            int headerMargin = calculatePhoneHeaderMargin();
+            applyHeaderTopMargin(mHeader, headerMargin, false);
+            applyHeaderTopMargin(getSearchRecyclerView(), headerMargin, false);
+            applyHeaderTopMargin(getAppsRecyclerViewContainer(), headerMargin, mUsingTabs);
+        }
+    }
+
+    /**
+     * Whether this host owns the built-in top search field's safe inset in its container padding.
+     * Taskbar and secondary-display hosts deliberately retain their existing inset semantics.
+     */
+    protected boolean ownsSearchTopInset() {
+        return false;
+    }
+
+    private void applySearchTopInset(int insetTop) {
+        // Floating/custom search UIs own their window positioning through their search delegate.
+        if (isSearchBarFloating() || !(mSearchContainer instanceof AppsSearchContainerLayout)
+                || mSearchContainer.getParent() != this) {
+            return;
+        }
+        MarginLayoutParams lp = (MarginLayoutParams) mSearchContainer.getLayoutParams();
+        int topMargin = AllAppsTopLayoutPolicy.calculateSearchTopMargin(
+                insetTop, ownsSearchTopInset(), calculatePhoneSearchMargin());
+        if (lp.topMargin != topMargin) {
+            lp.topMargin = topMargin;
+            mSearchContainer.setLayoutParams(lp);
+        }
+    }
+
+    private boolean usesBalancedPhoneSearchSpacing() {
+        return ownsSearchTopInset() && !isSearchBarFloating()
+                && mSearchContainer instanceof AppsSearchContainerLayout;
+    }
+
+    private int calculatePhoneSearchMargin() {
+        return AllAppsTopLayoutPolicy.calculatePhoneSearchMargin(
+                getResources().getDimensionPixelSize(R.dimen.bottom_sheet_handle_margin)
+                        + getResources().getDimensionPixelSize(R.dimen.bottom_sheet_handle_height),
+                getResources().getDimensionPixelSize(R.dimen.all_apps_phone_search_gap),
+                getResources().getDimensionPixelSize(R.dimen.all_apps_search_bar_content_overlap),
+                getResources().getDimensionPixelSize(R.dimen.uwu_qsb_widget_vertical_padding));
+    }
+
+    private int calculatePhoneHeaderMargin() {
+        DeviceProfile dp = mActivityContext.getDeviceProfile();
+        // Measure the same unbound cell as BaseAllAppsAdapter. BubbleTextView owns its font/line
+        // metrics and vertical centering; duplicating that calculation here would drift with styles.
+        int layout = dp.inv.enableTwoLinesInAllApps
+                ? R.layout.all_apps_icon_twoline : R.layout.all_apps_icon;
+        View icon = getLayoutInflater().inflate(layout, this, false);
+        icon.measure(MeasureSpec.makeMeasureSpec(
+                        dp.getAllAppsProfile().getCellWidthPx(), MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(
+                        dp.getAllAppsProfile().getCellHeightPx(), MeasureSpec.EXACTLY));
+        return AllAppsTopLayoutPolicy.calculatePhoneHeaderMargin(
+                mSearchContainer.getLayoutParams().height,
+                getResources().getDimensionPixelSize(R.dimen.all_apps_phone_search_gap),
+                getResources().getDimensionPixelSize(R.dimen.all_apps_search_bar_content_overlap),
+                getResources().getDimensionPixelSize(R.dimen.uwu_qsb_widget_vertical_padding),
+                getResources().getDimensionPixelSize(R.dimen.all_apps_search_bar_bottom_padding),
+                icon.getPaddingTop());
+    }
+
+    private void applyHeaderTopMargin(View view, int headerMargin, boolean includeTabsMargin) {
+        if (view == null || !(view.getLayoutParams() instanceof RelativeLayout.LayoutParams)) {
+            return;
+        }
+        RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) view.getLayoutParams();
+        int margin = headerMargin + (includeTabsMargin ? getResources().getDimensionPixelSize(
+                R.dimen.all_apps_header_pill_height) : 0);
+        if (lp.topMargin != margin) {
+            lp.topMargin = margin;
+            view.setLayoutParams(lp);
+        }
     }
 
     @VisibleForTesting
     public static int calculateTopPadding(int profilePadding, int insetTop, int phoneSpacing,
             boolean isPhone) {
-        // The profile may predate the current status bar and display cutout insets.
-        return isPhone ? Math.max(profilePadding, insetTop + phoneSpacing) : profilePadding;
+        return AllAppsTopLayoutPolicy.calculateTopPadding(
+                profilePadding, insetTop, phoneSpacing, isPhone);
     }
 
     /**

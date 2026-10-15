@@ -41,6 +41,11 @@ public class LauncherAllAppsContainerView extends ActivityAllAppsContainerView<L
     }
 
     @Override
+    protected boolean ownsSearchTopInset() {
+        return mActivityContext.getDeviceProfile().getDeviceProperties().isPhone();
+    }
+
+    @Override
     protected int computeNavBarScrimHeight(WindowInsets insets) {
         return insets.getTappableElementInsets().bottom;
     }
