@@ -56,6 +56,14 @@ internal fun resetAtAGlanceSettings(context: Context) {
     )
 }
 
+internal fun resetIconSizeSettings(context: Context) {
+    applyLauncherSetting(
+        context,
+        LauncherPrefs.HOME_ICON_SIZE_FACTOR.to(1.0f),
+        LauncherPrefs.DRAWER_ICON_SIZE_FACTOR.to(1.0f),
+    )
+}
+
 internal fun resetLayoutSettings(context: Context, kind: LayoutSettingsKind) {
     when (kind) {
         LayoutSettingsKind.Dock -> applyLauncherSetting(

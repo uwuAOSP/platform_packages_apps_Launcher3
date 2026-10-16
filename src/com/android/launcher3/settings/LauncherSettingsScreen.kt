@@ -244,7 +244,15 @@ fun LauncherSettingsScreen(startRoute: String? = null) {
                 }
             }
             composable(ICON_PACK_ROUTE) {
-                SettingsScaffold(title = context.getString(R.string.icon_pack_title)) { padding ->
+                SettingsScaffold(
+                    title = context.getString(R.string.icon_settings_title),
+                    actions = {
+                        ResetAction {
+                            resetIconSizeSettings(context)
+                            recreateSettings(context)
+                        }
+                    },
+                ) { padding ->
                     IconSettingsContent(
                         contentPadding = padding,
                         selectedPackage = selectedIconPack,
@@ -439,7 +447,9 @@ private val SETTINGS_SEARCH_RESULTS = listOf(
         AT_A_GLANCE_ROUTE,
         "at a glance smartspace status",
     ),
-    SettingsSearchResult(R.string.icon_pack_title, ICON_PACK_ROUTE, "icons icon pack theme"),
+    SettingsSearchResult(R.string.icon_settings_title, ICON_PACK_ROUTE, "icons icon pack theme"),
+    SettingsSearchResult(R.string.home_icon_size, ICON_PACK_ROUTE, "home screen icon size"),
+    SettingsSearchResult(R.string.drawer_icon_size, ICON_PACK_ROUTE, "drawer icon size"),
 )
 
 private fun settingsRouteIcon(route: String): @Composable () -> Unit = when (route) {
@@ -566,7 +576,7 @@ private fun MainSettingsContent(
             Category(title = context.getString(R.string.settings_icons_section)) {
                 Preference(
                     model = object : PreferenceModel {
-                        override val title = context.getString(R.string.icon_pack_title)
+                        override val title = context.getString(R.string.icon_settings_title)
                         override val icon = settingsPreferenceIcon(
                             Icons.Outlined.Palette,
                             SettingsIconTone.Tertiary,

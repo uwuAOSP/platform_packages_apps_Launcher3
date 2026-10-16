@@ -16,6 +16,11 @@
     <string name="google_folder_title" translatable="false">Google</string>
 
     <string name="home_screen_grid">Home screen grid</string>
+    <string name="home_icon_size">Home screen icon size</string>
+    <string name="drawer_icon_size">App drawer icon size</string>
+    <string name="icon_size_settings_title">Icon size</string>
+    <string name="icon_settings_title">Icon settings</string>
+    <string name="icon_size_percent_title">%1$s (%2$d%%)</string>
     <string name="grid_columns">Columns</string>
     <string name="grid_rows">Rows</string>
     <string name="dock_icons">Dock icons</string>

@@ -320,6 +320,15 @@ public class InvariantDeviceProfile {
 
     /** Creates an isolated profile used by the settings preview without changing user preferences. */
     public InvariantDeviceProfile(Context context, GridSize previewGrid) {
+        this(context, previewGrid, null, null);
+    }
+
+    /** Creates an isolated preview profile with optional live icon size overrides. */
+    public InvariantDeviceProfile(
+            Context context,
+            GridSize previewGrid,
+            @Nullable Float homeIconSizeFactorOverride,
+            @Nullable Float drawerIconSizeFactorOverride) {
         LauncherAppComponent component = LauncherComponentProvider.get(context);
         mDisplayController = component.getDisplayController();
         mWMProxy = component.getWmProxy();
@@ -327,10 +336,15 @@ public class InvariantDeviceProfile {
         mThemeManager = component.getThemeManager();
         taskbarModeUtil = component.getTaskbarModeUtil();
         mMainExecutor = MAIN_EXECUTOR;
-        initGridForPreview(context, previewGrid);
+        initGridForPreview(
+                context, previewGrid, homeIconSizeFactorOverride, drawerIconSizeFactorOverride);
     }
 
-    private void initGridForPreview(Context context, GridSize previewGrid) {
+    private void initGridForPreview(
+            Context context,
+            GridSize previewGrid,
+            @Nullable Float homeIconSizeFactorOverride,
+            @Nullable Float drawerIconSizeFactorOverride) {
         LauncherDisplayInfo displayInfo = mDisplayController.getInfo();
         List<DisplayOption> allOptions = getPredefinedDeviceProfiles(
                 displayInfo,
@@ -351,7 +365,12 @@ public class InvariantDeviceProfile {
 
         DisplayOption displayOption = invDistWeightedInterpolate(
                 displayInfo, new ArrayList<>(matchingOptions), displayInfo.getDeviceType());
-        initGridForDisplayOption(displayInfo, displayOption, previewGrid);
+        initGridForDisplayOption(
+                displayInfo,
+                displayOption,
+                previewGrid,
+                homeIconSizeFactorOverride,
+                drawerIconSizeFactorOverride);
     }
 
     private void initGrid(String gridName) {
@@ -431,7 +450,7 @@ public class InvariantDeviceProfile {
             mPrefs.put(GRID_NAME, displayOption.grid.name);
         }
 
-        initGridForDisplayOption(displayInfo, displayOption, null);
+        initGridForDisplayOption(displayInfo, displayOption, null, null, null);
         FileLog.d(TAG, "After initGrid:"
                 + "gridName:" + gridName
                 + ", dbFile:" + dbFile
@@ -457,7 +476,9 @@ public class InvariantDeviceProfile {
 
     private void initGridForDisplayOption(
             LauncherDisplayInfo displayInfo, DisplayOption displayOption,
-            @Nullable GridSize previewGrid) {
+            @Nullable GridSize previewGrid,
+            @Nullable Float homeIconSizeFactorOverride,
+            @Nullable Float drawerIconSizeFactorOverride) {
         Context context = displayInfo.context;
         enableTwoLinesInAllApps = Flags.enableTwolineToggle()
                 && Utilities.isEnglishLanguage(context)
@@ -551,7 +572,11 @@ public class InvariantDeviceProfile {
         applyPartnerDeviceProfileOverrides(context, metrics);
 
         // Apply user-configurable grid overrides (drawer columns, folder size, icon size, dock).
-        gridSizeOverrides.applyOverrides(this, closestProfile);
+        gridSizeOverrides.applyOverrides(
+                this,
+                closestProfile,
+                homeIconSizeFactorOverride,
+                drawerIconSizeFactorOverride);
 
         float maxIconSize = iconSize[0];
         for (int i = 1; i < iconSize.length; i++) {

@@ -68,7 +68,12 @@ class GridSizeOverrides private constructor(
         )
     }
 
-    fun applyOverrides(idp: InvariantDeviceProfile, defaultGrid: GridOption) {
+    fun applyOverrides(
+        idp: InvariantDeviceProfile,
+        defaultGrid: GridOption,
+        homeIconSizeFactorOverride: Float?,
+        drawerIconSizeFactorOverride: Float?,
+    ) {
         if (!canReadPreferences) return
 
         val drawerColumns =
@@ -91,8 +96,10 @@ class GridSizeOverrides private constructor(
                 resolve(folderColumns, defaultGrid.numFolderColumns[index])
         }
 
-        val homeIconSizeFactor = prefs.get(LauncherPrefs.HOME_ICON_SIZE_FACTOR)
-        val drawerIconSizeFactor = prefs.get(LauncherPrefs.DRAWER_ICON_SIZE_FACTOR)
+        val homeIconSizeFactor =
+            homeIconSizeFactorOverride ?: prefs.get(LauncherPrefs.HOME_ICON_SIZE_FACTOR)
+        val drawerIconSizeFactor =
+            drawerIconSizeFactorOverride ?: prefs.get(LauncherPrefs.DRAWER_ICON_SIZE_FACTOR)
         val drawerIconTextSizeFactor = prefs.get(LauncherPrefs.DRAWER_ICON_TEXT_SIZE_FACTOR)
         val sizeIndices =
             intArrayOf(

@@ -146,18 +146,18 @@ fun GridSizeSettingsContent(contentPadding: PaddingValues) {
                                     title = R.string.dock_icons_unfolded,
                                     value = unfoldedHotseatColumns,
                                     range = hotseatColumns..maxGrid,
-                                     onValueChange = {
-                                         unfoldedHotseatColumns = it.coerceAtLeast(hotseatColumns)
-                                     },
-                                     onValueChangeFinished = {
-                                         idp.setGridSize(
-                                             rows,
-                                             columns,
-                                             hotseatColumns,
-                                             unfoldedHotseatColumns,
-                                         )
-                                     },
-                                 )
+                                    onValueChange = {
+                                        unfoldedHotseatColumns = it.coerceAtLeast(hotseatColumns)
+                                    },
+                                    onValueChangeFinished = {
+                                        idp.setGridSize(
+                                            rows,
+                                            columns,
+                                            hotseatColumns,
+                                            unfoldedHotseatColumns,
+                                        )
+                                    },
+                                )
                             }
                         }
                     }

@@ -13,11 +13,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
@@ -69,6 +71,14 @@ fun IconSettingsContent(
     val shapes = remember { ShapesProvider.iconShapes.toList() }
     val packs = remember { IconPackRepository.getAvailablePacks(context) }
     val idp = remember { InvariantDeviceProfile.INSTANCE.get(context) }
+    val initialHomeIconSizeFactor = prefs.get(LauncherPrefs.HOME_ICON_SIZE_FACTOR)
+    val initialDrawerIconSizeFactor = prefs.get(LauncherPrefs.DRAWER_ICON_SIZE_FACTOR)
+    var homeIconSizeFactor by remember(initialHomeIconSizeFactor) {
+        mutableFloatStateOf(initialHomeIconSizeFactor)
+    }
+    var drawerIconSizeFactor by remember(initialDrawerIconSizeFactor) {
+        mutableFloatStateOf(initialDrawerIconSizeFactor)
+    }
     val initialShapeKey = remember { prefs.get(ThemeManager.PREF_ICON_SHAPE) }
     var appliedShapeKey by rememberSaveable { mutableStateOf(initialShapeKey) }
     var themedIconsEnabled by remember { mutableStateOf(themeManager.isMonoThemeEnabled) }
@@ -84,6 +94,71 @@ fun IconSettingsContent(
             .padding(contentPadding)
             .verticalScroll(rememberScrollState()),
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(400.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = context.getString(R.string.home_screen_grid),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                GridOverridesPreview(
+                    columns = idp.numColumns,
+                    rows = idp.numRows,
+                    hotseatColumns = idp.numShownHotseatIcons,
+                    homeIconSizeFactor = homeIconSizeFactor,
+                    iconShapeKey = appliedShapeKey,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = context.getString(R.string.drawer_settings),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                DrawerIconPreview(
+                    idp = idp,
+                    iconSizeFactor = drawerIconSizeFactor,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                )
+            }
+        }
+        Category(title = context.getString(R.string.icon_size_settings_title)) {
+            IconSizeSlider(
+                title = R.string.home_icon_size,
+                factor = initialHomeIconSizeFactor,
+                onFactorChange = { homeIconSizeFactor = it },
+                onValueChangeFinished = { factor ->
+                    applyLauncherSetting(
+                        context,
+                        LauncherPrefs.HOME_ICON_SIZE_FACTOR.to(factor),
+                    )
+                },
+            )
+            IconSizeSlider(
+                title = R.string.drawer_icon_size,
+                factor = initialDrawerIconSizeFactor,
+                onFactorChange = { drawerIconSizeFactor = it },
+                onValueChangeFinished = { factor ->
+                    applyLauncherSetting(
+                        context,
+                        LauncherPrefs.DRAWER_ICON_SIZE_FACTOR.to(factor),
+                    )
+                },
+            )
+        }
         Category {
             if (shapes.size > 1) {
                 IconShapePreference(

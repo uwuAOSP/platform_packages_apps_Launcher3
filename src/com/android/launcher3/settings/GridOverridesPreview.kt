@@ -54,6 +54,7 @@ fun GridOverridesPreview(
     rows: Int,
     hotseatColumns: Int,
     hotseatColumnsUnfolded: Int = hotseatColumns,
+    homeIconSizeFactor: Float? = null,
     iconShapeKey: String? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -62,6 +63,7 @@ fun GridOverridesPreview(
         rows = rows,
         hotseatColumns = hotseatColumns,
         hotseatColumnsUnfolded = hotseatColumnsUnfolded,
+        homeIconSizeFactor = homeIconSizeFactor,
     )
     val isPortrait = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
     val previewAspectRatio = remember(previewIdp, isPortrait) {
@@ -77,7 +79,10 @@ fun GridOverridesPreview(
     }
 
     BoxWithConstraints(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
         contentAlignment = Alignment.Center,
     ) {
         val fitByWidth = maxHeight == 0.dp || maxWidth == 0.dp
@@ -169,17 +174,21 @@ private fun createPreviewIdp(
     rows: Int,
     hotseatColumns: Int,
     hotseatColumnsUnfolded: Int,
+    homeIconSizeFactor: Float?,
 ): InvariantDeviceProfile {
     val context = LocalContext.current
-    return remember(columns, rows, hotseatColumns, hotseatColumnsUnfolded) {
-        InvariantDeviceProfile(
-            context,
+    return remember(columns, rows, hotseatColumns, hotseatColumnsUnfolded, homeIconSizeFactor) {
+        val gridSize =
             GridSize(
                 numRows = rows,
                 numColumns = columns,
                 numHotseatColumns = hotseatColumns,
                 numHotseatColumnsUnfolded = hotseatColumnsUnfolded.coerceAtLeast(hotseatColumns),
-            ),
-        )
+            )
+        if (homeIconSizeFactor == null) {
+            InvariantDeviceProfile(context, gridSize)
+        } else {
+            InvariantDeviceProfile(context, gridSize, homeIconSizeFactor, null)
+        }
     }
 }
