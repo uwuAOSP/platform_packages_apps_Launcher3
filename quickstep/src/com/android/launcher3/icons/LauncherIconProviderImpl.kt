@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2025 The Android Open Source Project
+ * Copyright (C) 2026 The uwuAOSP Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +21,11 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageItemInfo
 import android.content.res.Resources.NotFoundException
+import android.graphics.Color
 import android.graphics.drawable.AdaptiveIconDrawable
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.InsetDrawable
 import android.util.Log
 import com.android.launcher3.LauncherModel
 import com.android.launcher3.dagger.ApplicationContext
@@ -67,6 +71,8 @@ constructor(
         mSystemState.withAdditionalValues(
             (appInfo.sourceDir?.hashCode() ?: 0).toString(),
             appInfo.longVersionCode.toString(),
+            appInfo.roundIconRes.toString(),
+            "round-icon-wrapper-v4",
         )
 
     override fun loadPackageIcon(
@@ -81,6 +87,39 @@ constructor(
 
         try {
             val resources = mContext.packageManager.getResourcesForApplication(appInfo)
+            val hasActivitySpecificIcon =
+                info !== appInfo && info.icon != 0 && info.icon != appInfo.icon
+            if (!hasActivitySpecificIcon && mThemeManager.iconShape is Circle) {
+                if (appInfo.roundIconRes != 0) {
+                    try {
+                        val roundIcon =
+                            resources.getDrawableForDensity(appInfo.roundIconRes, density, null)
+                        if (roundIcon != null) {
+                            val processedRoundIcon = roundIcon.preprocess(appInfo.roundIconRes)
+                            return if (processedRoundIcon is AdaptiveIconDrawable) {
+                                processedRoundIcon
+                            } else {
+                                // AdaptiveIconDrawable expands its child bounds by 25% on each
+                                // edge. Counter-inset the bitmap so its visible size is preserved.
+                                val inset =
+                                    AdaptiveIconDrawable.getExtraInsetFraction() /
+                                        (1 + 2 * AdaptiveIconDrawable.getExtraInsetFraction())
+                                AdaptiveIconDrawable(
+                                    ColorDrawable(Color.TRANSPARENT),
+                                    InsetDrawable(
+                                        processedRoundIcon,
+                                        inset,
+                                        inset,
+                                        inset,
+                                        inset,
+                                    ),
+                                )
+                            }
+                        }
+                    } catch (_: NotFoundException) {}
+                }
+            }
+
             // Try to load the package item icon first
             if (info !== appInfo && info.icon != 0) {
                 try {
@@ -90,17 +129,6 @@ constructor(
             }
             // Load the fallback app icon
             if (appInfo.icon != 0) {
-                // Tries to load the round icon res, if the app defines it as an adaptive icon
-                if (mThemeManager.iconShape is Circle) {
-                    if (appInfo.roundIconRes != 0 && appInfo.roundIconRes != appInfo.icon) {
-                        try {
-                            val d =
-                                resources.getDrawableForDensity(appInfo.roundIconRes, density, null)
-                            if (d is AdaptiveIconDrawable) return d.preprocess(appInfo.roundIconRes)
-                        } catch (_: NotFoundException) {}
-                    }
-                }
-
                 try {
                     return resources
                         .getDrawableForDensity(appInfo.icon, density, null)
