@@ -392,9 +392,8 @@ data class HotseatProfile(
                     numShownHotseatIconsParam = displayOptionSpec.numShownHotseatIcons,
                 )
 
-            val cellHeight =
-                ceil(workspaceProfile.iconSizePx * 2 * ICON_OVERLAP_FACTOR).toInt() -
-                    workspaceProfile.iconSizePx / 2
+            // Dock labels are disabled, so a cell only needs the icon footprint.
+            val cellHeight = ceil(workspaceProfile.iconSizePx * ICON_OVERLAP_FACTOR).toInt()
             val iconBandSpace = abs(cellHeight / 2) - 16
             val qsbSpace = hotseatProfileInitialValues.qsbSpace
             val extraRowsHeight = if (isVerticalBarLayout) {

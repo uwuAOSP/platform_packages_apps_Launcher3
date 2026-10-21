@@ -213,9 +213,9 @@ data class HotseatProfileInitialValues(
             // and bottom for shadows, similar to the icon shadows.
             // This (2 * hotseatQsbShadowHeight) is to account for the top space and the bottom.
             val qsbVisualHeight = hotseatQsbHeight - (2 * hotseatQsbShadowHeight)
+            // Dock labels are disabled, so a cell only needs the icon footprint.
             val hotseatCellHeight =
-                ceil(responsiveWorkspaceCellSpec.iconSize * 2 * ICON_OVERLAP_FACTOR).toInt() -
-                    responsiveWorkspaceCellSpec.iconSize / 2
+                ceil(responsiveWorkspaceCellSpec.iconSize * ICON_OVERLAP_FACTOR).toInt()
             val extraBarSpace = if (
                 isVerticalBarLayout ||
                     (!isQsbInline && !deviceProperties.taskbarConfiguration.isTaskbarPresent)
@@ -354,9 +354,9 @@ data class HotseatProfileInitialValues(
             val barWorkspaceSpacePx = hotseatBarWorkspaceSpacePx
             val qsbVisualHeight = hotseatQsbHeight - 2 * hotseatQsbShadowHeight
             val hotseatIconSize = pxFromDp(inv.iconSize[typeIndex], metrics)
+            // Dock labels are disabled, so a cell only needs the icon footprint.
             val hotseatCellHeight =
-                ceil(hotseatIconSize * 2 * ICON_OVERLAP_FACTOR).toInt() -
-                    hotseatIconSize / 2
+                ceil(hotseatIconSize * ICON_OVERLAP_FACTOR).toInt()
             val extraBarSpace = if (
                 isVerticalBarLayout ||
                     (!isQsbInline && !deviceProperties.taskbarConfiguration.isTaskbarPresent)
