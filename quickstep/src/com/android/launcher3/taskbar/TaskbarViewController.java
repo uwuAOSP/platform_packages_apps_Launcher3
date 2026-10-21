@@ -1257,12 +1257,12 @@ public class TaskbarViewController implements TaskbarControllers.LoggableTaskbar
                 }
 
                 if (mIsHotseatIconOnTopWhenAligned) {
+                    // Leaving home, keep the QSB hidden so that it doesn't linger while shrinking
+                    // into the taskbar.
                     setter.addFloat(child, VIEW_ALPHA, 0f, 1f,
                             isToHome
                                     ? Interpolators.clampToProgress(LINEAR, 0f, 0.35f)
-                                    : mActivity.getDeviceProfile().getHotseatProfile().isQsbInline()
-                                            ? Interpolators.clampToProgress(LINEAR, 0f, 1f)
-                                            : Interpolators.clampToProgress(LINEAR, 0.84f, 1f));
+                                    : FINAL_FRAME);
                 }
                 setter.addOnFrameListener(animator -> AlphaUpdateListener.updateVisibility(child));
                 continue;

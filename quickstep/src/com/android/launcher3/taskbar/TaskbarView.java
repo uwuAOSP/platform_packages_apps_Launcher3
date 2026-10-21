@@ -64,6 +64,7 @@ import com.android.launcher3.Utilities;
 import com.android.launcher3.anim.AnimatorListeners;
 import com.android.launcher3.apppairs.AppPairIcon;
 import com.android.launcher3.celllayout.CellInfo;
+import com.android.launcher3.dagger.LauncherComponentProvider;
 import com.android.launcher3.folder.FolderIcon;
 import com.android.launcher3.folder.PreviewBackground;
 import com.android.launcher3.graphics.ThemeManager;
@@ -231,9 +232,8 @@ public class TaskbarView extends FrameLayout implements FolderIcon.FolderIconPar
         mTaskbarUiState.setIsTaskbarViewShown(isShown());
         mTransientTaskbarMinWidth = resources.getDimension(R.dimen.transient_taskbar_min_width);
 
-        // Taskbar does not display the home-screen QSB.
-        mQsb = new View(context);
-        mQsb.setLayoutParams(new LayoutParams(0, 0));
+        // TODO: Disable touch events on QSB otherwise it can crash.
+        mQsb = LauncherComponentProvider.get(context).getQsbWidgetFactory().createView(this);
         onDeviceProfileChanged(mActivityContext.getDeviceProfile());
 
         final TaskbarSpecsEvaluator specsEvaluator = mActivityContext.getTaskbarSpecsEvaluator();

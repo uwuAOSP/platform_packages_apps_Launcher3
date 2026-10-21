@@ -47,7 +47,7 @@ class LawnQsbLayout @JvmOverloads constructor(
         isLongClickable = true
     }
     private val prefListener = LauncherPrefChangeListener { key ->
-        if (QSB_PREFS.any { it.sharedPrefKey == key }) updateContent()
+        if (QSB_PREFS.any { it.sharedPrefKey == key }) post { updateContent() }
     }
 
     override fun onFinishInflate() {

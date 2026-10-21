@@ -28,6 +28,7 @@ import com.android.launcher3.dagger.BootSafeModules
 import com.android.launcher3.dagger.LauncherAppComponent
 import com.android.launcher3.dagger.LauncherAppSingleton
 import com.android.launcher3.dagger.LauncherComponentProvider.appComponent
+import com.android.launcher3.dagger.LauncherQsbModule
 import com.android.launcher3.dagger.NoOpLoggerModule
 import com.android.launcher3.dagger.PerDisplayModule
 import com.android.launcher3.graphics.theme.ThemePreference
@@ -197,6 +198,7 @@ constructor(
                 NoOpLoggerModule::class,
                 PreviewModule::class,
                 BootSafeModules::class,
+                LauncherQsbModule::class,
                 NoOpOrganizerModule::class,
                 NoOpGeneratorModule::class,
             ]
