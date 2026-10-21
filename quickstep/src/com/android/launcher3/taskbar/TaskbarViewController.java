@@ -1125,7 +1125,8 @@ public class TaskbarViewController implements TaskbarControllers.LoggableTaskbar
         // or fade in while already in in-app state.
         Interpolator interpolator = mIsHotseatIconOnTopWhenAligned ? LINEAR : FINAL_FRAME;
 
-        int offsetY = taskbarDp.getTaskbarOffsetY();
+        // taskbarDp has the taskbar icon size, the hotseat geometry needs the launcher one.
+        int offsetY = launcherDp.getTaskbarOffsetY();
         setter.setFloat(mTaskbarIconTranslationYForHome, VALUE, -offsetY, interpolator);
         setter.setFloat(mTaskbarNavButtonTranslationY, VALUE, -offsetY, interpolator);
         setter.setFloat(mTaskbarNavButtonTranslationYForInAppDisplay, VALUE, offsetY, interpolator);
@@ -1174,7 +1175,7 @@ public class TaskbarViewController implements TaskbarControllers.LoggableTaskbar
         int borderSpacing = launcherDp.getHotseatProfile().getBorderSpace();
         Rect hotseatPadding = launcherDp.getHotseatLayoutPadding(mActivity);
         int hotseatCellSize = DeviceProfile.calculateCellWidth(
-                launcherDp.getDeviceProperties().getAvailableWidthPx()
+                launcherDp.getDeviceProperties().getWidthPx()
                         - hotseatPadding.left
                         - hotseatPadding.right,
                 borderSpacing,
@@ -1394,8 +1395,7 @@ public class TaskbarViewController implements TaskbarControllers.LoggableTaskbar
             taskbarWindowSize = Math.max(taskbarWindowSize, bubbleBarMaxHeight);
         }
         mActivity.setTaskbarWindowSize(taskbarWindowSize);
-        mTaskbarNavButtonTranslationY.updateValue(
-                -mActivity.getDeviceProfile().getTaskbarOffsetY());
+        mTaskbarNavButtonTranslationY.updateValue(-deviceProfile.getTaskbarOffsetY());
     }
 
     public LauncherBindableItemsContainer getContent() {

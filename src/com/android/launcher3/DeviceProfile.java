@@ -931,14 +931,17 @@ public class DeviceProfile {
             int hotseatWidth = getHotseatRequiredWidth();
             int startSpacing;
             int endSpacing;
+            // Hotseat spans the whole window, insets are not applied as margins.
+            int layoutWidth = mDeviceProperties.getWidthPx();
             // Hotseat aligns to the left with nav buttons
             if (getHotseatProfile().getBarEndOffset() > 0) {
                 startSpacing = getHotseatProfile().getInlineNavButtonsEndSpacingPx();
-                endSpacing = mDeviceProperties.getAvailableWidthPx() - hotseatWidth - startSpacing
+                endSpacing = layoutWidth - hotseatWidth - startSpacing
                         + mHotseatProfile.getBorderSpace();
             } else {
-                startSpacing = (mDeviceProperties.getAvailableWidthPx() - hotseatWidth) / 2;
-                endSpacing = startSpacing;
+                startSpacing = (layoutWidth - hotseatWidth) / 2;
+                // Odd pixel goes to the end, so CellLayout has no unused space to center.
+                endSpacing = layoutWidth - hotseatWidth - startSpacing;
             }
             startSpacing += getAdditionalQsbSpace();
 
@@ -957,7 +960,7 @@ public class DeviceProfile {
             int iconExtraSpacePx = getWorkspaceProfile().getIconSizePx() - getIconVisibleSizePx(
                     getWorkspaceProfile().getIconSizePx());
             int sideSpacing =
-                    (mDeviceProperties.getAvailableWidthPx() - (
+                    (mDeviceProperties.getWidthPx() - (
                             mHotseatProfile.getQsbWidth() + iconExtraSpacePx))
                             / 2;
             hotseatBarPadding.set(sideSpacing,
@@ -1105,11 +1108,12 @@ public class DeviceProfile {
      * Returns the number of pixels the taskbar is translated from the bottom of the screen.
      */
     public int getTaskbarOffsetY() {
-        int taskbarIconBottomSpace =
-                (getTaskbarProfile().getHeight() - getWorkspaceProfile().getIconSizePx()) / 2;
+        int taskbarIconBottomSpace = getCenteredIconBottomSpace(
+                getTaskbarProfile().getHeight(), getWorkspaceProfile().getIconSizePx());
         int launcherIconBottomSpace = Math.min(
-                (mHotseatProfile.getCellHeightPx() - getWorkspaceProfile().getIconSizePx()
-                ) / 2, mWorkspaceProfile.getGridVisualizationPaddingY());
+                getCenteredIconBottomSpace(mHotseatProfile.getCellHeightPx(),
+                        getWorkspaceProfile().getIconSizePx()),
+                mWorkspaceProfile.getGridVisualizationPaddingY());
         // Taskbar Icon Alignment Animation is On
         // We need this for taskbar icons to softly land on hotseat icons.
         if (mTaskbarProfile.isTransientTaskbar() && !enableRecentsInTaskbar()) {
@@ -1122,6 +1126,12 @@ public class DeviceProfile {
             int navButtonContainerHalf = getTaskbarProfile().getHeight() / 2;
             return mHotseatProfile.getBarBottomSpacePx() + hotSeatIconHalf - navButtonContainerHalf;
         }
+    }
+
+    /** Space below a centered icon, with the odd pixel at the bottom like hotseat and taskbar. */
+    private static int getCenteredIconBottomSpace(int containerSize, int iconSize) {
+        int freeSpace = containerSize - iconSize;
+        return freeSpace > 0 ? freeSpace - freeSpace / 2 : freeSpace / 2;
     }
 
     /** Returns the number of pixels required below OverviewActions. */
