@@ -36,7 +36,6 @@ class LauncherAppModule
             ExecutorsModule::class,
             LauncherExecutorsModule::class,
             LauncherModelModule::class,
-            LauncherQsbModule::class,
             SettingsModule::class,
             HomeScreenFilesModule::class,
             DesktopModule::class,
@@ -57,6 +56,8 @@ class BootSafeModules
             StatsLoggerModule::class,
             WorkspaceFunctionsLauncherModule::class,
             OrganizerLauncherModule::class,
+            // TaskbarBootComponent binds NoOpQsbFactory instead.
+            LauncherQsbModule::class,
         ]
 )
 class BootUnsafeModules
