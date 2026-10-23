@@ -182,7 +182,8 @@ class SmartspacerClient(context: Context) {
     }
 
     private suspend fun getService(): ISmartspaceManager? = withContext(Dispatchers.IO) {
-        suspendCoroutine {
+        service?.let { return@withContext it }
+        suspendCoroutine<ISmartspaceManager?> {
             var hasResumed = false
             val serviceConnection = object: ServiceConnection {
                 override fun onServiceConnected(component: ComponentName, binder: IBinder) {
