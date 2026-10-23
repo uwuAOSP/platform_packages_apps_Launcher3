@@ -143,7 +143,6 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     private final SearchTransitionController mSearchTransitionController;
     private final Paint mHeaderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Rect mInsets = new Rect();
-    private int mSearchKeyboardInset;
     private final AllAppsStore mAllAppsStore;
     private final RecyclerView.OnScrollListener mScrollListener =
             new RecyclerView.OnScrollListener() {
@@ -1155,13 +1154,6 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         return mSearchRecyclerView;
     }
 
-    /** Reserve scroll space for the built-in search keyboard without replacing normal insets. */
-    public void setSearchKeyboardInset(int height) {
-        if (mSearchKeyboardInset == height) return;
-        mSearchKeyboardInset = height;
-        for (AdapterHolder holder : mAH) holder.applyPadding();
-    }
-
     protected boolean isPersonalTab() {
         return mViewPager == null || mViewPager.getNextPage() == 0;
     }
@@ -1737,7 +1729,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                     bottomOffset += mSearchContainer.getHeight();
                 }
                 mRecyclerView.setPadding(mPadding.left, mPadding.top, mPadding.right,
-                        Math.max(mPadding.bottom + bottomOffset, mSearchKeyboardInset));
+                        mPadding.bottom + bottomOffset);
             }
         }
 

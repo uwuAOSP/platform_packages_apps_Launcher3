@@ -35,7 +35,6 @@ internal fun resetDockSettings(context: Context) {
 internal fun resetSearchSettings(context: Context) {
     applyLauncherSetting(
         context,
-        LauncherPrefs.APP_SEARCH_INPUT_MODE.to("native"),
         LauncherPrefs.HOTSEAT_MODE.to("lawnchair"),
         LauncherPrefs.HOTSEAT_QSB_PROVIDER.to("google"),
         LauncherPrefs.HOTSEAT_QSB_THEMED.to(true),
