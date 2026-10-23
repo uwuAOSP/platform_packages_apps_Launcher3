@@ -36,8 +36,6 @@ import android.view.View;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.ExtendedEditText;
 import com.android.launcher3.Insettable;
-import com.android.launcher3.LauncherPrefChangeListener;
-import com.android.launcher3.LauncherPrefs;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.allapps.ActivityAllAppsContainerView;
@@ -46,6 +44,7 @@ import com.android.launcher3.allapps.BaseAllAppsAdapter.AdapterItem;
 import com.android.launcher3.allapps.SearchUiManager;
 import com.android.launcher3.qsb.SearchBarUI;
 import com.android.launcher3.search.SearchCallback;
+import com.android.launcher3.util.Themes;
 import com.android.launcher3.views.ActivityContext;
 
 import java.util.ArrayList;
@@ -95,8 +94,8 @@ public class AppsSearchContainerLayout extends ExtendedEditText
     }
 
     private void applySearchFieldContent() {
-        Drawable searchIcon = getContext().getDrawable(R.drawable.ic_allapps_search).mutate();
-        searchIcon.setTint(getCurrentTextColor());
+        Drawable searchIcon = getContext().getDrawable(R.drawable.ic_qsb_search).mutate();
+        searchIcon.setTint(Themes.getColorAccent(getContext()));
         int iconSize = Math.round(TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, 24, getResources().getDisplayMetrics()));
         searchIcon.setBounds(0, 0, iconSize, iconSize);
@@ -104,9 +103,9 @@ public class AppsSearchContainerLayout extends ExtendedEditText
                 - iconSize) / 2;
         setCompoundDrawablesRelative(searchIcon, null, null, null);
         setCompoundDrawablePadding(contentPadding);
-        setPadding(contentPadding / 2, 0, contentPadding / 2, 0);
+        setPadding(contentPadding, 0, contentPadding / 2, 0);
         setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-        setHint(getHint());
+        setHint(null);
     }
 
     @Override
