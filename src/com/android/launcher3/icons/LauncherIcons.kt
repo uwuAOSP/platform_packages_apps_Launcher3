@@ -16,6 +16,7 @@
 package com.android.launcher3.icons
 
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.os.UserHandle
 import com.android.launcher3.Flags
 import com.android.launcher3.InvariantDeviceProfile
@@ -23,6 +24,8 @@ import com.android.launcher3.dagger.ApplicationContext
 import com.android.launcher3.dagger.LauncherAppSingleton
 import com.android.launcher3.dagger.LauncherComponentProvider.appComponent
 import com.android.launcher3.graphics.ThemeManager
+import com.android.launcher3.icons.BaseIconFactory.IconOptions
+import com.android.launcher3.icons.iconpack.IconPackDrawable
 import com.android.launcher3.pm.UserCache
 import com.android.launcher3.util.UserIconInfo
 import dagger.assisted.Assisted
@@ -52,6 +55,17 @@ internal constructor(
         themeManager.themeController,
     ),
     AutoCloseable {
+
+    override fun createBadgedIconBitmap(icon: Drawable?, options: IconOptions): BitmapInfo {
+        if (icon is IconPackDrawable) {
+            options
+                .assumeFullBleedIcon(false)
+                .setWrapNonAdaptiveIcon(false)
+                .setDrawFullBleed(false)
+                .setAddShadows(false)
+        }
+        return super.createBadgedIconBitmap(icon, options)
+    }
 
     /** Recycles a LauncherIcons that may be in-use. */
     fun recycle() {

@@ -35,6 +35,7 @@ import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.dagger.ApplicationContext;
 import com.android.launcher3.dagger.LauncherAppSingleton;
 import com.android.launcher3.graphics.ThemeManager;
+import com.android.launcher3.icons.iconpack.IconPackDrawable;
 import com.android.launcher3.icons.iconpack.IconPackEntry;
 import com.android.launcher3.icons.iconpack.IconPackRepository;
 import com.android.launcher3.icons.iconpack.IconOverrideRepository;
@@ -88,10 +89,17 @@ public class LauncherIconProvider extends IconProvider {
     }
 
     @Override
-    protected Drawable loadPackageIcon(
-            PackageItemInfo info, ApplicationInfo appInfo, int density) {
-        Drawable icon = getIconPackDrawable(info, appInfo, density);
-        return icon != null ? icon : super.loadPackageIcon(info, appInfo, density);
+    public Drawable getIcon(ComponentInfo info, int density) {
+        if (info.isArchived) return super.getIcon(info, density);
+        Drawable icon = getIconPackDrawable(info, info.applicationInfo, density);
+        return icon != null ? icon : super.getIcon(info, density);
+    }
+
+    @Override
+    public Drawable getIcon(ApplicationInfo info, int density) {
+        if (info.isArchived) return super.getIcon(info, density);
+        Drawable icon = getIconPackDrawable(info, info, density);
+        return icon != null ? icon : super.getIcon(info, density);
     }
 
     /** Returns a per-component custom icon, or the selected pack's mapping. */
@@ -115,7 +123,7 @@ public class LauncherIconProvider extends IconProvider {
         ComponentKey key = new ComponentKey(componentName, user);
         Drawable customImage = IconOverrideRepository.INSTANCE
                 .getCustomImageDrawable(mContext, key);
-        if (customImage != null) return customImage;
+        if (customImage != null) return new IconPackDrawable(customImage);
 
         IconPackEntry entry = IconOverrideRepository.INSTANCE.get(mContext, key);
         if (entry == null) {
@@ -127,8 +135,9 @@ public class LauncherIconProvider extends IconProvider {
                 entry = pack.getIcon(componentName);
             }
         }
-        return entry == null ? null
+        Drawable icon = entry == null ? null
                 : IconPackRepository.INSTANCE.getDrawable(mContext, entry, density);
+        return icon == null ? null : new IconPackDrawable(icon);
     }
 
     @Override
@@ -138,7 +147,8 @@ public class LauncherIconProvider extends IconProvider {
         return super.getStateForApp(info).withAdditionalValues(
                 LauncherPrefs.get(mContext).get(LauncherPrefs.ICON_PACK_PACKAGE),
                 IconOverrideRepository.INSTANCE.getPackageState(
-                        mContext, info.packageName, user));
+                        mContext, info.packageName, user),
+                "icon-pack-artwork-v1");
     }
 
     private Map<String, ThemeData> getThemedIconMap() {
