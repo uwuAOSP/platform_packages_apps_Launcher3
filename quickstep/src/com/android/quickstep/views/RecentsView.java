@@ -1554,7 +1554,13 @@ public abstract class RecentsView<
      * button fully visible, center page is Clear All button.
      */
     public boolean isClearAllHidden() {
-        return mClearAllButton.getAlpha() != 1f;
+        if (indexOfChild(mClearAllButton) == -1 || mClearAllButton.getAlpha() != 1f) {
+            return true;
+        }
+        // The button is pinned and always visible in the carousel, so its alpha no longer tracks
+        // the scroll position. Use the scroll directly: the old scroll alpha was 1 exactly when
+        // the strip was snapped to the Clear All page.
+        return getPagedOrientationHandler().getPrimaryScroll(this) != getClearAllScroll();
     }
 
     @Override
@@ -2387,8 +2393,9 @@ public abstract class RecentsView<
         int scroll = getPagedOrientationHandler().getPrimaryScroll(this);
         mClearAllButton.onRecentsViewScroll(scroll, mOverviewGridEnabled);
 
-        // Clear all button alpha was set by the previous line.
-        mActionsView.getIndexScrollAlpha().updateValue(1 - mClearAllButton.getScrollAlpha());
+        // The clear all button is pinned and always visible, so the actions bar no longer
+        // alternates with it at the end of the strip.
+        mActionsView.getIndexScrollAlpha().updateValue(1f);
     }
 
     @Override

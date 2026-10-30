@@ -96,9 +96,6 @@ class PortraitPagedViewHandler : DefaultPagedViewHandler(), RecentsPagedOrientat
 
     override fun rotateInsets(insets: Rect, outInsets: Rect) = outInsets.set(insets)
 
-    override fun getClearAllSidePadding(view: View, isRtl: Boolean): Int =
-        (if (isRtl) view.paddingRight else -view.paddingLeft) / 2
-
     override fun getSecondaryDimension(view: View): Int = view.height
 
     override val primaryViewTranslate: FloatProperty<View> = LauncherAnimUtils.VIEW_TRANSLATE_X

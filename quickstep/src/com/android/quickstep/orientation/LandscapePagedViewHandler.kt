@@ -129,9 +129,6 @@ open class LandscapePagedViewHandler : RecentsPagedOrientationHandler {
         outInsets.set(insets.bottom, insets.left, insets.top, insets.right)
     }
 
-    override fun getClearAllSidePadding(view: View, isRtl: Boolean): Int =
-        if (isRtl) view.paddingBottom / 2 else -view.paddingTop / 2
-
     override fun getSecondaryDimension(view: View): Int = view.width
 
     override val primaryViewTranslate: FloatProperty<View> = LauncherAnimUtils.VIEW_TRANSLATE_Y

@@ -75,8 +75,6 @@ interface RecentsPagedOrientationHandler : PagedOrientationHandler {
     /** Rotate the provided insets to portrait perspective. */
     fun rotateInsets(insets: Rect, outInsets: Rect)
 
-    fun getClearAllSidePadding(view: View, isRtl: Boolean): Int
-
     fun getSecondaryDimension(view: View): Int
 
     val primaryViewTranslate: FloatProperty<View>

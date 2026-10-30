@@ -26,6 +26,7 @@ import com.android.launcher3.R
 import com.android.launcher3.util.KFloatProperty
 import com.android.launcher3.util.MultiPropertyDelegate
 import com.android.launcher3.util.MultiValueAlpha
+import com.android.launcher3.views.ActivityContext
 import com.android.quickstep.util.BorderAnimator
 import com.android.quickstep.util.BorderAnimator.Companion.createSimpleBorderAnimator
 import kotlin.math.abs
@@ -112,7 +113,7 @@ constructor(
     var gridScrollOffset = 0f
     var scrollOffsetPrimary = 0f
 
-    private var sidePadding = 0
+    private var inGridMode = false
     var borderEnabled = false
         set(value) {
             if (field == value) {
@@ -162,13 +163,6 @@ constructor(
         super.draw(canvas)
     }
 
-    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        super.onLayout(changed, left, top, right, bottom)
-        sidePadding =
-            recentsView?.let { it.pagedOrientationHandler?.getClearAllSidePadding(it, isLayoutRtl) }
-                ?: 0
-    }
-
     private val recentsView: RecentsView<*, *>?
         get() = parent as? RecentsView<*, *>?
 
@@ -184,20 +178,22 @@ constructor(
         }
 
         val clearAllScroll = recentsView.clearAllScroll
-        val adjustedScrollFromEdge = abs((scroll - clearAllScroll)).toFloat()
-        val shift = min(adjustedScrollFromEdge, orientationSize)
-        normalTranslationPrimary = if (isLayoutRtl) -shift else shift
-        if (!gridEnabled) {
-            normalTranslationPrimary += sidePadding.toFloat()
+        inGridMode = gridEnabled
+        if (gridEnabled) {
+            val adjustedScrollFromEdge = abs((scroll - clearAllScroll)).toFloat()
+            val shift = min(adjustedScrollFromEdge, orientationSize)
+            normalTranslationPrimary = if (isLayoutRtl) -shift else shift
+        } else {
+            // The button is pinned at the bottom center and always visible, like the overview
+            // action buttons it replaces. Compensate the strip scroll completely (no one page
+            // cap) so the button never slides away with the task pages.
+            normalTranslationPrimary =
+                (scroll - clearAllScroll) + restingCenteringOffset(recentsView, orientationSize)
         }
         applyPrimaryTranslation()
         applySecondaryTranslation()
-        var clearAllSpacing = recentsView.pageSpacing + recentsView.clearAllExtraPageSpacing
-        clearAllSpacing = if (isLayoutRtl) -clearAllSpacing else clearAllSpacing
-        scrollAlpha =
-            ((clearAllScroll + clearAllSpacing - scroll) / clearAllSpacing.toFloat()).coerceAtLeast(
-                0f
-            )
+        // Always fully visible: this is a fixed control now, not an end-of-strip page.
+        scrollAlpha = 1f
     }
 
     fun getScrollAdjustment(fullscreenEnabled: Boolean, gridEnabled: Boolean) =
@@ -229,10 +225,49 @@ constructor(
     private fun applySecondaryTranslation() {
         val recentsView = recentsView ?: return
         val orientationHandler = recentsView.pagedOrientationHandler
+        val restingOffset = if (inGridMode) 0f else restingBottomOffset(recentsView)
         orientationHandler.secondaryViewTranslate.set(
             this,
-            orientationHandler.getSecondaryValue(0f, taskAlignmentTranslationY),
+            orientationHandler.getSecondaryValue(0f, taskAlignmentTranslationY) + restingOffset,
         )
+    }
+
+    /**
+     * Horizontal offset that parks the button at the middle of the screen when it is at rest on
+     * its page, in place of the old side padding that used to float it at the screen edge.
+     */
+    private fun restingCenteringOffset(
+        recentsView: RecentsView<*, *>,
+        orientationSize: Float,
+    ): Float {
+        val orientationHandler = recentsView.pagedOrientationHandler
+        val viewportSize =
+            orientationHandler.getPrimaryValue(recentsView.width, recentsView.height).toFloat()
+        val primaryPos = orientationHandler.getPrimaryValue(left, top).toFloat()
+        return (viewportSize - orientationSize) / 2f - (primaryPos - recentsView.clearAllScroll)
+    }
+
+    /**
+     * Vertical offset that parks the button where the Overview actions bar buttons used to sit.
+     * Mirrors the bottom margin [OverviewActionsView] applies to its buttons so the button lands
+     * in the same spot, since it is laid out as a RecentsView page instead of a child of the
+     * actions bar.
+     */
+    private fun restingBottomOffset(recentsView: RecentsView<*, *>): Float {
+        val activity: ActivityContext? = ActivityContext.lookupContextNoThrow(context)
+        val dp = activity?.deviceProfile ?: return 0f
+        val overviewProfile = dp.overviewProfile
+        val bottomMargin = if (dp.deviceProperties.isLargeScreen) {
+            val taskbarProfile = dp.taskbarProfile
+            (if (taskbarProfile.isTransientTaskbar) taskbarProfile.stashedTaskbarHeight
+            else taskbarProfile.height) + overviewProfile.actionsTopMarginPx
+        } else {
+            dp.deviceProperties.heightPx - recentsView.lastComputedTaskSize.bottom -
+                overviewProfile.actionsTopMarginPx - overviewProfile.actionsHeight
+        }
+        val rowTop = recentsView.height - bottomMargin - overviewProfile.actionsHeight
+        val targetTop = rowTop + (overviewProfile.actionsHeight - height) / 2f
+        return targetTop - top
     }
 
     private fun getFullscreenTrans(endTranslation: Float) =
