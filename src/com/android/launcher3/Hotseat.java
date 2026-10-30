@@ -135,8 +135,6 @@ public class Hotseat extends FrameLayout implements Insettable {
         mPagedView.setPageIndicator(mPageIndicator);
 
         mQsb = LauncherComponentProvider.get(context).getQsbWidgetFactory().createView(this);
-        mQsb.setVisibility(!"disabled".equals(mPrefs.get(LauncherPrefs.HOTSEAT_MODE))
-                ? VISIBLE : GONE);
         addView(mQsb);
 
         mPagedView.resetPages(false, null, mActivity.getDeviceProfile());
@@ -149,7 +147,7 @@ public class Hotseat extends FrameLayout implements Insettable {
         mIconsTranslationXFactory = new MultiPropertyFactory<>(mIconsContainer,
                 VIEW_TRANSLATE_X, ICONS_TRANSLATION_X_CHANNELS_COUNT, Float::sum);
         mQsbAlphaChannels = new MultiValueAlpha(mQsb, ALPHA_CHANNEL_CHANNELS_COUNT);
-        mQsbAlphaChannels.setUpdateVisibility(true);
+        updateQsbVisibility();
 
         setUpBackground(0);
         setClipChildren(false);
@@ -315,17 +313,15 @@ public class Hotseat extends FrameLayout implements Insettable {
     public void setInsets(Rect insets) {
         LayoutParams lp = (LayoutParams) getLayoutParams();
         DeviceProfile dp = mActivity.getDeviceProfile();
+        updateQsbVisibility();
         int topOverlap = 0;
         if (dp.isVerticalBarLayout()) {
-            mQsb.setVisibility(GONE);
             mPageIndicator.setVisibility(GONE);
             lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
             lp.gravity = dp.isSeascape() ? Gravity.LEFT : Gravity.RIGHT;
             lp.width = dp.getHotseatProfile().getBarSizePx()
                     + (dp.isSeascape() ? insets.left : insets.right);
         } else {
-            mQsb.setVisibility(!"disabled".equals(mPrefs.get(LauncherPrefs.HOTSEAT_MODE))
-                    ? VISIBLE : GONE);
             lp.gravity = Gravity.BOTTOM;
             lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
             int totalHeightForQsb = dp.getQsbOffsetY()
@@ -346,6 +342,23 @@ public class Hotseat extends FrameLayout implements Insettable {
                 || !"disabled".equals(mPrefs.get(LauncherPrefs.HOTSEAT_MODE))
                 ? VISIBLE : GONE);
         InsettableFrameLayout.dispatchInsets(this, insets);
+    }
+
+    /**
+     * Shows the dock search bar only while the user keeps it enabled and the layout can host it,
+     * and teaches the QSB alpha channels the same rule.
+     *
+     * <p>{@link MultiValueAlpha} flips its target to VISIBLE whenever an aggregated alpha update
+     * rises past the cutoff, and several sources push that alpha back up unconditionally (the
+     * assistant visibility reset fired by OverviewComponentObserver on boot and package changes,
+     * taskbar alignment, preview rendering). Without this gate those updates resurrect a QSB the
+     * user turned off in settings.
+     */
+    private void updateQsbVisibility() {
+        boolean showQsb = !"disabled".equals(mPrefs.get(LauncherPrefs.HOTSEAT_MODE))
+                && !mActivity.getDeviceProfile().isVerticalBarLayout();
+        mQsb.setVisibility(showQsb ? VISIBLE : GONE);
+        mQsbAlphaChannels.setUpdateVisibility(showQsb);
     }
 
     public void setWorkspace(Workspace<?> workspace) {
