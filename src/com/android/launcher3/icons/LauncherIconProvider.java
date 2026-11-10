@@ -126,18 +126,22 @@ public class LauncherIconProvider extends IconProvider {
         if (customImage != null) return new IconPackDrawable(customImage);
 
         IconPackEntry entry = IconOverrideRepository.INSTANCE.get(mContext, key);
-        if (entry == null) {
-            String packageName = LauncherPrefs.get(mContext)
-                    .get(LauncherPrefs.ICON_PACK_PACKAGE);
-            if (packageName.isEmpty()) return null;
-            CustomIconPack pack = IconPackRepository.INSTANCE.getPack(mContext, packageName);
-            if (pack != null) {
-                entry = pack.getIcon(componentName);
-            }
+        if (entry != null) {
+            Drawable icon = IconPackRepository.INSTANCE.getDrawable(mContext, entry, density);
+            return icon == null ? null : new IconPackDrawable(icon);
         }
-        Drawable icon = entry == null ? null
-                : IconPackRepository.INSTANCE.getDrawable(mContext, entry, density);
-        return icon == null ? null : new IconPackDrawable(icon);
+
+        String packages = LauncherPrefs.get(mContext).get(LauncherPrefs.ICON_PACK_PACKAGE);
+        for (String packageName : packages.split(",")) {
+            if (packageName.isEmpty()) continue;
+            CustomIconPack pack = IconPackRepository.INSTANCE.getPack(mContext, packageName);
+            if (pack == null) continue;
+            entry = pack.getIcon(componentName);
+            if (entry == null) continue;
+            Drawable icon = IconPackRepository.INSTANCE.getDrawable(mContext, entry, density);
+            if (icon != null) return new IconPackDrawable(icon);
+        }
+        return null;
     }
 
     @Override

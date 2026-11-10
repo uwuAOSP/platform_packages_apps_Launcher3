@@ -6,6 +6,7 @@
 package com.android.launcher3.settings
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,10 +19,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -35,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -48,8 +52,8 @@ import com.android.launcher3.R
 import com.android.launcher3.InvariantDeviceProfile
 import com.android.launcher3.graphics.ThemeManager
 import com.android.launcher3.icons.iconpack.IconPackRepository
+import com.android.launcher3.icons.iconpack.IconPackInfo
 import com.android.launcher3.shapes.ShapesProvider
-import com.android.settingslib.spa.widget.preference.ListPreference
 import com.android.settingslib.spa.widget.preference.ListPreferenceModel
 import com.android.settingslib.spa.widget.preference.ListPreferenceOption
 import com.android.settingslib.spa.widget.preference.RadioPreferences
@@ -58,6 +62,9 @@ import com.android.settingslib.spa.widget.preference.PreferenceModel
 import com.android.settingslib.spa.widget.preference.SwitchPreference
 import com.android.settingslib.spa.widget.preference.SwitchPreferenceModel
 import com.android.settingslib.spa.widget.ui.Category
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun IconSettingsContent(
@@ -69,7 +76,12 @@ fun IconSettingsContent(
     val prefs = LauncherPrefs.get(context)
     val themeManager = remember { ThemeManager.INSTANCE.get(context) }
     val shapes = remember { ShapesProvider.iconShapes.toList() }
-    val packs = remember { IconPackRepository.getAvailablePacks(context) }
+    var packs by remember { mutableStateOf<List<IconPackInfo>>(emptyList()) }
+    var pickerRequested by remember { mutableStateOf(false) }
+    LaunchedEffect(context) {
+        val available = withContext(Dispatchers.IO) { IconPackRepository.getAvailablePacks(context) }
+        if (!pickerRequested) packs = available
+    }
     val idp = remember { InvariantDeviceProfile.INSTANCE.get(context) }
     val initialHomeIconSizeFactor = prefs.get(LauncherPrefs.HOME_ICON_SIZE_FACTOR)
     val initialDrawerIconSizeFactor = prefs.get(LauncherPrefs.DRAWER_ICON_SIZE_FACTOR)
@@ -177,7 +189,13 @@ fun IconSettingsContent(
             if (com.android.systemui.shared.Flags.workspaceItemsLabelHidden()) {
                 AppLabelsPreference(context, prefs)
             }
-            IconPackPreference(context, prefs, packs, selectedPackage, onSelectedPackageChange)
+            IconPackPreference(
+                context, prefs, packs,
+                onPacksChange = { packs = it },
+                onPickerRequested = { pickerRequested = true },
+                selectedPackage = selectedPackage,
+                onSelectedPackageChange = onSelectedPackageChange,
+            )
         }
         Category(title = context.getString(R.string.icon_themed_title)) {
             ThemedIconsPreference(
@@ -421,30 +439,154 @@ private fun AppLabelsPreference(context: android.content.Context, prefs: Launche
 private fun IconPackPreference(
     context: android.content.Context,
     prefs: LauncherPrefs,
-    packs: List<com.android.launcher3.icons.iconpack.IconPackInfo>,
+    packs: List<IconPackInfo>,
+    onPacksChange: (List<IconPackInfo>) -> Unit,
+    onPickerRequested: () -> Unit,
     selectedPackage: String,
     onSelectedPackageChange: (String) -> Unit,
 ) {
-    val selectedIndex = packs.indexOfFirst { it.packageName == selectedPackage } + 1
-    val state = remember(selectedPackage, packs) {
-        mutableIntStateOf(selectedIndex.coerceAtLeast(0))
+    var dialogOpen by rememberSaveable { mutableStateOf(false) }
+    var pickerLoading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    var selectedPackages by remember(selectedPackage) {
+        mutableStateOf(selectedPackage.split(',').filter { it.isNotBlank() })
     }
-    val options = listOf(ListPreferenceOption(0, context.getString(R.string.icon_pack_none))) +
-        packs.mapIndexed { index, pack -> ListPreferenceOption(index + 1, pack.label) }
+    val summary = selectedPackages.map { packageName ->
+        packs.firstOrNull { it.packageName == packageName }?.label ?: packageName
+    }.joinToString(", ").ifEmpty { context.getString(R.string.icon_pack_none) }
 
-    ListPreference(
-        object : ListPreferenceModel {
+    Preference(
+        object : PreferenceModel {
             override val title = context.getString(R.string.icon_pack_select_title)
-            override val options = options
-            override val selectedId = state
-            override val onIdSelected: (Int) -> Unit = { id ->
-                state.intValue = id
-                val packageName = packs.getOrNull(id - 1)?.packageName ?: ""
-                prefs.put(LauncherPrefs.ICON_PACK_PACKAGE, packageName)
-                onSelectedPackageChange(packageName)
-                LauncherAppState.getInstance(context).model
-                    .reloadIfActive("icon-pack-changed")
+            override val summary = { summary }
+            override val onClick = {
+                if (!pickerLoading) {
+                    pickerLoading = true
+                    onPickerRequested()
+                    scope.launch {
+                        try {
+                            val available = withContext(Dispatchers.IO) {
+                                IconPackRepository.getAvailablePacks(context)
+                            }
+                            val installed = available.mapTo(mutableSetOf()) { it.packageName }
+                            val saved = prefs.get(LauncherPrefs.ICON_PACK_PACKAGE)
+                            val updated = saved.split(',').filter { it.isNotBlank() && it in installed }
+                            val value = updated.joinToString(",")
+                            onPacksChange(available)
+                            selectedPackages = updated
+                            if (value != saved) {
+                                prefs.put(LauncherPrefs.ICON_PACK_PACKAGE, value)
+                                onSelectedPackageChange(value)
+                                LauncherAppState.getInstance(context).model
+                                    .reloadIfActive("icon-pack-changed")
+                            }
+                            dialogOpen = true
+                        } finally {
+                            pickerLoading = false
+                        }
+                    }
+                }
             }
         }
     )
+
+    if (dialogOpen) {
+        IconPackPickerSheet(
+            context = context,
+            packs = packs,
+            selectedPackages = selectedPackages,
+            onApply = { updated ->
+                selectedPackages = updated
+                val value = updated.joinToString(",")
+                prefs.put(LauncherPrefs.ICON_PACK_PACKAGE, value)
+                onSelectedPackageChange(value)
+                LauncherAppState.getInstance(context).model
+                    .reloadIfActive("icon-pack-changed")
+                dialogOpen = false
+            },
+            onDismiss = { dialogOpen = false },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun IconPackPickerSheet(
+    context: android.content.Context,
+    packs: List<IconPackInfo>,
+    selectedPackages: List<String>,
+    onApply: (List<String>) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var selected by remember(selectedPackages, packs) {
+        mutableStateOf(selectedPackages.toList())
+    }
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 0.dp,
+        dragHandle = { BottomSheetDefaults.DragHandle() },
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+            Text(
+                text = context.getString(R.string.icon_pack_select_title),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+            )
+            selected.toList().forEachIndexed { index, packageName ->
+                val pack = packs.firstOrNull { it.packageName == packageName } ?: return@forEachIndexed
+                IconPackPickerRow(
+                    pack = pack,
+                    selected = true,
+                    priority = index + 1,
+                    onToggle = { selected = selected.filterNot { it == packageName } },
+                )
+            }
+            packs.filter { it.packageName !in selected }.forEach { pack ->
+                IconPackPickerRow(
+                    pack = pack,
+                    selected = false,
+                    priority = null,
+                    onToggle = { selected = selected + pack.packageName },
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 12.dp),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.icon_editor_cancel))
+                }
+                Button(onClick = { onApply(selected) }) {
+                    Text(stringResource(R.string.icon_editor_save))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun IconPackPickerRow(
+    pack: IconPackInfo,
+    selected: Boolean,
+    priority: Int?,
+    onToggle: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onToggle),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
+        Checkbox(checked = selected, onCheckedChange = { onToggle() })
+        Column(modifier = Modifier.weight(1f).padding(vertical = 12.dp)) {
+            Text(pack.label, style = MaterialTheme.typography.bodyLarge)
+            if (priority != null) {
+                Text(
+                    stringResource(R.string.icon_pack_priority, priority),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
 }
