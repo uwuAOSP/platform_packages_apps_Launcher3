@@ -590,24 +590,18 @@ public abstract class SystemShortcut<T extends ActivityContext> extends ItemInfo
                         && !(itemInfo instanceof WorkspaceItemInfo)) {
                     return null;
                 }
-                if (itemInfo instanceof ItemInfoWithIcon itemInfoWithIcon) {
-                    // Don't show bubble shortcut if the item is non-resizeable but not supported.
-                    if (itemInfoWithIcon.isNonResizeable()) {
-                        // TODO(b/411558731): isPhone just checks for smallest width < 600dp, so it
-                        // basically is a check for small screens including Foldables when folded.
-                        // However, the name is a bit misleading, so considering renaming.
-                        final boolean isSmallScreen =
-                                activity.getDeviceProfile().getDeviceProperties().isPhone();
-                        final boolean supportsBubbleNonResizeable =
-                                systemSupportsNonResizableMultiWindow(
-                                        (Context) activity, isSmallScreen);
-                        if (!supportsBubbleNonResizeable) {
-                            return null;
-                        }
-                    }
+                if (itemInfo instanceof ItemInfoWithIcon itemInfoWithIcon
+                        && !supportsBubbleActivity(activity, itemInfoWithIcon.isNonResizeable())) {
+                    return null;
                 }
                 return new BubbleShortcut<>(activity, itemInfo, originalView);
             };
+
+    /** Returns whether the given activity can be launched in an app bubble on this device. */
+    public static boolean supportsBubbleActivity(ActivityContext activity, boolean nonResizable) {
+        return !nonResizable || systemSupportsNonResizableMultiWindow(activity.asContext(),
+                activity.getDeviceProfile().getDeviceProperties().isPhone());
+    }
 
     /**
      * Checks if the system framework policy supports multi-window for non-resizable activities
