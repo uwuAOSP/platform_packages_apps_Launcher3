@@ -389,6 +389,9 @@ constructor(
 
     fun isActive() = systemUiProxy != null
 
+    /** Returns whether the Shell app bubble interface is connected. */
+    fun hasBubbleInterface(): Boolean = bubbles != null
+
     private fun linkToDeath() =
         executeWithErrorLog({ "Failed to link sysui proxy death recipient" }) {
             systemUiProxy?.asBinder()?.linkToDeath(systemUiProxyDeathRecipient, 0 /* flags */)

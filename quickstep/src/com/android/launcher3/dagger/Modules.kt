@@ -339,6 +339,7 @@ object TaskOverlayModule {
             TaskShortcutFactory.FORCE_STOP,
             TaskShortcutFactory.SPLIT_SELECT,
             TaskShortcutFactory.PIN,
+            TaskShortcutFactory.BUBBLE,
             TaskShortcutFactory.INSTALL,
             TaskShortcutFactory.FREE_FORM,
             desktopShortcutFactory,

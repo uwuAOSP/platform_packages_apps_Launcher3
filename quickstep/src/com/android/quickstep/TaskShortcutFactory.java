@@ -24,11 +24,19 @@ import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCH
 import static com.android.launcher3.util.SplitConfigurationOptions.STAGE_POSITION_BOTTOM_OR_RIGHT;
 
 import android.app.ActivityOptions;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.LauncherActivityInfo;
+import android.content.pm.LauncherApps;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
@@ -42,8 +50,11 @@ import androidx.annotation.Nullable;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.R;
 import com.android.launcher3.logging.StatsLogManager.LauncherEvent;
+import com.android.launcher3.pm.UserCache;
 import com.android.launcher3.popup.SystemShortcut;
 import com.android.launcher3.popup.SystemShortcut.AppInfo;
+import com.android.launcher3.uioverrides.QuickstepLauncher;
+import com.android.launcher3.util.ApiWrapper;
 import com.android.launcher3.util.InstantAppResolver;
 import com.android.launcher3.util.SplitConfigurationOptions;
 import com.android.launcher3.util.SplitConfigurationOptions.SplitPositionOption;
@@ -58,6 +69,7 @@ import com.android.systemui.shared.recents.view.AppTransitionAnimationSpecCompat
 import com.android.systemui.shared.recents.view.AppTransitionAnimationSpecsFuture;
 import com.android.systemui.shared.recents.view.RecentsTransition;
 import com.android.systemui.shared.system.ActivityManagerWrapper;
+import com.android.wm.shell.shared.bubbles.logging.EntryPoint;
 import com.android.wm.shell.shared.desktopmode.DesktopModeStatus;
 
 import java.util.Collections;
@@ -453,6 +465,86 @@ public interface TaskShortcutFactory {
             dismissTaskMenuView();
             mTarget.getStatsLogManager().logger().withItemInfo(mTaskContainer.getItemInfo())
                         .log(LauncherEvent.LAUNCHER_SYSTEM_SHORTCUT_PIN_TAP);
+        }
+    }
+
+    TaskShortcutFactory BUBBLE = new TaskShortcutFactory() {
+        @Override
+        public List<SystemShortcut> getShortcuts(RecentsViewContainer container,
+                TaskContainer taskContainer) {
+            if (!(container instanceof QuickstepLauncher launcher)
+                    || !launcher.areAppBubblesSupported()
+                    || !SystemUiProxy.INSTANCE.get(launcher).hasBubbleInterface()
+                    || ActivityManagerWrapper.getInstance().isLockToAppActive()) {
+                return null;
+            }
+
+            Task.TaskKey taskKey = taskContainer.getTask().key;
+            ComponentName taskComponent = taskKey.getComponent();
+            String packageName = taskKey.getPackageName();
+            if (packageName == null) return null;
+
+            UserHandle user = UserHandle.of(taskKey.userId);
+            Context context = container.asContext();
+            var users = UserCache.INSTANCE.get(context).getUserManagerState();
+            if (!users.getUserProfiles().contains(user) || !users.isUserUnlocked(user)
+                    || users.isUserQuiet(user)) {
+                return null;
+            }
+
+            // Resolve a launchable activity for this profile; do not replay task extras or grants.
+            List<LauncherActivityInfo> activities = context.getSystemService(LauncherApps.class)
+                    .getActivityList(packageName, user);
+            LauncherActivityInfo activity = null;
+            for (LauncherActivityInfo candidate : activities) {
+                if (PackageManager.APP_DETAILS_ACTIVITY_CLASS_NAME.equals(
+                        candidate.getComponentName().getClassName())) {
+                    continue;
+                }
+                if (activity == null) {
+                    activity = candidate;
+                }
+                if (candidate.getComponentName().equals(taskComponent)) {
+                    activity = candidate;
+                    break;
+                }
+            }
+            if (activity == null
+                    || (activity.getApplicationInfo().flags & ApplicationInfo.FLAG_SUSPENDED) != 0
+                    || !SystemShortcut.supportsBubbleActivity(container,
+                            ApiWrapper.INSTANCE.get(context).isNonResizeableActivity(activity))) {
+                return null;
+            }
+
+            // NEW_TASK allows Shell's native launch to reuse a matching task without resetting it.
+            Intent intent = Intent.makeMainActivity(activity.getComponentName())
+                    .setPackage(packageName)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            return Collections.singletonList(new BubbleSystemShortcut(launcher, taskContainer,
+                    intent, user));
+        }
+    };
+
+    class BubbleSystemShortcut extends SystemShortcut<QuickstepLauncher> {
+        private final Intent mIntent;
+        private final UserHandle mUser;
+
+        BubbleSystemShortcut(QuickstepLauncher launcher, TaskContainer taskContainer,
+                Intent intent, UserHandle user) {
+            super(R.drawable.ic_bubble_button, R.string.bubble, launcher,
+                    taskContainer.getItemInfo(), taskContainer.getTaskView());
+            mIntent = intent;
+            mUser = user;
+        }
+
+        @Override
+        public void onClick(View view) {
+            dismissTaskMenuView();
+            RecentsView<?, ?> recentsView = mTarget.getOverviewPanel();
+            recentsView.switchToScreenshot(() -> recentsView.finishRecentsAnimation(
+                    true /* toHome */, false /* shouldPip */,
+                    // Shell does not yet define a Recents-specific entry point.
+                    () -> mTarget.showAppBubble(mIntent, mUser, EntryPoint.LAUNCHER_ICON_MENU)));
         }
     }
 

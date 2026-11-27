@@ -552,7 +552,7 @@ public class QuickstepLauncher extends Launcher implements RecentsViewContainer,
         if (Flags.enablePrivateSpace()) {
             shortcuts.add(UNINSTALL_APP);
         }
-        if (mBubbleFeatureConfig.areAppBubblesSupported()) {
+        if (areAppBubblesSupported()) {
             shortcuts.add(BUBBLE_SHORTCUT);
         }
         if (android.security.Flags.appLockApis() && Flags.enableAppLockShortcut()) {
@@ -1565,6 +1565,11 @@ public class QuickstepLauncher extends Launcher implements RecentsViewContainer,
         }
         mSplitSelectStateController.getSplitInstructionsView().goBoing();
         return true;
+    }
+
+    /** Returns whether the app bubble entry points are supported on the launcher display. */
+    public boolean areAppBubblesSupported() {
+        return mBubbleFeatureConfig.areAppBubblesSupported();
     }
 
     @Override
